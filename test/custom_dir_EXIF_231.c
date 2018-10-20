@@ -1,4 +1,3 @@
-/* $Id: custom_dir.c,v 1.3 2013-12-17 14:41:58 bfriesen Exp $ */
 
 /*
  * Copyright (c) 2012, Frank Warmerdam <warmerdam@pobox.com>
@@ -60,8 +59,11 @@ In contrary, custom_dir.c does write additional main-IFD and parameters to file.
 #include "tifftest.h"
 
 
+
+int write_test_tiff(TIFF *tif, const char *filenameRead);
+
 static const char filename[] = "custom_dir_EXIF_231.tif";
-static const char filenameRead[] = "custom_dir_EXIF_231.tif";
+static const char filenameBigTiff[] = "custom_dir_EXIF_231_Big.tif";
 
 #define	SPP	3		/* Samples per pixel */
 const uint16	width = 1;
@@ -76,6 +78,47 @@ int
 main()
 {
 	TIFF			*tif;
+	int				ret;
+
+
+	//--- Test with Classic-TIFF ---
+	/* delete file, if exists */
+	unlink(filename);
+
+	/* We write the main directory as a simple image. */
+	tif = TIFFOpen(filename, "w+");
+	if (!tif) {
+		fprintf(stderr, "Can't create test TIFF file %s.\n", filename);
+		return 1;
+	}
+	fprintf(stderr, "-------- Test with ClassicTIFF started  ----------\n");
+	ret = write_test_tiff(tif, filename);
+
+	//--- Test with BIG-TIFF ---
+	/* delete file, if exists */
+	unlink(filenameBigTiff);
+
+	tif = TIFFOpen(filenameBigTiff, "w8");
+	if (!tif) {
+		fprintf(stderr, "Can't create test TIFF file %s.\n", filenameBigTiff);
+		return 1;
+	}
+	fprintf(stderr, "\n\n-------- Test with BigTIFF started  ----------\n");
+	ret = write_test_tiff(tif, filenameBigTiff);
+
+
+
+} // main()
+
+
+
+
+
+
+
+int
+write_test_tiff(TIFF *tif, const char *filenameRead)
+{
 	unsigned char	buf[SPP] = { 0, 127, 255 };
 	uint64          dir_offset = 0;
 	uint64			dir_offset_GPS = 0, dir_offset_EXIF = 0;
@@ -164,18 +207,6 @@ main()
 		auxDoubleArrayW[i] = (double)((i+1)*3689)/4.5697;
 	}
 
-	fprintf (stderr, "-------- Starting Test  ---------- writing ...\n");
-
-	//-- If file exists delete them --
-	unlink(filename);
-
-	/* We write the main directory as a simple image. */
-	//tif = TIFFOpen(filename, "w8");		//BigTIFF
-	tif = TIFFOpen(filename, "w");
-	if (!tif) {
-		fprintf (stderr, "Can't create test TIFF file %s.\n", filename);
-		return 1;
-	}
 
 	if (!TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, width)) {
 		fprintf (stderr, "Can't set ImageWidth tag.\n");
@@ -264,17 +295,24 @@ main()
 
 	//-- Set dummy EXIF/GPS tag in original tiff-structure in order to reserve space for final dir_offset value,
 	//   which is properly written at the end.
-	dir_offset = 312;
+	dir_offset = 0;  //Zero, in case no Custom-IFD is written
+
+#define WRITE_GPS_TAGS
+#ifdef WRITE_GPS_TAGS
 	if (!TIFFSetField(tif, TIFFTAG_GPSIFD, dir_offset )) {
 		fprintf (stderr, "Can't write TIFFTAG_GPSIFD\n" );
 	}
+#endif
 
 	//------- And also do the same for the EXIF IFD tag here, because we have to save the main directory next ------
 	//-- Set dummy EXIF/GPS tag in original tiff-structure in order to reserve space for final dir_offset value,
 	//   which is properly written at the end.
+#define WRITE_EXIF_TAGS
+#ifdef WRITE_EXIF_TAGS
 	if (!TIFFSetField(tif, TIFFTAG_EXIFIFD, dir_offset )) {
 		fprintf (stderr, "Can't write TIFFTAG_EXIFIFD\n" );
 	}
+#endif
 
 #ifndef WRITEPIXELLAST
 	//-- Write dummy pixel data. --
@@ -284,15 +322,14 @@ main()
 	}
 #endif
 
+#ifdef WRITE_GPS_TAGS
+#define READ_GPS_TAGS
+	//================== Write GPS tags =====================
+
 	//-- Save current tiff-directory to file before directory is changed. Otherwise it will be lost! 
 	//   The tif-structure is overwritten/ freshly initialized by any "CreateDirectory"
 	//retCode = TIFFCheckpointDirectory(tif);	// does not cleanup Tiff-Structure
 	retCode = TIFFWriteDirectory(tif);			//cleanup Tiff-structure
-
-#define WRITE_GPS_TAGS
-#ifdef WRITE_GPS_TAGS
-#define READ_GPS_TAGS
-	//================== Write GPS tags =====================
 
 	//-- Now create a GPS directory.
 	if (TIFFCreateGPSDirectory(tif) != 0) {
@@ -325,7 +362,7 @@ main()
 		}
 		for (j=0; j<3; j++) auxFloatArray[j] = (float)auxDoubleArrayGPS2[j];
 		if (!TIFFSetField( tif, GPSTAG_LONGITUDE, auxFloatArray)) {
-			fprintf (stderr, "Can't write GPSTAG_LATITUDE\n" );
+			fprintf (stderr, "Can't write GPSTAG_LONGITUDE\n" );
 			goto failure;
 		}		
 		//-- AltitudeRef: default is above sea level!!
@@ -428,7 +465,6 @@ main()
 	////	fprintf (stderr, "Can't write TIFFTAG_EXIFIFD\n" );
 	////}
 
-#define WRITE_EXIF_TAGS
 #ifdef WRITE_EXIF_TAGS
 #define READ_EXIF_TAGS
 	//-- Save current tiff-directory to file before directory is changed. Otherwise it will be lost! 
@@ -448,7 +484,9 @@ main()
 		goto failure;
 	}
 
-
+#define WRITE_ALL_EXIF_TAGS
+#ifdef WRITE_ALL_EXIF_TAGS
+#define READ_ALL_EXIF_TAGS
 	//================= EXIF: Write arbitrary data to the EXIF fields ==============
 	//-- Get array, where EXIF tag fields are defined --
 	tFieldArray = _TIFFGetExifFields();
@@ -590,6 +628,7 @@ main()
 		};  //-- switch() --
 	} //-- for() --
 	//================= EXIF: END Writing arbitrary data to the EXIF fields END END END ==============
+#endif  //-- WRITE_ALL_EXIF_TAGS --
 
 	//--- Set valid EXIF version, which is a 4 byte string --
 	if (!TIFFSetField( tif, EXIFTAG_EXIFVERSION, exifVersion)) {
@@ -604,12 +643,12 @@ main()
 		fprintf (stderr, "TIFFWriteCustomDirectory() with EXIF failed.\n");
 		goto failure;
 	}
-#endif //-- WRITE_EXIF_TAGS --
 
 	//-- Go back to the first (main) directory, and set correct value of the EXIFIFD pointer. 
 	//   (directory is reloaded from file!)
 	TIFFSetDirectory(tif, 0);
 	TIFFSetField(tif, TIFFTAG_EXIFIFD, dir_offset_EXIF );	
+#endif //-- WRITE_EXIF_TAGS --
 
 #ifdef WRITEPIXELLAST
 	//-- Write dummy pixel data. --
@@ -620,10 +659,12 @@ main()
 #endif
 	//-- Write directory to file --
 	// Always WriteDirectory before using/creating another directory.
-	// Not necessary before TIFFClose() !!
-	//retCode = TIFFWriteDirectory(tif);
+	// Not necessary before TIFFClose(), however, TIFFClose() uses TIFFReWriteDirectory(), which forces directory to be written at another location.
+	retCode = TIFFWriteDirectory(tif);
 
 	//-- Write File to disk and close file --
+	// TIFFClose() uses TIFFReWriteDirectory(), which forces directory to be written at another location.
+	// Therefore, better use TIFFWriteDirectory() before.
 	TIFFClose(tif);
 
 	fprintf (stderr, "-------- Continue Test  ---------- reading ...\n");
@@ -664,10 +705,25 @@ main()
 	//- pVoidArray points to a Tiff-internal temporary memorypart. Thus, contents needs to be saved.
 	memcpy(&auxFloatArray, pVoidArray,(count16 * sizeof(auxFloatArray[0])));
 	for (i=0; i<count16; i++) {
-		if (auxFloatArray[i] != (float)auxDoubleArrayGPS1[i]) {
-			fprintf (stderr, "Read value %d of TIFFTAG_DECODE %f differs from set value %f\n", i, auxFloatArray[i], auxDoubleArrayGPS1[i]);
+		if (tType == TIFF_RATIONAL || tType == TIFF_SRATIONAL) dblDiffLimit = RATIONAL_EPS*auxFloatArrayN1[i]; else dblDiffLimit = 1e-6;
+		dblDiff = auxFloatArray[i] - auxFloatArrayN1[i];
+		if (fabs(dblDiff) > fabs(dblDiffLimit)) {
+			fprintf (stderr, "Read value %d of TIFFTAG_DECODE Array %f differs from set value %f\n", i, auxFloatArray[i], auxFloatArrayN1[i]);
 		}
 	}
+
+	retCode = TIFFGetField(tif, TIFFTAG_BLACKLEVEL, &count16, &pVoidArray);
+	//- pVoidArray points to a Tiff-internal temporary memorypart. Thus, contents needs to be saved.
+	memcpy(&auxFloatArray, pVoidArray, (count16 * sizeof(auxFloatArray[0])));
+	for (i = 0; i<count16; i++) {
+		if (tType == TIFF_RATIONAL || tType == TIFF_SRATIONAL) dblDiffLimit = RATIONAL_EPS*auxFloatArrayN1[i]; else dblDiffLimit = 1e-6;
+		dblDiff = auxFloatArray[i] - auxFloatArrayN1[i];
+		if (fabs(dblDiff) > fabs(dblDiffLimit)) {
+			fprintf(stderr, "Read value %d of TIFFTAG_BLACKLEVEL Array %f differs from set value %f\n", i, auxFloatArray[i], auxFloatArrayN1[i]);
+		}
+	}
+
+
 #endif	//-- ADDITIONAL_TAGS --
 
 
@@ -691,7 +747,7 @@ main()
 	retCode = TIFFGetField(tif, GPSTAG_LATITUDEREF, &pAscii);
 	retCode2 = strncmp("N", pAscii, 2);
 	if (retCode2 != 0) {
-		fprintf (stderr, "Read value of GPSTAG_LATITUDEREF %s differs from set value %s\n", i, "N", pAscii);
+		fprintf (stderr, "Read value %d of GPSTAG_LATITUDEREF %s differs from set value %s\n", i, "N", pAscii);
 	}
 
 	//-- Fixed Array: Latitude is an array of 3 Float-values. TIFFGetField() returns a pointer to a temporary float-array.
@@ -701,7 +757,9 @@ main()
 	memcpy(auxFloatArray, pVoidArray, 3*sizeof(float));
 	//or step by step: for (i=0; i<3; i++) auxFloatArray[i] = ((float *)pVoidArray)[i];
 	for (i=0; i<3; i++) {
-		if (auxFloatArray[i] != (float)auxDoubleArrayGPS1[i]) {
+		dblDiffLimit = RATIONAL_EPS*auxDoubleArrayGPS1[i];
+		dblDiff = auxFloatArray[i] - auxDoubleArrayGPS1[i];
+		if (fabs(dblDiff) > fabs(dblDiffLimit)) {
 			fprintf (stderr, "Read value %d of GPSTAG_LATITUDE %f differs from set value %f\n", i, auxFloatArray[i], auxDoubleArrayGPS1[i]);
 		}
 	}
@@ -709,7 +767,7 @@ main()
 		//-- GPSTAG_DIFFERENTIAL	, 1, 1,	TIFF_SHORT	, 0, 	TIFF_SETGET_UINT16
 	retCode = TIFFGetField(tif, GPSTAG_DIFFERENTIAL, &auxShort);
 	if (auxShort != auxShortArrayW[5]) {
-		fprintf (stderr, "Read value of GPSTAG_DIFFERENTIAL %f differs from set value %f\n", auxShort, auxShortArrayW[5]);
+		fprintf (stderr, "Read value of GPSTAG_DIFFERENTIAL %d differs from set value %d\n", auxShort, auxShortArrayW[5]);
 	}
 
 	//-- GPSHPOSITIONINGERROR - new tag for EXIF 2.31 -
@@ -742,6 +800,7 @@ main()
 	retCode = TIFFGetField(tif, EXIFTAG_EXIFVERSION, &pAscii);
 
 
+#ifdef READ_ALL_EXIF_TAGS
 	//-- Get array, where EXIF tag fields are defined --
 	tFieldArray = _TIFFGetExifFields();
 	nTags = tFieldArray->count;
@@ -783,7 +842,7 @@ main()
 				// compare read values with written ones
 				auxLong = auxChar;
 				if (auxLong != (char)auxLongArrayW[i]) {
-					fprintf (stderr, "%d:Read value of %s %s differs from set value %s\n", i, tFieldName, auxLong, auxLongArrayW[i]);
+					fprintf (stderr, "%d:Read value of %s %d differs from set value %d\n", i, tFieldName, auxLong, auxLongArrayW[i]);
 				}
 				break;
 			case TIFF_SETGET_UINT16:
@@ -796,7 +855,7 @@ main()
 				// compare read values with written ones
 				auxLong = auxShort;	
 				if (auxLong != (short)auxLongArrayW[i]) {
-					fprintf (stderr, "%d:Read value of %s %s differs from set value %s\n", i, tFieldName, auxLong, auxLongArrayW[i]);
+					fprintf (stderr, "%d:Read value of %s %d differs from set value %d\n", i, tFieldName, auxLong, auxLongArrayW[i]);
 				}
 				break;
 			case TIFF_SETGET_UINT32:
@@ -811,7 +870,7 @@ main()
 				// compare read values with written ones
 				auxLong = auxUint32;
 				if (auxLong != auxLongArrayW[i]) {
-					fprintf (stderr, "%d:Read value of %s %s differs from set value %s\n", i, tFieldName, auxLong, auxLongArrayW[i]);
+					fprintf (stderr, "%d:Read value of %s %d differs from set value %d\n", i, tFieldName, auxLong, auxLongArrayW[i]);
 				}
 				break;
 			case TIFF_SETGET_FLOAT:
@@ -823,7 +882,7 @@ main()
 				// compare read values with written ones
 				if (tType == TIFF_RATIONAL || tType == TIFF_SRATIONAL) dblDiffLimit = RATIONAL_EPS*auxDoubleArrayW[i]; else dblDiffLimit = 1e-6;
 				dblDiff = auxFloat - auxDoubleArrayW[i];
-				if (fabs(dblDiff) > dblDiffLimit) {
+				if (fabs(dblDiff) > fabs(dblDiffLimit)) {
 					//--: EXIFTAG_SUBJECTDISTANCE: LibTiff returns value of "-1.0" if numerator equals 4294967295 (0xFFFFFFFF) to indicate infinite distance!
 					// However, there are two other EXIF tags where numerator indicates a special value and six other cases where the denominator indicates special values,
 					// which are not treated within LibTiff!!
@@ -851,7 +910,7 @@ main()
 				// compare read values with written ones
 				if (tType == TIFF_RATIONAL || tType == TIFF_SRATIONAL) dblDiffLimit = RATIONAL_EPS*auxDoubleArrayW[i]; else dblDiffLimit = 1e-6;
 				dblDiff = auxDouble - auxDoubleArrayW[i];
-				if (fabs(dblDiff) > dblDiffLimit) {
+				if (fabs(dblDiff) > fabs(dblDiffLimit)) {
 					//--: EXIFTAG_SUBJECTDISTANCE: LibTiff returns value of "-1.0" if numerator equals 4294967295 (0xFFFFFFFF) to indicate infinite distance!
 					if (!(tTag == EXIFTAG_SUBJECTDISTANCE && auxDouble == -1.0))
 						fprintf (stderr, "%d:Read value of %s %f differs from set value %f\n", i, tFieldName, auxDouble, auxDoubleArrayW[i]);
@@ -899,7 +958,7 @@ main()
 						if (tType == TIFF_RATIONAL || tType == TIFF_SRATIONAL) dblDiffLimit = RATIONAL_EPS*auxDoubleArrayW[i]; else dblDiffLimit = 1e-6;
 						for (j=0; j<auxLong; j++) {
 							dblDiff = auxFloatArray[j] - auxFloatArrayW[i+j];
-							if (fabs(dblDiff) > dblDiffLimit) {
+							if (fabs(dblDiff) > fabs(dblDiffLimit)) {
 							//if (auxFloatArray[j] != (float)auxFloatArrayW[i+j]) {
 								fprintf (stderr, "Read value %d of %s #%d %f differs from set value %f\n", i, tFieldName, j, auxFloatArray[j], auxFloatArrayW[i+j]);
 							}
@@ -910,7 +969,7 @@ main()
 						if (tType == TIFF_RATIONAL || tType == TIFF_SRATIONAL) dblDiffLimit = RATIONAL_EPS*auxDoubleArrayW[i]; else dblDiffLimit = 1e-6;
 						for (j=0; j<auxLong; j++) {
 							dblDiff = auxDoubleArray[j] - auxDoubleArrayW[i+j];
-							if (fabs(dblDiff) > dblDiffLimit) {
+							if (fabs(dblDiff) > fabs(dblDiffLimit)) {
 							//if (auxDoubleArray[j] != auxDoubleArrayW[i+j]) {
 								fprintf (stderr, "Read value %d of %s #%d %f differs from set value %f\n", i, tFieldName, j, auxDoubleArray[j], auxDoubleArrayW[i+j]);
 							}
@@ -1012,6 +1071,7 @@ main()
 		};  //-- switch() --
 	} //-- for() --
 	//================= EXIF: END Reading arbitrary data to the EXIF fields END END END ==============
+#endif //-- READ_ALL_EXIF_TAGS --
 #endif //-- READ_EXIF_TAGS --
 
 
