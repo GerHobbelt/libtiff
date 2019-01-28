@@ -282,11 +282,7 @@ AC_DEFINE_UNQUOTED(TIFF_UINT32_FORMAT,$UINT32_FORMAT,[Unsigned 32-bit type forma
 AC_MSG_CHECKING(for signed 64-bit type)
 INT64_T='none'
 INT64_FORMAT='none'
-if test $ac_cv_sizeof_signed_long -eq 8
-then
-  INT64_T='signed long'
-  INT64_FORMAT='"%ld"'
-elif test $ac_cv_sizeof_signed_long_long -eq 8
+if test $ac_cv_sizeof_signed_long_long -eq 8
 then
   INT64_T='signed long long'
   case "${host_os}" in
@@ -298,6 +294,10 @@ then
       INT64_FORMAT='"%lld"'
       ;;
   esac
+elif test $ac_cv_sizeof_signed_long -eq 8
+then
+  INT64_T='signed long'
+  INT64_FORMAT='"%ld"'
 fi
 
 
@@ -308,11 +308,7 @@ AC_DEFINE_UNQUOTED(TIFF_INT64_FORMAT,$INT64_FORMAT,[Signed 64-bit type formatter
 AC_MSG_CHECKING(for unsigned 64-bit type)
 UINT64_T='none'
 UINT64_FORMAT='none'
-if test $ac_cv_sizeof_unsigned_long -eq 8
-then
-  UINT64_T='unsigned long'
-  UINT64_FORMAT='"%lu"'
-elif test $ac_cv_sizeof_unsigned_long_long -eq 8
+if test $ac_cv_sizeof_unsigned_long_long -eq 8
 then
   UINT64_T='unsigned long long'
   case "${host_os}" in
@@ -324,6 +320,10 @@ then
       UINT64_FORMAT='"%llu"'
       ;;
   esac
+elif test $ac_cv_sizeof_unsigned_long -eq 8
+then
+  UINT64_T='unsigned long'
+  UINT64_FORMAT='"%lu"'
 fi
 AC_MSG_RESULT($UINT64_T)
 AC_DEFINE_UNQUOTED(TIFF_UINT64_T,$UINT64_T,[Unsigned 64-bit type])
