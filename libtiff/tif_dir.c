@@ -1364,7 +1364,7 @@ TIFFCreateEXIFDirectory(TIFF* tif)
 	return TIFFCreateCustomDirectory(tif, exifFieldArray);
 }
 
-//--: EXIF-GPS added:
+/*--: EXIF-GPS added: */
 /*
  * Creates the GPS custom directory 
  */
