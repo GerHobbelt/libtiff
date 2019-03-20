@@ -688,7 +688,7 @@ typedef enum {
 #define EXIFTAG_GAINCONTROL		41991	/* Gain control */
 #define EXIFTAG_IMAGEUNIQUEID		42016	/* Unique image ID */
 
-//--: New for EXIF-Version 2.31 ...
+/*--: New for EXIF-Version 2.31 ... */
 #define EXIFTAG_SENSITIVITYTYPE		34864		/* The SensitivityType tag indicates which one of the parameters of ISO12232 is the PhotographicSensitivity tag. */
 #define EXIFTAG_STANDARDOUTPUTSENSITIVITY		34865		/* This tag indicates the standard output sensitivity value of a camera or input device defined in ISO 12232. */
 #define EXIFTAG_RECOMMENDEDEXPOSUREINDEX		34866		/* recommended exposure index */
@@ -711,10 +711,10 @@ typedef enum {
 #define EXIFTAG_LENSMODEL		42036		/* the lens’s model name and model number */
 #define EXIFTAG_LENSSERIALNUMBER		42037		/* the serial number of the interchangeable lens */
 #define EXIFTAG_GAMMA		42240		/* value of coefficient gamma */
-//-- ..... EXIF-Version 2.31 ---
+/*-- ..... EXIF-Version 2.31 ---*/
 
 
-//--: EXIF-GPS fields added:
+/*--: EXIF-GPS fields added: */
 /*
  * EXIF-GPS tags  (Version 2.31, July 2016)
  */

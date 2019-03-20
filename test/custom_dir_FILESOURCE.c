@@ -136,8 +136,9 @@ main()
 	/*
 	 *
 	 */
-	////--: FILESOURCE and SCENETYPE are defined as TIFF_UNDEFINED. However, TiffLib does not read TIFF_UNDEFINED with field_readcount==1!
-	//      Libtiff writes those tags correctly.
+	/*--: FILESOURCE and SCENETYPE are defined as TIFF_UNDEFINED. However, TiffLib does not read TIFF_UNDEFINED with field_readcount==1!
+	 *     Libtiff writes those tags correctly.
+	 */
 #define FILESOURCE_VAL 99
 #define SCENETYPE_VAL 250
 
@@ -223,9 +224,10 @@ main()
 		goto failure;
 	}
 
-	////--: FILESOURCE and SCENETYPE are defined as TIFF_UNDEFINED. However, TiffLib does not read TIFF_UNDEFINED with field_readcount==1!
-	////    Upgrade of TIFFReadDirEntryByte() with added TIFF_UNDEFINED switch-entry allows libtiff to read those tags correctly.
-
+    /*--: FILESOURCE and SCENETYPE are defined as TIFF_UNDEFINED and field_readcount==1.
+     *     There was a bug in TIFFReadDirEntryByte() in versions up to 4.0.10 preventing
+     *     to read correctly type TIFF_UNDEFINED fields with field_readcount==1
+     */
 	if (!TIFFGetField( tif, EXIFTAG_FILESOURCE, &u8) ) {
 		fprintf (stderr, "reading EXIFTAG_FILESOURCE failed.\n" );
 		goto failure;
@@ -277,7 +279,7 @@ main()
 	TIFFClose(tif);
 	
 	/* All tests passed; delete file and exit with success status. */
-	//unlink(filename);
+	/* unlink(filename); */
 	return 0;
 
 failure:

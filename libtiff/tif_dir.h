@@ -266,7 +266,7 @@ extern void _TIFFPrintFieldInfo(TIFF*, FILE*);
 
 extern int _TIFFFillStriles(TIFF*);        
 
-//--: EXIF-GPS fields added: tfiatGps  and _TIFFGetGpsFields added
+/*--: EXIF-GPS fields added: tfiatGps  and _TIFFGetGpsFields added */
 extern const TIFFFieldArray* _TIFFGetGpsFields(void);
 
 typedef enum {
