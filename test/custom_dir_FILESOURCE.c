@@ -136,7 +136,7 @@ main()
 	/*
 	 *
 	 */
-	/*--: FILESOURCE and SCENETYPE are defined as TIFF_UNDEFINED. However, TiffLib does not read TIFF_UNDEFINED with field_readcount==1!
+    /*--: FILESOURCE and SCENETYPE are defined as TIFF_UNDEFINED and field_readcount==1.
 	 *     Libtiff writes those tags correctly.
 	 */
 #define FILESOURCE_VAL 99
