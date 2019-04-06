@@ -49,6 +49,12 @@ typedef struct {
  * BigTIFF, then it is placed in the offset field to save space. If so,
  * it is left-justified in the offset field.
  */
+/*
+ * -add a field 'ignore' to the TIFFDirEntry structure, to flag status,
+ *  eliminating current use of the IGNORE value, and therefore eliminating
+ *  current irrational behaviour on tags with tag id code 0
+  * (see tiff_dirread.c)
+ */
 typedef struct {
 	uint16 tdir_tag;        /* see below */
 	uint16 tdir_type;       /* data type; see below */

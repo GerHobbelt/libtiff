@@ -36,7 +36,7 @@
 /*------------
  * This version writes the GPS and EXIF Tags correctly, without additonal main-IFD and parameters!
  * In contrary, custom_dir.c does write additional main-IFD and parameters to file.
--------------*/
+ -------------*/
 
 
 
@@ -245,6 +245,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 		fprintf (stderr, "Can't set PhotometricInterpretation tag.\n");
 		goto failure;
 	}
+
 #define ADDITIONAL_TAGS
 #ifdef ADDITIONAL_TAGS
 	/*-- Additional tags to check Rational standard tags, which are also defined as FIELD_CUSTOM */
@@ -333,12 +334,13 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	}
 #endif
 
+
 #ifdef WRITE_GPS_TAGS
 #define READ_GPS_TAGS
 	/*================== Write GPS tags =====================*/
 
 	/*-- Save current tiff-directory to file before directory is changed. Otherwise it will be lost!  */
-	/*   The tif-structure is overwritten/ freshly initialized by any "CreateDirectory"
+	/*   The tif-structure is overwritten/ freshly initialized by any "CreateDirectory" */
 	/*retCode = TIFFCheckpointDirectory(tif);*/	/* does not cleanup Tiff-Structure */
 	retCode = TIFFWriteDirectory(tif);			/* cleanup Tiff-structure */
 
@@ -443,7 +445,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 
 
 	/*-- GPS - write custom directory GPS into file...---*/
-	/*   (Get back the offset of GPS directory) */
+	/*   (Get back the offset of GPS directory)          */
 	if (!TIFFWriteCustomDirectory( tif, &dir_offset_GPS )) {
 		fprintf (stderr, "TIFFWriteCustomDirectory() with GPS failed.\n");
 		goto failure;
@@ -774,7 +776,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	/*-- Fixed Array: Latitude is an array of 3 Float-values. TIFFGetField() returns a pointer to a temporary float-array. */
 	retCode = TIFFGetField(tif, GPSTAG_LATITUDE, &pVoidArray);
 	/* Reset arrays for debugging purpose */
-	memset(auxDoubleArray, 0, sizeof(auxDoubleArray));
+	memset(auxFloatArray, 0, sizeof(auxFloatArray));
 	memcpy(auxFloatArray, pVoidArray, 3*sizeof(float));
 	/*or step by step: for (i=0; i<3; i++) auxFloatArray[i] = ((float *)pVoidArray)[i]; */
 	for (i=0; i<3; i++) {
@@ -792,8 +794,6 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	}
 
 	/*-- GPSHPOSITIONINGERROR - new tag for EXIF 2.31 --*/
-	retCode = TIFFGetField(tif, GPSTAG_GPSHPOSITIONINGERROR, &auxDouble);
-	auxFloat = (float)auxDouble;
 	retCode = TIFFGetField(tif, GPSTAG_GPSHPOSITIONINGERROR, &auxFloat);
 	if (auxFloat != (float)GPSHPOSITIONINGERROR_VAL) {
 		fprintf (stderr, "Read value of GPSTAG_GPSHPOSITIONINGERROR %f differs from set value %f\n", auxFloat, GPSHPOSITIONINGERROR_VAL);
