@@ -684,8 +684,6 @@ typedef enum {
 #define EXIFTAG_SHARPNESS		41994	/* Sharpness */
 #define EXIFTAG_DEVICESETTINGDESCRIPTION 41995	/* Device settings description */
 #define EXIFTAG_SUBJECTDISTANCERANGE	41996	/* Subject distance range */
-#define EXIFTAG_GAINCONTROL		41991	/* Gain control */
-#define EXIFTAG_GAINCONTROL		41991	/* Gain control */
 #define EXIFTAG_IMAGEUNIQUEID		42016	/* Unique image ID */
 
 /*--: New for EXIF-Version 2.31 ... */
