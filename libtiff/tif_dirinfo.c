@@ -47,14 +47,13 @@
 #endif
 static const TIFFFieldArray tiffFieldArray;
 static const TIFFFieldArray exifFieldArray;
+/*--: EXIF-GPS tags and field added --*/
+static const TIFFFieldArray gpsFieldArray;
 #ifdef _MSC_VER
 #pragma warning( pop )
 #endif
 
 
-/*--: EXIF-GPS added: */
-/*--: GPS tags and field --*/
-static const TIFFFieldArray gpsFieldArray;
 
 static const TIFFField
 tiffFields[] = {
@@ -146,9 +145,9 @@ tiffFields[] = {
 	{ TIFFTAG_RICHTIFFIPTC, -3, -3, TIFF_LONG, 0, TIFF_SETGET_C32_UINT32, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "RichTIFFIPTC", NULL },
 	{ TIFFTAG_PHOTOSHOP, -3, -3, TIFF_BYTE, 0, TIFF_SETGET_C32_UINT8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "Photoshop", NULL },
 	/*--: EXIFIFD and GPSIFD specified as TIFF_LONG by Aware-Systems and not TIFF_IFD8 as in original LibTiff.
-	      However, for IFD-like tags, libtiff uses the data type TIFF_IFD8 in tiffFields[]-tag definition combined with
-		  a special handling procedure in order to write either a 32-bit value and the TIFF_IFD type-id into ClassicTIFF files 
-		  or a 64-bit value and the TIFF_IFD8 type-id into BigTIFF files. */
+	 *    However, for IFD-like tags, libtiff uses the data type TIFF_IFD8 in tiffFields[]-tag definition combined with
+	 *    a special handling procedure in order to write either a 32-bit value and the TIFF_IFD type-id into ClassicTIFF files 
+	 *    or a 64-bit value and the TIFF_IFD8 type-id into BigTIFF files. */
 	{ TIFFTAG_EXIFIFD, 1, 1, TIFF_IFD8, 0, TIFF_SETGET_IFD8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 0, "EXIFIFDOffset", (TIFFFieldArray*) &exifFieldArray },
 	{ TIFFTAG_ICCPROFILE, -3, -3, TIFF_UNDEFINED, 0, TIFF_SETGET_C32_UINT8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "ICC Profile", NULL },
 	{ TIFFTAG_GPSIFD, 1, 1, TIFF_IFD8, 0, TIFF_SETGET_IFD8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 0, "GPSIFDOffset", (TIFFFieldArray*) &gpsFieldArray },
@@ -342,7 +341,7 @@ exifFields[] = {
 
 static TIFFField
 gpsFields[] = {
-	/*  For the GPS tag definitions in gpsFields[] the standard definition for Rationals is TIFF_SETGET_DOUBLE.
+	/*  For the GPS tag definitions in gpsFields[] the standard definition for Rationals is TIFF_SETGET_DOUBLE and TIFF_SETGET_C0_FLOAT.
 	 */
 	{		GPSTAG_VERSIONID	, 4, 4, 	TIFF_BYTE	, 0, 	TIFF_SETGET_C0_UINT8	, TIFF_SETGET_UINT8	, FIELD_CUSTOM	, 1, 0, 	"	VersionID	", NULL },
 	{		GPSTAG_LATITUDEREF	, 2, 2,	TIFF_ASCII	, 0, 	TIFF_SETGET_ASCII	, TIFF_SETGET_UNDEFINED	, FIELD_CUSTOM	, 1, 0, 	"	LatitudeRef	", NULL },
