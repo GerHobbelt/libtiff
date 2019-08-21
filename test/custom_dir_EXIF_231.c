@@ -26,15 +26,15 @@
  * TIFF Library
  *
  * -- Module copied from custom_dir.c --
- * Extended and amended version for testing of EXIF 2.31, GPS and handling of custom fields.
+ * Extended and amended version for testing of EXIF 2.32, GPS and handling of custom fields.
  *
- * EXIF 2.31 and GPS are defined in amended files tif_dirinfo.c, tif_dirread.c, tiff.h, tiffio.h, tif_dir.h, tif_dir.c
+ * EXIF 2.32 and GPS are defined in amended files tif_dirinfo.c, tif_dirread.c, tiff.h, tiffio.h, tif_dir.h, tif_dir.c
  *
  */
 
 
 /*------------
- * This version writes the GPS and EXIF Tags correctly, without additonal main-IFD and parameters!
+ * This version writes the GPS and EXIF tags correctly, without additonal main-IFD and parameters!
  * In contrary, custom_dir.c does write additional main-IFD and parameters to file.
  -------------*/
 
@@ -722,7 +722,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	/*- pVoidArray points to a Tiff-internal temporary memorypart. Thus, contents needs to be saved. */
 	memcpy(&auxFloatArray, pVoidArray,(count16 * sizeof(auxFloatArray[0])));
 	for (i=0; i<count16; i++) {
-		if (tType == TIFF_RATIONAL || tType == TIFF_SRATIONAL) dblDiffLimit = RATIONAL_EPS*auxFloatArrayN1[i]; else dblDiffLimit = 1e-6;
+		dblDiffLimit = RATIONAL_EPS*auxFloatArrayN1[i];
 		dblDiff = auxFloatArray[i] - auxFloatArrayN1[i];
 		if (fabs(dblDiff) > fabs(dblDiffLimit)) {
 			fprintf (stderr, "Read value %d of TIFFTAG_DECODE Array %f differs from set value %f\n", i, auxFloatArray[i], auxFloatArrayN1[i]);
@@ -733,14 +733,12 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	/*- pVoidArray points to a Tiff-internal temporary memorypart. Thus, contents needs to be saved. */
 	memcpy(&auxFloatArray, pVoidArray, (count16 * sizeof(auxFloatArray[0])));
 	for (i = 0; i<count16; i++) {
-		if (tType == TIFF_RATIONAL || tType == TIFF_SRATIONAL) dblDiffLimit = RATIONAL_EPS*auxFloatArrayN1[i]; else dblDiffLimit = 1e-6;
+		dblDiffLimit = RATIONAL_EPS*auxFloatArrayN1[i];
 		dblDiff = auxFloatArray[i] - auxFloatArrayN1[i];
 		if (fabs(dblDiff) > fabs(dblDiffLimit)) {
 			fprintf(stderr, "Read value %d of TIFFTAG_BLACKLEVEL Array %f differs from set value %f\n", i, auxFloatArray[i], auxFloatArrayN1[i]);
 		}
 	}
-
-
 #endif	/*-- ADDITIONAL_TAGS --*/
 
 
@@ -775,7 +773,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 
 	/*-- Fixed Array: Latitude is an array of 3 Float-values. TIFFGetField() returns a pointer to a temporary float-array. */
 	retCode = TIFFGetField(tif, GPSTAG_LATITUDE, &pVoidArray);
-	/* Reset arrays for debugging purpose */
+	/* Reset arrays for debugging purpose first */
 	memset(auxFloatArray, 0, sizeof(auxFloatArray));
 	memcpy(auxFloatArray, pVoidArray, 3*sizeof(float));
 	/*or step by step: for (i=0; i<3; i++) auxFloatArray[i] = ((float *)pVoidArray)[i]; */

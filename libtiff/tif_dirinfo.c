@@ -226,7 +226,7 @@ tiffFields[] = {
 };
 
 /*
- * EXIF tags  (Version 2.31, July 2016)
+ * EXIF tags  (Version 2.31, July 2016 plus version 2.32 May 2019)
  */
 static const TIFFField
 exifFields[] = {
@@ -317,27 +317,18 @@ exifFields[] = {
 	{ EXIFTAG_LENSMAKE, -1, -1, TIFF_ASCII, 0, TIFF_SETGET_ASCII, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 0, "LensMake", NULL },
 	{ EXIFTAG_LENSMODEL, -1, -1, TIFF_ASCII, 0, TIFF_SETGET_ASCII, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 0, "LensModel", NULL },
 	{ EXIFTAG_LENSSERIALNUMBER, -1, -1, TIFF_ASCII, 0, TIFF_SETGET_ASCII, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 0, "LensSerialNumber", NULL },
-	{ EXIFTAG_GAMMA, 1, 1, TIFF_RATIONAL, 0, TIFF_SETGET_DOUBLE, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 0, "Gamma", NULL }
+	{ EXIFTAG_GAMMA, 1, 1, TIFF_RATIONAL, 0, TIFF_SETGET_DOUBLE, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 0, "Gamma", NULL },
 	/*-- ..... EXIF-Version 2.31 ---*/
+	/*--: New for EXIF-Version 2.32 ... */
+	{ EXIFTAG_COMPOSITEIMAGE, 1, 1, TIFF_SHORT, 0, TIFF_SETGET_UINT16, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 0, "CompositeImage", NULL },
+	{ EXIFTAG_SOURCEIMAGENUMBEROFCOMPOSITEIMAGE, 2, 2, TIFF_SHORT, 0, TIFF_SETGET_C0_UINT16, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 0, "SourceImageNumberOfCompositeImage", NULL },
+	{ EXIFTAG_SOURCEEXPOSURETIMESOFCOMPOSITEIMAGE, -1, -1, TIFF_UNDEFINED, 0, TIFF_SETGET_C16_UINT8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 1, "SourceExposureTimesOfCompositeImage", NULL }
+	/*-- ..... EXIF-Version 2.32 ---*/
 };
 /*--: EXIF-GPS fields added: */
 /*
- * EXIF-GPS tags  (Version 2.31, July 2016)
+ * EXIF-GPS tags  (Version 2.31, July 2016; nothing changed for version 2.32 May 2019)
  */
-/*
-	uint32 field_tag;                       // field's tag ;:;
-	short field_readcount;                  // read count/TIFF_VARIABLE/TIFF_SPP ;:;
-	short field_writecount;                 // write count/TIFF_VARIABLE ;:;
-	TIFFDataType field_type;                // type of associated data ;:;
-	uint32 reserved;                        // reserved for future extension ;:;
-	TIFFSetGetFieldType set_field_type;     // type to be passed to TIFFSetField ;:;
-	TIFFSetGetFieldType get_field_type;     // type to be passed to TIFFGetField ;:;
-	unsigned short field_bit;               // bit in fieldsset bit vector ;:;
-	unsigned char field_oktochange;         // if true, can change while writing ;:;
-	unsigned char field_passcount;          // if true, pass dir count on set ;:;
-	char* field_name;                       // ASCII name ;:;
-	TIFFFieldArray* field_subfields;        // if field points to child ifds, child ifd field definition array ;:;
-  */
 
 static TIFFField
 gpsFields[] = {
