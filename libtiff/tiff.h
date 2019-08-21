@@ -631,8 +631,8 @@ typedef enum {
 #define EXIFTAG_EXPOSUREPROGRAM		34850	/* Exposure program */
 #define EXIFTAG_SPECTRALSENSITIVITY	34852	/* Spectral sensitivity */
 #define EXIFTAG_ISOSPEEDRATINGS		34855	/* ISO speed rating */
-#define EXIFTAG_OECF			34856	/* Optoelectric conversion
-						   factor */
+#define EXIFTAG_PHOTOGRAPHICSENSITIVITY	34855 /* Photographic Sensitivity (new name for tag 34855) */
+#define EXIFTAG_OECF			34856	/* Optoelectric conversion factor */
 #define EXIFTAG_EXIFVERSION		36864	/* Exif version */
 #define EXIFTAG_DATETIMEORIGINAL	36867	/* Date and time of original
 						   data generation */
@@ -710,6 +710,11 @@ typedef enum {
 #define EXIFTAG_LENSSERIALNUMBER		42037		/* the serial number of the interchangeable lens */
 #define EXIFTAG_GAMMA		42240		/* value of coefficient gamma */
 /*-- ..... EXIF-Version 2.31 ---*/
+/*--: New for EXIF-Version 2.32 ... */
+#define EXIFTAG_COMPOSITEIMAGE		42080	/* composite image */
+#define EXIFTAG_SOURCEIMAGENUMBEROFCOMPOSITEIMAGE		42081	/* source image number of composite image */
+#define EXIFTAG_SOURCEEXPOSURETIMESOFCOMPOSITEIMAGE		42082	/* source exposure times of composite image */
+/*-- ..... EXIF-Version 2.32 ---*/
 
 
 /*--: EXIF-GPS fields added: */
