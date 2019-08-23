@@ -350,7 +350,6 @@ extern int TIFFVGetFieldDefaulted(TIFF* tif, uint32 tag, va_list ap);
 extern int TIFFReadDirectory(TIFF* tif);
 extern int TIFFReadCustomDirectory(TIFF* tif, toff_t diroff, const TIFFFieldArray* infoarray);
 extern int TIFFReadEXIFDirectory(TIFF* tif, toff_t diroff);
-/*--: EXIF-GPS added: */
 extern int TIFFReadGPSDirectory(TIFF* tif, toff_t diroff);
 extern uint64 TIFFScanlineSize64(TIFF* tif);
 extern tmsize_t TIFFScanlineSize(TIFF* tif);
@@ -402,7 +401,6 @@ extern void TIFFFreeDirectory(TIFF*);
 extern int TIFFCreateDirectory(TIFF*);
 extern int TIFFCreateCustomDirectory(TIFF*,const TIFFFieldArray*);
 extern int TIFFCreateEXIFDirectory(TIFF*);
-/*--: EXIF-GPS added: */
 extern int TIFFCreateGPSDirectory(TIFF*);
 extern int TIFFLastDirectory(TIFF*);
 extern int TIFFSetDirectory(TIFF*, uint16);
