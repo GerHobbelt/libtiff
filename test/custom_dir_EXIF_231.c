@@ -523,7 +523,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 			case TIFF_SETGET_ASCII:
 				/* Either the stringlength is defined as a fixed length in .field_writecount or a NULL-terminated string is used. */
 				/* Shorter strings than in auxTextArraxW need a NULL-termination. Therefore copy the string. */
-				if (tWriteCount > 0) auxLong = tWriteCount-1; else auxLong = strlen(auxTextArrayW[i])-1;
+				if (tWriteCount > 0) auxLong = tWriteCount-1; else auxLong = (long)strlen(auxTextArrayW[i])-1;
 				strncpy(auxCharArray, auxTextArrayW[i], auxLong);
 				auxCharArray[auxLong] = 0;
 				if (!TIFFSetField( tif, tTag, auxCharArray)) {
@@ -844,7 +844,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 				}
 				/* Save string from temporary buffer and compare with written string. */
 				strncpy(auxCharArray, pAscii, sizeof(auxCharArray));
-				if (tWriteCount > 0) auxLong = tWriteCount-1; else auxLong = strlen(auxCharArray);
+				if (tWriteCount > 0) auxLong = tWriteCount-1; else auxLong = (long)strlen(auxCharArray);
 				retCode2 = strncmp(auxCharArray, auxTextArrayW[i], auxLong);
 				if (retCode2 != 0) {
 					fprintf (stderr, "%d:Read value of %s %s differs from set value %s\n", i, tFieldName, auxCharArray, auxTextArrayW[i]);
