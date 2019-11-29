@@ -85,7 +85,7 @@ main()
 
 	/* --- Test with Classic-TIFF ---*/
 	/* delete file, if exists */
-	ret = _unlink(filename);
+	ret = unlink(filename);
 	errorNo = errno;
 	if (ret != 0 && errno != ENOENT) {
 		fprintf(stderr, "Can't delete test TIFF file %s.\n", filename);
@@ -102,7 +102,7 @@ main()
 
 	/*--- Test with BIG-TIFF ---*/
 	/* delete file, if exists */
-	ret = _unlink(filenameBigTiff);
+	ret = unlink(filenameBigTiff);
 	if (ret != 0 && errno != ENOENT) {
 		fprintf(stderr, "Can't delete test TIFF file %s.\n", filenameBigTiff);
 	}
@@ -201,10 +201,10 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 		sprintf(auxTextArrayW[i],"N%d-String-%d_tttttttttttttttttttttttttttttx", i, i);
 	}
 	for (i=0; i<N_SIZE; i++) {
-		auxCharArrayW[i] = (i+1);
+		auxCharArrayW[i] = (char)(i+1);
 	}
 	for (i=0; i<N_SIZE; i++) {
-		auxShortArrayW[i] = (i+1)*7;
+		auxShortArrayW[i] = (short)(i+1)*7;
 	}
 	for (i=0; i<N_SIZE; i++) {
 		auxLongArrayW[i] = (i+1)*133;
