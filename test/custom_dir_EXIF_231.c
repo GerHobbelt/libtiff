@@ -1100,7 +1100,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	TIFFClose(tif);
 	
 	/* All tests passed; delete file and exit with success status. */
-	unlink(filename);
+	unlink(filenameRead);
 	fprintf (stderr, "-------- Test finished  ----------\n");
 	return 0;
 
