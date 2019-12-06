@@ -28,6 +28,7 @@
  * Directory Write Support Routines.
  */
 #include "tiffiop.h"
+#include <float.h>		/*--: for Rational2Double */
 
 #ifdef HAVE_IEEEFP
 #define TIFFCvtNativeToIEEEFloat(tif, n, fp)
@@ -154,6 +155,22 @@ static int TIFFWriteDirectoryTagCheckedSlong8Array(TIFF* tif, uint32* ndir, TIFF
 static int TIFFWriteDirectoryTagCheckedRational(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, double value);
 static int TIFFWriteDirectoryTagCheckedRationalArray(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, uint32 count, float* value);
 static int TIFFWriteDirectoryTagCheckedSrationalArray(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, uint32 count, float* value);
+
+/*--: Rational2Double: New functions to support true double-precision for custom rational tag types. */
+static int TIFFWriteDirectoryTagRationalDoubleArray(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, uint32 count, double* value);
+static int TIFFWriteDirectoryTagSrationalDoubleArray(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, uint32 count, double* value);
+static int TIFFWriteDirectoryTagCheckedRationalDoubleArray(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, uint32 count, double* value);
+static int TIFFWriteDirectoryTagCheckedSrationalDoubleArray(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, uint32 count, double* value);
+void DoubleToRational(double f, uint32 *num, uint32 *denom);
+void DoubleToSrational(double f, int32 *num, int32 *denom);
+void DoubleToRational_direct(double value, unsigned long *num, unsigned long *denom);
+void DoubleToSrational_direct(double value, long *num, long *denom);
+/*--: Rational2Double: limits.h for definition of ULONG_MAX etc. */
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <limits.h>  
+
 #ifdef notdef
 static int TIFFWriteDirectoryTagCheckedFloat(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, float value);
 #endif
@@ -796,12 +813,42 @@ TIFFWriteDirectorySec(TIFF* tif, int isimage, int imagedone, uint64* pdiroff)
 						goto bad;
 					break;
 				case TIFF_RATIONAL:
-					if (!TIFFWriteDirectoryTagRationalArray(tif,&ndir,dir,tag,count,tif->tif_dir.td_customValues[m].value))
-						goto bad;
+					{
+						/*-- Rational2Double: For Rationals evaluate "set_field_type" to determine internal storage size. */
+						int tv_size;
+						tv_size = _TIFFSetGetFieldSize(tif->tif_dir.td_customValues[m].info->set_field_type);
+						if (tv_size == 8) {
+							if (!TIFFWriteDirectoryTagRationalDoubleArray(tif,&ndir,dir,tag,count,tif->tif_dir.td_customValues[m].value))
+								goto bad;
+						} else {
+							/*-- default schould be tv_size == 4 */
+							if (!TIFFWriteDirectoryTagRationalArray(tif,&ndir,dir,tag,count,tif->tif_dir.td_customValues[m].value))
+								goto bad;
+							/*-- ToDo: After Testing, this should be removed and tv_size==4 should be set as default. */
+							if (tv_size != 4) {
+								TIFFErrorExt(0,"TIFFLib: _TIFFWriteDirectorySec()", "Rational2Double: .set_field_type in not 4 but %d", tv_size); 
+							}
+						}
+					}
 					break;
 				case TIFF_SRATIONAL:
-					if (!TIFFWriteDirectoryTagSrationalArray(tif,&ndir,dir,tag,count,tif->tif_dir.td_customValues[m].value))
-						goto bad;
+					{
+						/*-- Rational2Double: For Rationals evaluate "set_field_type" to determine internal storage size. */
+						int tv_size;
+						tv_size = _TIFFSetGetFieldSize(tif->tif_dir.td_customValues[m].info->set_field_type);
+						if (tv_size == 8) {
+							if (!TIFFWriteDirectoryTagSrationalDoubleArray(tif,&ndir,dir,tag,count,tif->tif_dir.td_customValues[m].value))
+								goto bad;
+						} else {
+							/*-- default schould be tv_size == 4 */
+							if (!TIFFWriteDirectoryTagSrationalArray(tif,&ndir,dir,tag,count,tif->tif_dir.td_customValues[m].value))
+								goto bad;
+							/*-- ToDo: After Testing, this should be removed and tv_size==4 should be set as default. */
+							if (tv_size != 4) {
+								TIFFErrorExt(0,"TIFFLib: _TIFFWriteDirectorySec()", "Rational2Double: .set_field_type in not 4 but %d", tv_size); 
+							}
+						}
+					}
 					break;
 				case TIFF_FLOAT:
 					if (!TIFFWriteDirectoryTagFloatArray(tif,&ndir,dir,tag,count,tif->tif_dir.td_customValues[m].value))
@@ -1558,6 +1605,29 @@ TIFFWriteDirectoryTagSrationalArray(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, 
 		return(1);
 	}
 	return(TIFFWriteDirectoryTagCheckedSrationalArray(tif,ndir,dir,tag,count,value));
+}
+
+/*-- Rational2Double: additional write functions */
+static int
+TIFFWriteDirectoryTagRationalDoubleArray(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, uint32 count, double* value)
+{
+	if (dir==NULL)
+	{
+		(*ndir)++;
+		return(1);
+	}
+	return(TIFFWriteDirectoryTagCheckedRationalDoubleArray(tif,ndir,dir,tag,count,value));
+}
+
+static int
+TIFFWriteDirectoryTagSrationalDoubleArray(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, uint32 count, double* value)
+{
+	if (dir==NULL)
+	{
+		(*ndir)++;
+		return(1);
+	}
+	return(TIFFWriteDirectoryTagCheckedSrationalDoubleArray(tif,ndir,dir,tag,count,value));
 }
 
 #ifdef notdef
@@ -2318,19 +2388,22 @@ TIFFWriteDirectoryTagCheckedSlong8Array(TIFF* tif, uint32* ndir, TIFFDirEntry* d
 static int
 TIFFWriteDirectoryTagCheckedRational(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, double value)
 {
-        static const char module[] = "TIFFWriteDirectoryTagCheckedRational";
+	static const char module[] = "TIFFWriteDirectoryTagCheckedRational";
 	uint32 m[2];
 	assert(sizeof(uint32)==4);
-        if( value < 0 )
-        {
-            TIFFErrorExt(tif->tif_clientdata,module,"Negative value is illegal");
-            return 0;
-        }
-        else if( value != value )
-        {
-            TIFFErrorExt(tif->tif_clientdata,module,"Not-a-number value is illegal");
-            return 0;
-        }
+	if (value < 0) 
+	{
+		TIFFErrorExt(tif->tif_clientdata, module, "Negative value is illegal");
+		return 0;
+	} else if (value != value) 
+	{
+		TIFFErrorExt(tif->tif_clientdata, module, "Not-a-number value is illegal");
+		return 0;
+	}
+	else {
+		DoubleToRational(value, &m[0], &m[1]);
+	}
+#ifdef not_def
 	else if (value==0.0)
 	{
 		m[0]=0;
@@ -2351,6 +2424,8 @@ TIFFWriteDirectoryTagCheckedRational(TIFF* tif, uint32* ndir, TIFFDirEntry* dir,
 		m[0]=0xFFFFFFFF;
 		m[1]=(uint32)(0xFFFFFFFF/value);
 	}
+#endif
+
 	if (tif->tif_flags&TIFF_SWAB)
 	{
 		TIFFSwabLong(&m[0]);
@@ -2377,6 +2452,8 @@ TIFFWriteDirectoryTagCheckedRationalArray(TIFF* tif, uint32* ndir, TIFFDirEntry*
 	}
 	for (na=value, nb=m, nc=0; nc<count; na++, nb+=2, nc++)
 	{
+		DoubleToRational(*na, &nb[0], &nb[1]);
+#ifdef not_def
 		if (*na<=0.0 || *na != *na)
 		{
 			nb[0]=0;
@@ -2398,6 +2475,7 @@ TIFFWriteDirectoryTagCheckedRationalArray(TIFF* tif, uint32* ndir, TIFFDirEntry*
 			nb[0]=0xFFFFFFFF;
 			nb[1]=(uint32)((double)0xFFFFFFFF/(*na));
 		}
+#endif
 	}
 	if (tif->tif_flags&TIFF_SWAB)
 		TIFFSwabArrayOfLong(m,count*2);
@@ -2424,6 +2502,8 @@ TIFFWriteDirectoryTagCheckedSrationalArray(TIFF* tif, uint32* ndir, TIFFDirEntry
 	}
 	for (na=value, nb=m, nc=0; nc<count; na++, nb+=2, nc++)
 	{
+		DoubleToSrational(*na, &nb[0], &nb[1]);
+#ifdef not_def
 		if (*na<0.0)
 		{
 			if (*na==(int32)(*na))
@@ -2460,6 +2540,7 @@ TIFFWriteDirectoryTagCheckedSrationalArray(TIFF* tif, uint32* ndir, TIFFDirEntry
 				nb[1]=(int32)((double)0x7FFFFFFF/(*na));
 			}
 		}
+#endif
 	}
 	if (tif->tif_flags&TIFF_SWAB)
 		TIFFSwabArrayOfLong((uint32*)m,count*2);
@@ -2467,6 +2548,371 @@ TIFFWriteDirectoryTagCheckedSrationalArray(TIFF* tif, uint32* ndir, TIFFDirEntry
 	_TIFFfree(m);
 	return(o);
 }
+
+/*-- Rational2Double: additonal write functions */
+static int
+TIFFWriteDirectoryTagCheckedRationalDoubleArray(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, uint32 count, double* value)
+{
+	static const char module[] = "TIFFWriteDirectoryTagCheckedRationalDoubleArray";
+	uint32* m;
+	double* na;
+	uint32* nb;
+	uint32 nc;
+	int o;
+	assert(sizeof(uint32)==4);
+	m=_TIFFmalloc(count*2*sizeof(uint32));
+	if (m==NULL)
+	{
+		TIFFErrorExt(tif->tif_clientdata,module,"Out of memory");
+		return(0);
+	}
+	for (na=value, nb=m, nc=0; nc<count; na++, nb+=2, nc++)
+	{
+		DoubleToRational(*na, &nb[0], &nb[1]);
+	}
+	if (tif->tif_flags&TIFF_SWAB)
+		TIFFSwabArrayOfLong(m,count*2);
+	o=TIFFWriteDirectoryTagData(tif,ndir,dir,tag,TIFF_RATIONAL,count,count*8,&m[0]);
+	_TIFFfree(m);
+	return(o);
+} /*-- TIFFWriteDirectoryTagCheckedRationalDoubleArray() ------- */
+
+static int
+TIFFWriteDirectoryTagCheckedSrationalDoubleArray(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, uint32 count, double* value)
+{
+	static const char module[] = "TIFFWriteDirectoryTagCheckedSrationalDoubleArray";
+	int32* m;
+	double* na;
+	int32* nb;
+	uint32 nc;
+	int o;
+	assert(sizeof(int32)==4);
+	m=_TIFFmalloc(count*2*sizeof(int32));
+	if (m==NULL)
+	{
+		TIFFErrorExt(tif->tif_clientdata,module,"Out of memory");
+		return(0);
+	}
+	for (na=value, nb=m, nc=0; nc<count; na++, nb+=2, nc++)
+	{
+		DoubleToSrational(*na, &nb[0], &nb[1]);
+	}
+	if (tif->tif_flags&TIFF_SWAB)
+		TIFFSwabArrayOfLong((uint32*)m,count*2);
+	o=TIFFWriteDirectoryTagData(tif,ndir,dir,tag,TIFF_SRATIONAL,count,count*8,&m[0]);
+	_TIFFfree(m);
+	return(o);
+} /*--- TIFFWriteDirectoryTagCheckedSrationalDoubleArray() -------- */
+
+#define DOUBLE2RAT_DEBUGOUTPUT
+/* -----  Double To Rational Conversion ---------------------
+ * From: http://rosettacode.org/wiki/Convert_decimal_number_to_rational 
+ * Here's another version of best rational approximation of a floating point number. 
+ * Especially for small numbers as needed for EXIF GPS tags latitude and longitude in WGS84.
+*/
+/* f : number to convert.
+ * num, denom: returned parts of the rational.
+ * md: max denominator value.  Note that machine floating point number
+ *     has a finite resolution (10e-16 ish for 64 bit double), so specifying
+ *     a "best match with minimal error" is often wrong, because one can
+ *     always just retrieve the significand and return that divided by 
+ *     2**52, which is in a sense accurate, but generally not very useful:
+ *     1.0/7.0 would be "2573485501354569/18014398509481984", for example.
+ *     md=65536 seems to be sufficient for double values and long num/denom
+ */
+void DoubleToRational(double f, uint32 *num, uint32 *denom)
+{
+	/*---- UN-SIGNED RATIONAL ---- */
+	/*  a: continued fraction coefficients. 
+	 *-- Internally, the integer variables can be bigger than the external ones,
+	*   as long as the result will fit into the external variable size.
+	*/
+	unsigned long long a, h[3] = { 0, 1, 0 }, k[3] = { 1, 0, 0 };
+	unsigned long long x, d, n = 1; 
+	int i, neg = 1;
+	unsigned long long nMax = ((9223372036854775807-1)/2);		/* for long long nMax = ((9223372036854775807-1)/2); for long nMax = ((2147483647-1)/2); */
+	double fMax = (double)((9223372036854775807i64-1)/2); 					/* fMax has to be smaller than max value of "d" /2 */
+
+	/*-- For check of better accuracy of "direct" method. */
+	double f_in = f;
+	unsigned long	num2, denom2;
+
+	/*-- For debugging purposes, check accuracy of this routine -- */
+#ifdef DOUBLE2RAT_DEBUGOUTPUT
+	double dblDiff, dblDiff2; 
+#endif
+
+	unsigned long md = ULONG_MAX;	/* this guarantees that denominator stays within size of long variables.
+	 *-- if md would be a parameter to the subroutine, then the following check is necessary:
+	 *   if (md <= 1) { *denom = 1; *num = (long) f; return; } 
+	 */
+
+	/*-- Check for negative values. If so it is an error. */
+	if (f < 0) { neg = -1; f = -f; *num=*denom=0; 
+		TIFFErrorExt(0,"TIFFLib: DoubeToRational()", " Negative Value for Unsigned Rational given."); return;}
+
+	/*-- Check for too big numbers (> LONG_MAX) -- */
+	if (f > ULONG_MAX) {
+		*num = 0xFFFFFFFF;
+		*denom = 0;
+		return;
+	}
+	/*-- Check for easy numbers -- */
+	if (f==(long)(f)) {
+		*num = (long)f;
+		*denom = 1;
+		return;
+	}
+	/*-- Check for too small numbers for "long" type rationals -- */
+	if (f < 1.0/0xFFFFFFFF) {
+		*num = 0;
+		*denom = 0xFFFFFFFF;
+		return;
+	}
+
+	/*-- Generate Integer value from double with fractional.
+	 *   d = big numinator of value without fraction (or cut residual fraction)
+	 *   n = big denominator of value
+	 *-- Break-criteria so that cast to "d" introduces no error and n has no overflow. 
+	*/
+	while ((f != floor(f)) && (f < fMax) && (n < nMax)) { n <<= 1; f *= 2; }
+	d = (unsigned long long)f;
+
+	/* continued fraction and check denominator each step */
+	for (i = 0; i < 64; i++) {
+		a = n ? d / n : 0;						/* if n is not zero, calculate integer part of original number. */
+		if (i && !a) break;						/* if n is zero, exit loop */
+
+		x = d; d = n; n = x % n;				/* set n to reminder of d/n and  d to previous denominator n. */
+
+		x = a;
+		if (k[1] * a + k[0] >= md) {			/* calculate next denominator and check for its given maximum */
+			x = (md - k[0]) / k[1];
+			if (x * 2 >= a || k[1] >= md)
+				i = 65;
+			else
+				break;
+		}
+		h[2] = x * h[1] + h[0]; h[0] = h[1]; h[1] = h[2];  /* calculate next numerator to h2 and save previous one to h0; h1 just copy of h2. */
+		k[2] = x * k[1] + k[0]; k[0] = k[1]; k[1] = k[2];  /* calculate next denominator to k2 and save previous one to k0; k1 just copy of k2. */
+	}
+	/*-- Check and adapt for final variable size and return values -- */
+	while (h[1] > ULONG_MAX) {
+		h[1] = h[1]/2;
+		k[1] = k[1]/2;
+	}
+	*denom = (unsigned long)k[1];
+	*num =   (unsigned long)h[1];
+
+	/*-- Generally, this routine has a higher accuracy than the original "direct" method.
+	     However, in some cases the "direct" method provides better results. Therefore, check here. */
+	DoubleToRational_direct(f_in, &num2, &denom2);
+	if (  fabs(f_in -((double)*num / (double)*denom)) > fabs(f_in -((double)num2 / (double)denom2)) ) {
+		*denom = denom2;
+		*num =   num2;
+	} 
+
+#ifdef DOUBLE2RAT_DEBUGOUTPUT
+	double f_new, f_old, f_new2;
+	f_new = ((double)*num / (double)*denom);
+	f_new2 = ((float)*num / (float)*denom);
+	f_old = ((double)num2 / (double)denom2);
+	dblDiff  = fabs(f_in -((double)*num / (double)*denom));	/*debugging*/
+	dblDiff2 = fabs(f_in -((double)num2 / (double)denom2)); /*debugging*/
+	if (  fabs(f_in -((double)*num / (double)*denom)) > fabs(f_in -((double)num2 / (double)denom2)) ) {
+		TIFFErrorExt(0,"TIFFLib: DoubeToRational()", " Old Method is better for %.18f: new dif=%g old-dif=%g.\n", f_in, dblDiff, dblDiff2);
+		*denom = denom2;
+		*num =   num2;
+	} else TIFFErrorExt(0,"TIFFLib: DoubeToRational()", " New is better for %.18f: new dif=%g old-dif=%g.\n", f_in, dblDiff, dblDiff2);
+#endif
+}  /*-- DoubleToRational() -------------- */
+
+void DoubleToRational_direct(double value, unsigned long *num, unsigned long *denom)
+{
+	/*--- OLD Code for debugging and comparison  ---- */
+	/* code merged from TIFFWriteDirectoryTagCheckedRationalArray() and TIFFWriteDirectoryTagCheckedRational() */
+
+	/* First check for zero and also check for negative numbers (which are illegal for RATIONAL) 
+	 * and also check for "not-a-number". In each case just set this to zero to support also rational-arrays.
+	  */
+	if (value<=0.0 || value != value)
+	{
+		*num=0;
+		*denom=1;
+	}
+	else if (value <= 0xFFFFFFFFU &&  (value==(double)(uint32)(value)))	/* check for integer values */
+	{
+		*num=(uint32)(value);
+		*denom=1;
+	}
+	else if (value<1.0)
+	{
+		*num = (uint32)((value) * (double)0xFFFFFFFFU);
+		*denom=0xFFFFFFFFU;
+	}
+	else
+	{
+		*num=0xFFFFFFFFU;
+		*denom=(uint32)((double)0xFFFFFFFFU/(value));
+	}
+}  /*-- DoubleToRational_direct() -------------- */
+
+
+void DoubleToSrational(double f, int32 *num, int32 *denom)
+{
+	/*---- SIGNED RATIONAL ----*/
+	/*  a: continued fraction coefficients.
+	 *-- Internally, the integer variables can be bigger than the external ones,
+	 *   as long as the result will fit into the external variable size. 
+	 */
+	unsigned long long a, h[3] = { 0, 1, 0 }, k[3] = { 1, 0, 0 };
+	unsigned long long x, d, n = 1; 
+	int i, neg = 1;
+	unsigned long long nMax = ((9223372036854775807-1)/2);		/* for long long nMax = ((9223372036854775807-1)/2); for long nMax = ((2147483647-1)/2); */
+	double fMax = (double)((9223372036854775807i64-1)/2); 		/* fMax has to be smaller than max value of "d" /2 */
+
+	/*-- For check of better accuracy of "direct" method. */
+	double f_in = f;
+	long	num2, denom2;
+
+	/*-- For debugging purposes, check accuracy of this routine -- */
+#ifdef DOUBLE2RAT_DEBUGOUTPUT
+	double dblDiff, dblDiff2; 
+#endif
+
+	long md = LONG_MAX;	/* this guarantees that denominator stays within size of long variables.
+	 *-- if md would be a parameter to the subroutine, then the following check is necessary:
+	 *   if (md <= 1) { *denom = 1; *num = (long) f; return; } 
+	 */
+
+	/*-- Check for negative values */
+	if (f < 0) { neg = -1; f = -f; }
+
+	/*-- Check for too big numbers (> LONG_MAX) -- */
+	if (f > LONG_MAX) {
+		*num = 0x7FFFFFFF;
+		*denom = 0;
+		return;
+	}
+	/*-- Check for easy numbers -- */
+	if (f==(long)(f)) {
+		*num = (long)f;
+		*denom = 1;
+		return;
+	}
+	/*-- Check for too small numbers for "long" type rationals -- */
+	if (f < 1.0/0x7FFFFFFF) {
+		*num = 0;
+		*denom = 0x7FFFFFFF;
+		return;
+	}
+
+	/*-- Generate Integer value from double with fractional.
+	 *   d = big numinator of value without fraction (or cut residual fraction)
+	 *   n = big denominator of value
+	 *-- Break-criteria so that cast to "d" introduces no error and n has no overflow. 
+	 */
+	while ((f != floor(f)) && (f < fMax) && (n < nMax)) { n <<= 1; f *= 2; }
+	d = (unsigned long long)f;
+
+	/* continued fraction and check denominator each step */
+	for (i = 0; i < 64; i++) {
+		a = n ? d / n : 0;						/* if n is not zero, calculate integer part of original number. */
+		if (i && !a) break;						/* if n is zero, exit loop */
+
+		x = d; d = n; n = x % n;				/* set n to reminder of d/n and  d to previous denominator n. */
+
+		x = a;
+		if (k[1] * a + k[0] >= md) {			/* calculate next denominator and check for its given maximum */
+			x = (md - k[0]) / k[1];
+			if (x * 2 >= a || k[1] >= md)
+				i = 65;
+			else
+				break;
+		}
+		h[2] = x * h[1] + h[0]; h[0] = h[1]; h[1] = h[2];  /* calculate next numerator to h2 and save previous one to h0; h1 just copy of h2. */
+		k[2] = x * k[1] + k[0]; k[0] = k[1]; k[1] = k[2];  /* calculate next denominator to k2 and save previous one to k0; k1 just copy of k2. */
+	}
+	/*-- Check and adapt for final variable size and return values -- */
+	while (h[1] > LONG_MAX) {
+		h[1] = h[1]/2;
+		k[1] = k[1]/2;
+	}
+	*denom = (long)k[1];
+	*num = neg * (long)h[1];
+
+	/*-- Generally, this routine has a higher accuracy than the original "direct" method.
+	 *   However, in some cases the "direct" method provides better results. Therefore, check here. 
+	 */
+	DoubleToSrational_direct(f_in, &num2, &denom2);
+	if (  fabs(f_in -((double)*num / (double)*denom)) > fabs(f_in -((double)num2 / (double)denom2)) ) {
+		*denom = denom2;
+		*num =   num2;
+	} 
+
+#ifdef DOUBLE2RAT_DEBUGOUTPUT
+	double f_new, f_old;
+	f_new = ((double)*num / (double)*denom);
+	f_old = ((double)num2 / (double)denom2);
+	dblDiff  = fabs(f_in -((double)*num / (double)*denom));	/*debugging*/
+	dblDiff2 = fabs(f_in -((double)num2 / (double)denom2)); /*debugging*/
+	if (  fabs(f_in -((double)*num / (double)*denom)) > fabs(f_in -((double)num2 / (double)denom2)) ) {
+		TIFFErrorExt(0,"TIFFLib: DoubeToSRational()", " Old Method is better for %.18f: new dif=%g old-dif=%f .\n", f_in, dblDiff, dblDiff2);
+		*denom = denom2;
+		*num =   num2;
+	} else TIFFErrorExt(0,"TIFFLib: DoubeToSRational()", " New is better for %.18f: new dif=%g old-dif=%g .\n", f_in, dblDiff, dblDiff2);
+#endif
+}  /*-- DoubleToSrational() --------------*/
+
+
+void DoubleToSrational_direct(double value,  long *num,  long *denom)
+{
+	/*--- OLD Code for debugging and comparison -- SIGNED-version ----*/
+	/*  code was amended from original TIFFWriteDirectoryTagCheckedSrationalArray() */
+
+	/* First check for zero and also check for negative numbers (which are illegal for RATIONAL)
+	 * and also check for "not-a-number". In each case just set this to zero to support also rational-arrays.
+	  */
+	if (value<0.0)
+		{
+			if (value==(int32)(value))
+			{
+				*num=(int32)(value);
+				*denom=1;
+			}
+			else if (value>-1.0)
+			{
+				*num=-(int32)((-value) * (double)0x7FFFFFFF);
+				*denom=0x7FFFFFFF;
+			}
+			else
+			{
+				*num=-0x7FFFFFFF;
+				*denom=(int32)((double)0x7FFFFFFF / (-value));
+			}
+		}
+		else
+		{
+			if (value==(int32)(value))
+			{
+				*num=(int32)(value);
+				*denom=1;
+			}
+			else if (value<1.0)
+			{
+				*num=(int32)((value)  *(double)0x7FFFFFFF);
+				*denom=0x7FFFFFFF;
+			}
+			else
+			{
+				*num=0x7FFFFFFF;
+				*denom=(int32)((double)0x7FFFFFFF / (value));
+			}
+		}
+}  /*-- DoubleToSrational_direct() --------------*/
+
+
+
 
 #ifdef notdef
 static int
