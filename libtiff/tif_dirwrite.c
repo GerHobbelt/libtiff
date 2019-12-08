@@ -169,7 +169,7 @@ void DoubleToSrational_direct(double value, long *num, long *denom);
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <limits.h>  
+#include <limits.h>
 
 #ifdef notdef
 static int TIFFWriteDirectoryTagCheckedFloat(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, float value);
@@ -2400,9 +2400,6 @@ TIFFWriteDirectoryTagCheckedRational(TIFF* tif, uint32* ndir, TIFFDirEntry* dir,
 		TIFFErrorExt(tif->tif_clientdata, module, "Not-a-number value is illegal");
 		return 0;
 	}
-	else {
-		DoubleToRational(value, &m[0], &m[1]);
-	}
 #ifdef not_def
 	else if (value==0.0)
 	{
@@ -2423,6 +2420,13 @@ TIFFWriteDirectoryTagCheckedRational(TIFF* tif, uint32* ndir, TIFFDirEntry* dir,
 	{
 		m[0]=0xFFFFFFFF;
 		m[1]=(uint32)(0xFFFFFFFF/value);
+	}
+#else
+	/*--Rational2Double: New function also used for non-custom rational tags. 
+	 *  However, could be omitted here, because TIFFWriteDirectoryTagCheckedRational() is not used by code for custom tags,
+	 *  only by code for named-tiff-tags like FIELD_RESOLUTION and FIELD_POSITION */
+	else {
+	DoubleToRational(value, &m[0], &m[1]);
 	}
 #endif
 
@@ -2452,7 +2456,6 @@ TIFFWriteDirectoryTagCheckedRationalArray(TIFF* tif, uint32* ndir, TIFFDirEntry*
 	}
 	for (na=value, nb=m, nc=0; nc<count; na++, nb+=2, nc++)
 	{
-		DoubleToRational(*na, &nb[0], &nb[1]);
 #ifdef not_def
 		if (*na<=0.0 || *na != *na)
 		{
@@ -2475,6 +2478,9 @@ TIFFWriteDirectoryTagCheckedRationalArray(TIFF* tif, uint32* ndir, TIFFDirEntry*
 			nb[0]=0xFFFFFFFF;
 			nb[1]=(uint32)((double)0xFFFFFFFF/(*na));
 		}
+#else
+		/*-- Rational2Double: Also for float precision accuracy is sometimes enhanced --*/
+		DoubleToRational(*na, &nb[0], &nb[1]);
 #endif
 	}
 	if (tif->tif_flags&TIFF_SWAB)
@@ -2502,7 +2508,6 @@ TIFFWriteDirectoryTagCheckedSrationalArray(TIFF* tif, uint32* ndir, TIFFDirEntry
 	}
 	for (na=value, nb=m, nc=0; nc<count; na++, nb+=2, nc++)
 	{
-		DoubleToSrational(*na, &nb[0], &nb[1]);
 #ifdef not_def
 		if (*na<0.0)
 		{
@@ -2540,6 +2545,9 @@ TIFFWriteDirectoryTagCheckedSrationalArray(TIFF* tif, uint32* ndir, TIFFDirEntry
 				nb[1]=(int32)((double)0x7FFFFFFF/(*na));
 			}
 		}
+#else
+		/*-- Rational2Double: Also for float precision accuracy is sometimes enhanced --*/
+		DoubleToSrational(*na, &nb[0], &nb[1]);
 #endif
 	}
 	if (tif->tif_flags&TIFF_SWAB)
@@ -2549,7 +2557,7 @@ TIFFWriteDirectoryTagCheckedSrationalArray(TIFF* tif, uint32* ndir, TIFFDirEntry
 	return(o);
 }
 
-/*-- Rational2Double: additonal write functions */
+/*-- Rational2Double: additonal write functions for double arrays */
 static int
 TIFFWriteDirectoryTagCheckedRationalDoubleArray(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, uint32 count, double* value)
 {
@@ -2604,8 +2612,9 @@ TIFFWriteDirectoryTagCheckedSrationalDoubleArray(TIFF* tif, uint32* ndir, TIFFDi
 	return(o);
 } /*--- TIFFWriteDirectoryTagCheckedSrationalDoubleArray() -------- */
 
-#define DOUBLE2RAT_DEBUGOUTPUT
-/* -----  Double To Rational Conversion ---------------------
+
+//#define DOUBLE2RAT_DEBUGOUTPUT
+/* -----  Rational2Double: Double To Rational Conversion ---------------------
  * From: http://rosettacode.org/wiki/Convert_decimal_number_to_rational 
  * Here's another version of best rational approximation of a floating point number. 
  * Especially for small numbers as needed for EXIF GPS tags latitude and longitude in WGS84.
@@ -2636,11 +2645,6 @@ void DoubleToRational(double f, uint32 *num, uint32 *denom)
 	/*-- For check of better accuracy of "direct" method. */
 	double f_in = f;
 	unsigned long	num2, denom2;
-
-	/*-- For debugging purposes, check accuracy of this routine -- */
-#ifdef DOUBLE2RAT_DEBUGOUTPUT
-	double dblDiff, dblDiff2; 
-#endif
 
 	unsigned long md = ULONG_MAX;	/* this guarantees that denominator stays within size of long variables.
 	 *-- if md would be a parameter to the subroutine, then the following check is necessary:
@@ -2713,13 +2717,16 @@ void DoubleToRational(double f, uint32 *num, uint32 *denom)
 	} 
 
 #ifdef DOUBLE2RAT_DEBUGOUTPUT
-	double f_new, f_old, f_new2;
-	f_new = ((double)*num / (double)*denom);
-	f_new2 = ((float)*num / (float)*denom);
-	f_old = ((double)num2 / (double)denom2);
-	dblDiff  = fabs(f_in -((double)*num / (double)*denom));	/*debugging*/
-	dblDiff2 = fabs(f_in -((double)num2 / (double)denom2)); /*debugging*/
-	if (  fabs(f_in -((double)*num / (double)*denom)) > fabs(f_in -((double)num2 / (double)denom2)) ) {
+	/*-- For debugging purposes, check accuracy of this routine -- */
+	double dblDiff, dblDiff2;
+	double f_new, f_old, f_new2, f_old2;	/*debugging*/
+	f_new = ((double)*num / (double)*denom);	/*debugging*/
+	f_new2 = ((float)*num / (float)*denom);	/*debugging*/
+	f_old = ((double)num2 / (double)denom2);	/*debugging*/
+	f_old2 = ((float)num2 / (float)denom2);	/*debugging*/
+	dblDiff  = fabs(f_in -((double)*num / (double)*denom));
+	dblDiff2 = fabs(f_in -((double)num2 / (double)denom2));
+	if (  dblDiff > dblDiff2 ) {
 		TIFFErrorExt(0,"TIFFLib: DoubeToRational()", " Old Method is better for %.18f: new dif=%g old-dif=%g.\n", f_in, dblDiff, dblDiff2);
 		*denom = denom2;
 		*num =   num2;
@@ -2774,11 +2781,6 @@ void DoubleToSrational(double f, int32 *num, int32 *denom)
 	/*-- For check of better accuracy of "direct" method. */
 	double f_in = f;
 	long	num2, denom2;
-
-	/*-- For debugging purposes, check accuracy of this routine -- */
-#ifdef DOUBLE2RAT_DEBUGOUTPUT
-	double dblDiff, dblDiff2; 
-#endif
 
 	long md = LONG_MAX;	/* this guarantees that denominator stays within size of long variables.
 	 *-- if md would be a parameter to the subroutine, then the following check is necessary:
@@ -2851,12 +2853,16 @@ void DoubleToSrational(double f, int32 *num, int32 *denom)
 	} 
 
 #ifdef DOUBLE2RAT_DEBUGOUTPUT
-	double f_new, f_old;
-	f_new = ((double)*num / (double)*denom);
-	f_old = ((double)num2 / (double)denom2);
-	dblDiff  = fabs(f_in -((double)*num / (double)*denom));	/*debugging*/
-	dblDiff2 = fabs(f_in -((double)num2 / (double)denom2)); /*debugging*/
-	if (  fabs(f_in -((double)*num / (double)*denom)) > fabs(f_in -((double)num2 / (double)denom2)) ) {
+	/*-- For debugging purposes, check accuracy of this routine -- */
+	double dblDiff, dblDiff2;
+	double f_new, f_old, f_new2, f_old2;	/*debugging*/
+	f_new = ((double)*num / (double)*denom);	/*debugging*/
+	f_new2 = ((float)*num / (float)*denom);	/*debugging*/
+	f_old = ((double)num2 / (double)denom2);	/*debugging*/
+	f_old2 = ((float)num2 / (float)denom2);	/*debugging*/
+	dblDiff  = fabs(f_in -((double)*num / (double)*denom));
+	dblDiff2 = fabs(f_in -((double)num2 / (double)denom2));
+	if (  dblDiff > dblDiff2 ) {
 		TIFFErrorExt(0,"TIFFLib: DoubeToSRational()", " Old Method is better for %.18f: new dif=%g old-dif=%f .\n", f_in, dblDiff, dblDiff2);
 		*denom = denom2;
 		*num =   num2;
