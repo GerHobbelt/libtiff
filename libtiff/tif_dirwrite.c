@@ -2395,7 +2395,8 @@ TIFFWriteDirectoryTagCheckedRational(TIFF* tif, uint32* ndir, TIFFDirEntry* dir,
 	{
 		TIFFErrorExt(tif->tif_clientdata, module, "Negative value is illegal");
 		return 0;
-	} else if (value != value) 
+	} 
+	else if (value != value) 
 	{
 		TIFFErrorExt(tif->tif_clientdata, module, "Not-a-number value is illegal");
 		return 0;
@@ -2615,103 +2616,120 @@ TIFFWriteDirectoryTagCheckedSrationalDoubleArray(TIFF* tif, uint32* ndir, TIFFDi
 
 //#define DOUBLE2RAT_DEBUGOUTPUT
 /* -----  Rational2Double: Double To Rational Conversion ---------------------
- * From: http://rosettacode.org/wiki/Convert_decimal_number_to_rational 
- * Here's another version of best rational approximation of a floating point number. 
- * Especially for small numbers as needed for EXIF GPS tags latitude and longitude in WGS84.
-*/
-/* f : number to convert.
- * num, denom: returned parts of the rational.
- * md: max denominator value.  Note that machine floating point number
- *     has a finite resolution (10e-16 ish for 64 bit double), so specifying
- *     a "best match with minimal error" is often wrong, because one can
- *     always just retrieve the significand and return that divided by 
- *     2**52, which is in a sense accurate, but generally not very useful:
- *     1.0/7.0 would be "2573485501354569/18014398509481984", for example.
- *     md=65536 seems to be sufficient for double values and long num/denom
+ * There is a mathematical theorem to convert real numbers into a rational (fraction) number.
+ * This is called "continuous fraction" (ref. e.g. https://de.wikipedia.org/wiki/Kettenbruch or https://en.wikipedia.org/wiki/Continued_fraction)
+ * 
+
+
+
  */
-void DoubleToRational(double f, uint32 *num, uint32 *denom)
+void DoubleToRational(double value, uint32 *num, uint32 *denom)
 {
 	/*---- UN-SIGNED RATIONAL ---- */
-	/*  a: continued fraction coefficients. 
-	 *-- Internally, the integer variables can be bigger than the external ones,
-	*   as long as the result will fit into the external variable size.
-	*/
-	unsigned long long a, h[3] = { 0, 1, 0 }, k[3] = { 1, 0, 0 };
-	unsigned long long x, d, n = 1; 
-	int i, neg = 1;
+	/* Internally, the integer variables can be bigger than the external ones,
+	 * as long as the result will fit into the external variable size.
+	 */
+	unsigned long long val, nm[3] = { 0, 1, 0 }, dm[3] = { 1, 0, 0 };
+	unsigned long long aux, bigNum, bigDenom; 
+	int i;
 	unsigned long long nMax = ((9223372036854775807-1)/2);		/* for long long nMax = ((9223372036854775807-1)/2); for long nMax = ((2147483647-1)/2); */
-	double fMax = (double)((9223372036854775807i64-1)/2); 					/* fMax has to be smaller than max value of "d" /2 */
+	double fMax = (double)((9223372036854775807i64-1)/2); 		/* fMax has to be smaller than max value of "bigNum" /2 */
 
 	/*-- For check of better accuracy of "direct" method. */
-	double f_in = f;
+	double value_in = value;
 	unsigned long	num2, denom2;
 
-	unsigned long md = ULONG_MAX;	/* this guarantees that denominator stays within size of long variables.
-	 *-- if md would be a parameter to the subroutine, then the following check is necessary:
-	 *   if (md <= 1) { *denom = 1; *num = (long) f; return; } 
-	 */
+	unsigned long maxDenom = ULONG_MAX;	/* this guarantees that denominator stays within size of unsigned long variables. */
 
 	/*-- Check for negative values. If so it is an error. */
-	if (f < 0) { neg = -1; f = -f; *num=*denom=0; 
-		TIFFErrorExt(0,"TIFFLib: DoubeToRational()", " Negative Value for Unsigned Rational given."); return;}
+	if (value < 0) {
+		*num=*denom=0; 
+		TIFFErrorExt(0,"TIFFLib: DoubeToRational()", " Negative Value for Unsigned Rational given."); 
+		return;
+	}
 
 	/*-- Check for too big numbers (> LONG_MAX) -- */
-	if (f > ULONG_MAX) {
+	if (value > ULONG_MAX) {
 		*num = 0xFFFFFFFF;
 		*denom = 0;
 		return;
 	}
 	/*-- Check for easy numbers -- */
-	if (f==(long)(f)) {
-		*num = (long)f;
+	if (value==(long)(value)) {
+		*num = (long)value;
 		*denom = 1;
 		return;
 	}
 	/*-- Check for too small numbers for "long" type rationals -- */
-	if (f < 1.0/0xFFFFFFFF) {
+	if (value < 1.0/(double)0xFFFFFFFFU) {
 		*num = 0;
-		*denom = 0xFFFFFFFF;
+		*denom = 0xFFFFFFFFU;
 		return;
 	}
 
-	/*-- Generate Integer value from double with fractional.
-	 *   d = big numinator of value without fraction (or cut residual fraction)
-	 *   n = big denominator of value
-	 *-- Break-criteria so that cast to "d" introduces no error and n has no overflow. 
+	/*-- Check if double is already a rational with limited fractional part,
+	 *   so that the stupid "reduce to higher terms" gives already a solution.
+	 *   Otherwise, keep that as a starting point for the true continued fraction algorithm.
+	 *   ###d= bigNum   = big numinator of value without fraction (or cut residual fraction)
+	 *   ###n= bigDenom = big denominator of value
+	 *-- Break-criteria so that cast to "bigNum" introduces no error and bigDenom has no overflow. 
 	*/
-	while ((f != floor(f)) && (f < fMax) && (n < nMax)) { n <<= 1; f *= 2; }
-	d = (unsigned long long)f;
+	bigDenom = 1;
+	while ((value != floor(value)) && (value < fMax) && (bigDenom < nMax)) { 
+		bigDenom <<= 1; 
+		value *= 2; 
+	}
+	bigNum = (unsigned long long)value;
 
-	/* continued fraction and check denominator each step */
-	for (i = 0; i < 64; i++) {
-		a = n ? d / n : 0;						/* if n is not zero, calculate integer part of original number. */
-		if (i && !a) break;						/* if n is zero, exit loop */
+	/*-- Start continued fraction, 
+	 *   which checks also, if in the step before the fractional part would be zero.
+	 */
+#define MAX_ITERATIONS 64
+	for (i = 0; i < MAX_ITERATIONS; i++) {
+		/* #### val = bigDenom ? bigNum / bigDenom : 0;	/* if bigDenom is not zero, calculate integer part of original number. */
+		/* if bigDenom is not zero, calculate integer part of original number. */
+		if (bigDenom == 0) {
+			val = 0;
+			if (i > 0) break;	/* if bigDenom is zero, exit loop, but execute loop just once */
+		} else {
+			val = bigNum / bigDenom;
+		}
 
-		x = d; d = n; n = x % n;				/* set n to reminder of d/n and  d to previous denominator n. */
+		/* set bigDenom to reminder of bigNum/bigDenom and  bigNum to previous denominator bigDenom. */
+		aux = bigNum;
+		bigNum = bigDenom; 
+		bigDenom = aux % bigDenom;
 
-		x = a;
-		if (k[1] * a + k[0] >= md) {			/* calculate next denominator and check for its given maximum */
-			x = (md - k[0]) / k[1];
-			if (x * 2 >= a || k[1] >= md)
-				i = 65;
+		/* calculate next denominator and check for its given maximum */
+		aux = val;
+		if (dm[1] * val + dm[0] >= maxDenom) {			
+			aux = (maxDenom - dm[0]) / dm[1];
+			if (aux * 2 >= val || dm[1] >= maxDenom)
+				i = (MAX_ITERATIONS +1);			/* exit but execute rest of for-loop */
 			else
 				break;
 		}
-		h[2] = x * h[1] + h[0]; h[0] = h[1]; h[1] = h[2];  /* calculate next numerator to h2 and save previous one to h0; h1 just copy of h2. */
-		k[2] = x * k[1] + k[0]; k[0] = k[1]; k[1] = k[2];  /* calculate next denominator to k2 and save previous one to k0; k1 just copy of k2. */
+		/* calculate next numerator to nm2 and save previous one to nm0; nm1 just copy of nm2. */
+		nm[2] = aux * nm[1] + nm[0];
+		nm[0] = nm[1];
+		nm[1] = nm[2];
+		/* calculate next denominator to dm2 and save previous one to dm0; dm1 just copy of dm2. */
+		dm[2] = aux * dm[1] + dm[0];
+		dm[0] = dm[1];
+		dm[1] = dm[2];
 	}
 	/*-- Check and adapt for final variable size and return values -- */
-	while (h[1] > ULONG_MAX) {
-		h[1] = h[1]/2;
-		k[1] = k[1]/2;
+	while (nm[1] > ULONG_MAX) {
+		nm[1] = nm[1]/2;
+		dm[1] = dm[1]/2;
 	}
-	*denom = (unsigned long)k[1];
-	*num =   (unsigned long)h[1];
+	*denom = (unsigned long)dm[1];
+	*num =   (unsigned long)nm[1];
 
 	/*-- Generally, this routine has a higher accuracy than the original "direct" method.
 	     However, in some cases the "direct" method provides better results. Therefore, check here. */
-	DoubleToRational_direct(f_in, &num2, &denom2);
-	if (  fabs(f_in -((double)*num / (double)*denom)) > fabs(f_in -((double)num2 / (double)denom2)) ) {
+	DoubleToRational_direct(value_in, &num2, &denom2);
+	if (  fabs(value_in -((double)*num / (double)*denom)) > fabs(value_in -((double)num2 / (double)denom2)) ) {
 		*denom = denom2;
 		*num =   num2;
 	} 
@@ -2724,13 +2742,13 @@ void DoubleToRational(double f, uint32 *num, uint32 *denom)
 	f_new2 = ((float)*num / (float)*denom);	/*debugging*/
 	f_old = ((double)num2 / (double)denom2);	/*debugging*/
 	f_old2 = ((float)num2 / (float)denom2);	/*debugging*/
-	dblDiff  = fabs(f_in -((double)*num / (double)*denom));
-	dblDiff2 = fabs(f_in -((double)num2 / (double)denom2));
+	dblDiff  = fabs(value_in -((double)*num / (double)*denom));
+	dblDiff2 = fabs(value_in -((double)num2 / (double)denom2));
 	if (  dblDiff > dblDiff2 ) {
-		TIFFErrorExt(0,"TIFFLib: DoubeToRational()", " Old Method is better for %.18f: new dif=%g old-dif=%g.\n", f_in, dblDiff, dblDiff2);
+		TIFFErrorExt(0,"TIFFLib: DoubeToRational()", " Old Method is better for %.18f: new dif=%g old-dif=%g.\n", value_in, dblDiff, dblDiff2);
 		*denom = denom2;
 		*num =   num2;
-	} else TIFFErrorExt(0,"TIFFLib: DoubeToRational()", " New is better for %.18f: new dif=%g old-dif=%g.\n", f_in, dblDiff, dblDiff2);
+	} else TIFFErrorExt(0,"TIFFLib: DoubeToRational()", " New is better for %.18f: new dif=%g old-dif=%g.\n", value_in, dblDiff, dblDiff2);
 #endif
 }  /*-- DoubleToRational() -------------- */
 
