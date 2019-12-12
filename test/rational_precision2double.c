@@ -35,7 +35,7 @@
  */
 
 
-#define FOR_AUTO_TESTING
+//#define FOR_AUTO_TESTING
 #ifdef FOR_AUTO_TESTING
 /*  Only for automake and CMake infrastructure the test should: 
     a.) delete any written testfiles when test passed (otherwise autotest will fail)
@@ -64,6 +64,8 @@
 #include "tif_dir.h"
 #include "tifftest.h"
 
+
+#include "tif_dirwrite.c"
 
 
 int write_test_tiff(TIFF *tif, const char *filenameRead, int blnAllCustomTags);
