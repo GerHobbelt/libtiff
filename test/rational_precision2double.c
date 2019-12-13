@@ -179,6 +179,7 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 	uint32			auxUint32 = 0;
 	long			auxLong = 0;
 	void* pVoid;
+	int				blnIsRational2Double;
 
 	int		i, j;
 	long	nTags;
@@ -595,6 +596,14 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 		/*-- Get array, where EXIF tag fields are defined --*/
 		tFieldArray = _TIFFGetFields();
 		nTags = tFieldArray->count;
+		/*-- Check, if the TiffLibrary is compiled with the new interface with Rational2Double or still uses the old definitions. */
+		/*   tags to check: TIFFTAG_BESTQUALITYSCALE, TIFFTAG_BASELINENOISE, TIFFTAG_BASELINESHARPNESS, */
+		const TIFFField *fip = TIFFFindField(tif, TIFFTAG_BESTQUALITYSCALE, TIFF_ANY); 
+		tSetFieldType = fip->set_field_type;
+		if (tSetFieldType == TIFF_SETGET_DOUBLE)
+			blnIsRational2Double = FALSE;
+		else
+			blnIsRational2Double = TRUE;
 
 		for (i = 0; i < nTags; i++) {
 			tTag = tFieldArray->fields[i].field_tag;
@@ -604,6 +613,7 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 			tFieldBit = tFieldArray->fields[i].field_bit;
 			tFieldName = tFieldArray->fields[i].field_name;
 			pVoid = NULL;
+			auxDblUnion.dbl = 0;
 
 			if (tType == TIFF_RATIONAL && tFieldBit == FIELD_CUSTOM) {
 				/*-- dependent on set_field_type read value --*/
@@ -628,20 +638,29 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 						break;
 					case TIFF_SETGET_DOUBLE:
 						/*-- Unfortunately, TIFF_SETGET_DOUBLE is used for TIFF_RATIONAL but those have to be read with FLOAT !!! */
-						/*   Only TIFFTAG_STONITS is a TIFF_DOUBLE, which has to be read as DOUBLE!! */
+						/*   Only after update with Rational2Double feature, also TIFF_RATIONAL can be read in double precision!!! */
+						/*   Therefore, use a union to avoid overflow in TIFFGetField() return value
+						 *   and depending on version check for the right interface here:
+						 *   - old interface:  correct value should be here a float
+						 *   - new interface:  correct value should be here a double
+						 *   Interface version (old/new) is determined above.
+						 */
+						if (!TIFFGetField(tif, tTag, &auxDblUnion.dbl)) {
+							fprintf(stderr, "Can't read %s\n", tFieldArray->fields[i].field_name);
+							/*goto failure; */
+							break;
+						}
 						if (tType == TIFF_RATIONAL || tType == TIFF_SRATIONAL) {
-							if (!TIFFGetField(tif, tTag, &auxFloat)) {
-								fprintf(stderr, "Can't read %s\n", tFieldArray->fields[i].field_name);
-								/*goto failure; */
-								break;
+							if (blnIsRational2Double) {
+								/* New interface allows also double precision for TIFF_RATIONAL */
+								auxDouble = auxDblUnion.dbl;
 							}
-							auxDouble = auxFloat; /* for comparison below */
+							else {
+								/* Old interface reads TIFF_RATIONAL defined as TIFF_SETGET_DOUBLE alwasy as FLOAT */
+								auxDouble = (double)auxDblUnion.flt1;
+							}
 						} else {
-							if (!TIFFGetField(tif, tTag, &auxDouble)) {
-								fprintf(stderr, "Can't read %s\n", tFieldArray->fields[i].field_name);
-								/*goto failure; */
-								break;
-							}
+							auxDouble = auxDblUnion.dbl;
 						}
 						/* compare read values with written ones */
 						if (tType == TIFF_RATIONAL || tType == TIFF_SRATIONAL) dblDiffLimit = RATIONAL_EPS * auxDoubleArrayW[i]; else dblDiffLimit = 1e-6;
