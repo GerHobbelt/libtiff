@@ -47,6 +47,8 @@
 */
 //#define GOTOFAILURE	goto failure;
 #define GOTOFAILURE
+#define GOTOFAILURE_GPS
+#define GOTOFAILURE_ALL_EXIF	goto failure;
 #else
 #define GOTOFAILURE
 #endif
@@ -91,7 +93,7 @@ int
 main()
 {
 	TIFF			*tif;
-	int				ret;
+	int				ret, ret1, ret2;
 
 	printf("\n\n======== custom_dir_EXIF_231 running ...\n\n");
 	/* --- Test with Classic-TIFF ---*/
@@ -108,7 +110,7 @@ main()
 		return 1;
 	}
 	fprintf(stderr, "-------- Test with ClassicTIFF started  ----------\n");
-	ret = write_test_tiff(tif, filename);
+	ret1 = write_test_tiff(tif, filename);
 
 	/*--- Test with BIG-TIFF ---*/
 	/* delete file, if exists */
@@ -123,7 +125,7 @@ main()
 		return 1;
 	}
 	fprintf(stderr, "\n\n-------- Test with BigTIFF started  ----------\n");
-	ret = write_test_tiff(tif, filenameBigTiff);
+	ret2 = write_test_tiff(tif, filenameBigTiff);
 
 
 
@@ -881,7 +883,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	/* TIFF_RATIONAL, TIFF_SETGET_DOUBLE */
 	if (!TIFFGetField(tif, GPSTAG_ALTITUDE, &auxDblUnion.dbl)) {
 		fprintf(stderr, "Can't read GPSTAG_ALTITUDE\n");
-		GOTOFAILURE
+		GOTOFAILURE_GPS
 	}
 	if (blnIsRational2Double) {
 		/* New interface allows also double precision for TIFF_RATIONAL */
@@ -895,7 +897,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	dblDiff = auxDouble - auxDoubleGPSAltitude;
 	if (fabs(dblDiff) > fabs(dblDiffLimit)) {
 			fprintf(stderr, "Read value of GPSTAG_ALTITUDE %f differs from set value %f\n", auxDouble, auxDoubleGPSAltitude);
-			GOTOFAILURE
+			GOTOFAILURE_GPS
 	}
 
 	/*-- TimeStamp is only hh:mm:ss. See also DateTime string  3, TIFF_RATIONAL, TIFF_SETGET_C0_DOUBLE */
@@ -916,7 +918,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 		dblDiff = auxDoubleArray[i] - auxDoubleArrayGPSTime[i];
 		if (fabs(dblDiff) > fabs(dblDiffLimit)) {
 			fprintf(stderr, "Read value %d of GPSTAG_TIMESTAMP %f differs from set value %f\n", i, auxDoubleArray[i], auxDoubleArrayGPS2[i]);
-			GOTOFAILURE
+			GOTOFAILURE_GPS
 		}
 	}
 
@@ -924,13 +926,13 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	retCode = TIFFGetField(tif, GPSTAG_DIFFERENTIAL, &auxShort);
 	if (auxShort != auxShortArrayW[5]) {
 		fprintf(stderr, "Read value of GPSTAG_DIFFERENTIAL %d differs from set value %d\n", auxShort, auxShortArrayW[5]);
-		GOTOFAILURE
+		GOTOFAILURE_GPS
 	}
 
 	/*-- GPSHPOSITIONINGERROR - new tag for EXIF 2.31 --*/
 	if (!TIFFGetField(tif, GPSTAG_GPSHPOSITIONINGERROR, &auxDblUnion.dbl)) {
 		fprintf(stderr, "Can't read GPSTAG_GPSHPOSITIONINGERROR\n");
-		GOTOFAILURE
+		GOTOFAILURE_GPS
 	}
 	if (blnIsRational2Double) {
 		/* New interface allows also double precision for TIFF_RATIONAL */
@@ -945,7 +947,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	dblDiff = auxDouble - auxFloat;
 	if (fabs(dblDiff) > fabs(dblDiffLimit)) {
 		fprintf(stderr, "Read value of GPSTAG_GPSHPOSITIONINGERROR %f differs from set value %f\n", auxDouble, auxFloat);
-		GOTOFAILURE
+		GOTOFAILURE_GPS
 	}
 
  /*===============  END reading GPS tags ==========================*/
@@ -999,7 +1001,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 				/* Either the stringlength is defined as a fixed length in .field_writecount or a NULL-terminated string is used. */
 				if (!TIFFGetField( tif, tTag, &pAscii)) {
 					fprintf (stderr, "Can't read %s\n", tFieldArray->fields[i].field_name);
-					GOTOFAILURE
+					GOTOFAILURE_ALL_EXIF
 					break;
 				}
 				/* Save string from temporary buffer and compare with written string. */
@@ -1008,7 +1010,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 				retCode2 = strncmp(auxCharArray, auxTextArrayW[i], auxLong);
 				if (retCode2 != 0) {
 					fprintf (stderr, "%d:Read value of %s %s differs from set value %s\n", i, tFieldName, auxCharArray, auxTextArrayW[i]);
-					GOTOFAILURE
+					GOTOFAILURE_ALL_EXIF
 				}
 				break;
 				/*-- For reading, the parameter size is to be observed !! */
@@ -1016,7 +1018,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 			case TIFF_SETGET_SINT8:
 				if (!TIFFGetField( tif, tTag, &auxChar)) {
 					fprintf (stderr, "Can't read %s\n", tFieldArray->fields[i].field_name);
-					GOTOFAILURE
+					GOTOFAILURE_ALL_EXIF
 					break;
 				}
 				/* compare read values with written ones */
@@ -1029,7 +1031,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 			case TIFF_SETGET_SINT16:
 				if (!TIFFGetField( tif, tTag, &auxShort)) {
 					fprintf (stderr, "Can't read %s\n", tFieldArray->fields[i].field_name);
-					GOTOFAILURE
+					GOTOFAILURE_ALL_EXIF
 					break;
 				}
 				/* compare read values with written ones */
@@ -1044,7 +1046,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 			case TIFF_SETGET_INT:
 				if (!TIFFGetField( tif, tTag, &auxUint32)) {
 					fprintf (stderr, "Can't read %s\n", tFieldArray->fields[i].field_name);
-					GOTOFAILURE
+					GOTOFAILURE_ALL_EXIF
 					break;
 				}
 				/* compare read values with written ones */
@@ -1056,7 +1058,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 			case TIFF_SETGET_FLOAT:
 				if (!TIFFGetField( tif, tTag, &auxFloat)) {
 					fprintf (stderr, "Can't read %s\n", tFieldArray->fields[i].field_name);
-					GOTOFAILURE
+					GOTOFAILURE_ALL_EXIF
 					break;
 				}
 				/* compare read values with written ones */
@@ -1069,7 +1071,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 					*/
 					if (!(tTag == EXIFTAG_SUBJECTDISTANCE && auxFloat == -1.0)) {
 						fprintf (stderr, "%d:Read value of %s %f differs from set value %f\n", i, tFieldName, auxFloat, auxDoubleArrayW[i]);
-						GOTOFAILURE
+						GOTOFAILURE_ALL_EXIF
 					}
 				}
 				break;
@@ -1085,7 +1087,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 				 */
 				if (!TIFFGetField(tif, tTag, &auxDblUnion.dbl)) {
 					fprintf(stderr, "Can't read %s\n", tFieldArray->fields[i].field_name);
-					GOTOFAILURE
+					GOTOFAILURE_ALL_EXIF
 					break;
 				}
 				if (tType == TIFF_RATIONAL || tType == TIFF_SRATIONAL) {
@@ -1108,7 +1110,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 					/*--: EXIFTAG_SUBJECTDISTANCE: LibTiff returns value of "-1.0" if numerator equals 4294967295 (0xFFFFFFFF) to indicate infinite distance! */
 					if (!(tTag == EXIFTAG_SUBJECTDISTANCE && auxDouble == -1.0)) {
 						fprintf (stderr, "%d:Read value of %s %f differs from set value %f\n", i, tFieldName, auxDouble, auxDoubleArrayW[i]);
-						GOTOFAILURE
+						GOTOFAILURE_ALL_EXIF
 					}
 				}
 				break;
@@ -1131,7 +1133,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 						/* fixed array with needed arraysize defined in .field_writecount */
 						if (!TIFFGetField( tif, tTag, &pVoidArray)) {
 							fprintf (stderr, "Can't read %s\n", tFieldArray->fields[i].field_name);
-							GOTOFAILURE
+							GOTOFAILURE_ALL_EXIF
 							break;
 						}	
 						/* set tWriteCount to number of read samples for next steps */
@@ -1141,7 +1143,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 						/* Dependent on Cxx, the count parameter is char, short or long. Therefore use unionLong! */
 						if (!TIFFGetField( tif, tTag, &unionLong, &pVoidArray)) {
 							fprintf (stderr, "Can't read %s\n", tFieldArray->fields[i].field_name);
-							GOTOFAILURE
+							GOTOFAILURE_ALL_EXIF
 							break;
 						}	
 						/* set tWriteCount to number of read samples for next steps */
@@ -1157,7 +1159,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 							if (fabs(dblDiff) > fabs(dblDiffLimit)) {
 							/*if (auxFloatArray[j] != (float)auxFloatArrayW[i+j]) { */
 								fprintf (stderr, "Read value %d of %s #%d %f differs from set value %f\n", i, tFieldName, j, auxFloatArray[j], auxFloatArrayW[i+j]);
-								GOTOFAILURE
+								GOTOFAILURE_ALL_EXIF
 							}
 						}
 					} else {
@@ -1169,7 +1171,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 							if (fabs(dblDiff) > fabs(dblDiffLimit)) {
 							/*if (auxDoubleArray[j] != auxDoubleArrayW[i+j]) { */
 								fprintf (stderr, "Read value %d of %s #%d %f differs from set value %f\n", i, tFieldName, j, auxDoubleArray[j], auxDoubleArrayW[i+j]);
-								GOTOFAILURE
+								GOTOFAILURE_ALL_EXIF
 							}
 						}
 					}
@@ -1208,7 +1210,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 						/* fixed array with needed arraysize defined in .field_writecount */
 						if (!TIFFGetField( tif, tTag, &pVoidArray)) {
 							fprintf (stderr, "Can't read %s\n", tFieldArray->fields[i].field_name);
-							GOTOFAILURE
+							GOTOFAILURE_ALL_EXIF
 							break;
 						}	
 						/* set tWriteCount to number of read samples for next steps */
@@ -1218,7 +1220,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 						/* for test, use always arraysize of VARIABLE_ARRAY_SIZE */
 						if (!TIFFGetField( tif, tTag, &unionLong, &pVoidArray)) {
 							fprintf (stderr, "Can't read %s\n", tFieldArray->fields[i].field_name);
-							GOTOFAILURE
+							GOTOFAILURE_ALL_EXIF
 							break;
 						}	
 						/* set tWriteCount to number of read samples for next steps */
@@ -1235,12 +1237,12 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 								/*-- Use exifVersion[] instead of auxCharArrayW[] for differently set EXIFVERSION tag */
 								if (auxCharArray[j] != exifVersion[j]) {
 									fprintf(stderr, "Read value %d of %s #%d %d differs from set value %d\n", i, tFieldName, j, auxCharArray[j], auxCharArrayW[i + j]);
-									GOTOFAILURE
+									GOTOFAILURE_ALL_EXIF
 								}
 							} else {
 								if (auxCharArray[j] != auxCharArrayW[i + j]) {
 									fprintf(stderr, "Read value %d of %s #%d %d differs from set value %d\n", i, tFieldName, j, auxCharArray[j], auxCharArrayW[i + j]);
-									GOTOFAILURE
+									GOTOFAILURE_ALL_EXIF
 								}
 							}
 						}
@@ -1252,7 +1254,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 						for (j=0; j<auxLong; j++) {
 							if (auxShortArray[j] != auxShortArrayW[i+j]) {
 								fprintf (stderr, "Read value %d of %s #%d %d differs from set value %d\n", i, tFieldName, j, auxShortArray[j], auxShortArrayW[i+j]);
-								GOTOFAILURE
+								GOTOFAILURE_ALL_EXIF
 							}
 						}
 					} else if (tSetFieldType == TIFF_SETGET_C0_UINT32 || tSetFieldType == TIFF_SETGET_C0_SINT32 || 
@@ -1263,7 +1265,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 						for (j=0; j<auxLong; j++) {
 							if (auxLongArray[j] != auxLongArrayW[i+j]) {
 								fprintf (stderr, "Read value %d of %s #%d %ld differs from set value %ld\n", i, tFieldName, j, auxLongArray[j], auxLongArrayW[i+j]);
-								GOTOFAILURE
+								GOTOFAILURE_ALL_EXIF
 							}
 						}
 					} else {
