@@ -883,7 +883,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	/* TIFF_RATIONAL, TIFF_SETGET_DOUBLE */
 	if (!TIFFGetField(tif, GPSTAG_ALTITUDE, &auxDblUnion.dbl)) {
 		fprintf(stderr, "Can't read GPSTAG_ALTITUDE\n");
-		GOTOFAILURE_GPS
+		/*GOTOFAILURE_GPS*/
 	}
 	if (blnIsRational2Double) {
 		/* New interface allows also double precision for TIFF_RATIONAL */
@@ -932,7 +932,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	/*-- GPSHPOSITIONINGERROR - new tag for EXIF 2.31 --*/
 	if (!TIFFGetField(tif, GPSTAG_GPSHPOSITIONINGERROR, &auxDblUnion.dbl)) {
 		fprintf(stderr, "Can't read GPSTAG_GPSHPOSITIONINGERROR\n");
-		GOTOFAILURE_GPS
+		/*GOTOFAILURE_GPS*/
 	}
 	if (blnIsRational2Double) {
 		/* New interface allows also double precision for TIFF_RATIONAL */
