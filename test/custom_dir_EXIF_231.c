@@ -111,6 +111,7 @@ main()
 	}
 	fprintf(stderr, "-------- Test with ClassicTIFF started  ----------\n");
 	ret1 = write_test_tiff(tif, filename);
+	return;
 
 	/*--- Test with BIG-TIFF ---*/
 	/* delete file, if exists */
