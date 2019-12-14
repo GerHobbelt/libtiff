@@ -111,7 +111,8 @@ main()
 	}
 	fprintf(stderr, "-------- Test with ClassicTIFF started  ----------\n");
 	ret1 = write_test_tiff(tif, filename);
-	return;
+	return(4);
+	if (ret1 > 0) return(ret1);
 
 	/*--- Test with BIG-TIFF ---*/
 	/* delete file, if exists */
@@ -128,7 +129,7 @@ main()
 	fprintf(stderr, "\n\n-------- Test with BigTIFF started  ----------\n");
 	ret2 = write_test_tiff(tif, filenameBigTiff);
 
-
+	return(ret2);
 
 } /* main() */
 
@@ -898,7 +899,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	dblDiff = auxDouble - auxDoubleGPSAltitude;
 	if (fabs(dblDiff) > fabs(dblDiffLimit)) {
 			fprintf(stderr, "Read value of GPSTAG_ALTITUDE %f differs from set value %f\n", auxDouble, auxDoubleGPSAltitude);
-			GOTOFAILURE_GPS
+			/*GOTOFAILURE_GPS*/
 	}
 
 	/*-- TimeStamp is only hh:mm:ss. See also DateTime string  3, TIFF_RATIONAL, TIFF_SETGET_C0_DOUBLE */
