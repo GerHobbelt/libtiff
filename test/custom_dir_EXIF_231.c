@@ -95,7 +95,6 @@ main()
 	TIFF			*tif;
 	int				ret, ret1, ret2;
 
-	printf("\n\n======== custom_dir_EXIF_231 running ...\n\n");
 	/* --- Test with Classic-TIFF ---*/
 	/* delete file, if exists */
 	ret = unlink(filename);
@@ -111,7 +110,7 @@ main()
 	}
 	fprintf(stderr, "-------- Test with ClassicTIFF started  ----------\n");
 	ret1 = write_test_tiff(tif, filename);
-	return(4);
+
 	if (ret1 > 0) return(ret1);
 
 	/*--- Test with BIG-TIFF ---*/
@@ -129,7 +128,7 @@ main()
 	fprintf(stderr, "\n\n-------- Test with BigTIFF started  ----------\n");
 	ret2 = write_test_tiff(tif, filenameBigTiff);
 
-	return(ret2);
+	if (ret2 > 0) return(ret2 + 10); else return(ret2);
 
 } /* main() */
 
@@ -329,11 +328,12 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	 */
 	fip = TIFFFindField(tif, TIFFTAG_BESTQUALITYSCALE, TIFF_ANY);
 	tSetFieldType = fip->set_field_type;
-	if (tSetFieldType == TIFF_SETGET_DOUBLE)
+	if (tSetFieldType == TIFF_SETGET_DOUBLE) {
 		blnIsRational2Double = FALSE;
-	else
+	} else {
 		blnIsRational2Double = TRUE;
-
+		fprintf(stderr, "-- Rational2Double detected --\n");
+	}
 
 /*================== Write GPS and EXIF tags =====================*/
 
@@ -843,7 +843,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 		for (i=0; i<3; i++) auxDoubleArray[i] = (double)auxFloatArray[i];
 	} else {
 		/* Rational2Double interface for GPSTAG reads double array */
-		memset(auxDoubleArray, 0, sizeof(auxFloatArray));
+		memset(auxDoubleArray, 0, sizeof(auxDoubleArray));
 		memcpy(auxDoubleArray, pVoidArray, 3 * sizeof(double));
 	}
 	for (i=0; i<3; i++) {
@@ -871,7 +871,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 		for (i = 0; i < 3; i++) auxDoubleArray[i] = (double)auxFloatArray[i];
 	} else {
 		/* Rational2Double interface for GPSTAG reads double array */
-		memset(auxDoubleArray, 0, sizeof(auxFloatArray));
+		memset(auxDoubleArray, 0, sizeof(auxDoubleArray));
 		memcpy(auxDoubleArray, pVoidArray, 3 * sizeof(double));
 	}
 	for (i = 0; i < 3; i++) {
@@ -912,7 +912,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 		for (i = 0; i < 3; i++) auxDoubleArray[i] = (double)auxFloatArray[i];
 	} else {
 		/* Rational2Double interface for GPSTAG reads double array */
-		memset(auxDoubleArray, 0, sizeof(auxFloatArray));
+		memset(auxDoubleArray, 0, sizeof(auxDoubleArray));
 		memcpy(auxDoubleArray, pVoidArray, 3 * sizeof(double));
 	}
 	for (i = 0; i < 3; i++) {
