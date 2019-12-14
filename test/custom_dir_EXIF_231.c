@@ -47,7 +47,7 @@
 */
 //#define GOTOFAILURE	goto failure;
 #define GOTOFAILURE	goto failure;
-#define GOTOFAILURE_GPS
+#define GOTOFAILURE_GPS	goto failure;
 #define GOTOFAILURE_ALL_EXIF	goto failure;
 #else
 #define GOTOFAILURE
