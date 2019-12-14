@@ -92,11 +92,10 @@ main()
 	int				ret;
 	int				errorNo;
 
-
+	printf("\n\n======== custom_dir_EXIF_231 running ...\n\n");
 	/* --- Test with Classic-TIFF ---*/
 	/* delete file, if exists */
 	ret = unlink(filename);
-	errorNo = errno;
 	if (ret != 0 && errno != ENOENT) {
 		fprintf(stderr, "Can't delete test TIFF file %s.\n", filename);
 	}
@@ -147,7 +146,6 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	unsigned char	exifVersion[4] = {'0','2','3','1'};		/* EXIF 2.31 version is 4 characters of a string! */
 	unsigned char	gpsVersion[4] = {2,2,0,1};		/* GPS Version is 4 numbers! */
 	unsigned char   *pGpsVersion;
-	char			auxStr[200];
 	float			auxFloat = 0.0f;
 	double			auxDouble = 0.0;
 	char			auxChar = 0;
@@ -203,7 +201,6 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	} auxDblUnion;
 	void		*pVoidArray;
 	float		*pFloatArray;
-	double		*pDoubleArray;
 	char        *pAscii;
 	char		auxCharArray[2*STRSIZE];
 	short		auxShortArray[2*N_SIZE];
@@ -1024,7 +1021,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 				/* compare read values with written ones */
 				auxLong = auxChar;
 				if (auxLong != (char)auxLongArrayW[i]) {
-					fprintf (stderr, "%d:Read value of %s %d differs from set value %d\n", i, tFieldName, auxLong, auxLongArrayW[i]);
+					fprintf (stderr, "%d:Read value of %s %ld differs from set value %ld\n", i, tFieldName, auxLong, auxLongArrayW[i]);
 				}
 				break;
 			case TIFF_SETGET_UINT16:
@@ -1037,7 +1034,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 				/* compare read values with written ones */
 				auxLong = auxShort;	
 				if (auxLong != (short)auxLongArrayW[i]) {
-					fprintf (stderr, "%d:Read value of %s %d differs from set value %d\n", i, tFieldName, auxLong, auxLongArrayW[i]);
+					fprintf (stderr, "%d:Read value of %s %ld differs from set value %ld\n", i, tFieldName, auxLong, auxLongArrayW[i]);
 				}
 				break;
 			case TIFF_SETGET_UINT32:
@@ -1052,7 +1049,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 				/* compare read values with written ones */
 				auxLong = auxUint32;
 				if (auxLong != auxLongArrayW[i]) {
-					fprintf (stderr, "%d:Read value of %s %d differs from set value %d\n", i, tFieldName, auxLong, auxLongArrayW[i]);
+					fprintf (stderr, "%d:Read value of %s %ld differs from set value %ld\n", i, tFieldName, auxLong, auxLongArrayW[i]);
 				}
 				break;
 			case TIFF_SETGET_FLOAT:
@@ -1264,7 +1261,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 						/* Compare and check values  */
 						for (j=0; j<auxLong; j++) {
 							if (auxLongArray[j] != auxLongArrayW[i+j]) {
-								fprintf (stderr, "Read value %d of %s #%d %d differs from set value %d\n", i, tFieldName, j, auxLongArray[j], auxLongArrayW[i+j]);
+								fprintf (stderr, "Read value %d of %s #%d %ld differs from set value %ld\n", i, tFieldName, j, auxLongArray[j], auxLongArrayW[i+j]);
 								GOTOFAILURE
 							}
 						}
