@@ -45,14 +45,16 @@
 	a.) delete any written testfiles when test passed (otherwise autotest will fail)
 	b.) goto failure, if any failure is detected, which is not necessary when test is initiated manually for debugging
 */
-#define GOTOFAILURE	goto failure;
+//#define GOTOFAILURE	goto failure;
+#define GOTOFAILURE
 #else
 #define GOTOFAILURE
 #endif
 
 
-
+#ifdef _MSC_VER
 #pragma warning( disable : 4101)
+#endif
 
 #include "tif_config.h"
 #include <stdio.h>
@@ -90,7 +92,6 @@ main()
 {
 	TIFF			*tif;
 	int				ret;
-	int				errorNo;
 
 	printf("\n\n======== custom_dir_EXIF_231 running ...\n\n");
 	/* --- Test with Classic-TIFF ---*/
@@ -1298,9 +1299,6 @@ failure:
 	 * Do not remove the file for further manual investigation.
 	 */
 	TIFFClose(tif);
-#ifdef FOR_AUTO_TESTING
-	unlink(filenameRead);
-#endif
 	fprintf(stderr, "-------- Test finished with FAILURE --------\n");
 	return 1;
 }
