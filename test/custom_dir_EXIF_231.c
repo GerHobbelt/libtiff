@@ -356,7 +356,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 
 #ifndef WRITEPIXELLAST
 	/*-- Write dummy pixel data. --*/
-	if (!TIFFWriteScanline(tif, buf, 0, 0) < 0) {
+	if (TIFFWriteScanline(tif, buf, 0, 0) < 0) {
 		fprintf (stderr, "Can't write image data.\n");
 		goto failure;
 	}
@@ -720,7 +720,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 
 #ifdef WRITEPIXELLAST
 	/*-- Write dummy pixel data. --*/
-	if (!TIFFWriteScanline(tif, buf, 0, 0) < 0) {
+	if (TIFFWriteScanline(tif, buf, 0, 0) < 0) {
 		fprintf (stderr, "Can't write image data.\n");
 		goto failure;
 	}
@@ -1298,5 +1298,9 @@ failure:
 	 * Do not remove the file for further manual investigation.
 	 */
 	TIFFClose(tif);
+#ifdef FOR_AUTO_TESTING
+	unlink(filenameRead);
+#endif
+	fprintf(stderr, "-------- Test finished with FAILURE --------\n");
 	return 1;
 }
