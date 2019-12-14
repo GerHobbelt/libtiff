@@ -39,7 +39,7 @@
  -------------*/
 
 
- //#define FOR_AUTO_TESTING
+#define FOR_AUTO_TESTING
 #ifdef FOR_AUTO_TESTING
 /*  Only for automake and CMake infrastructure the test should:
 	a.) delete any written testfiles when test passed (otherwise autotest will fail)
@@ -166,6 +166,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	short					tWriteCount;
 	TIFFSetGetFieldType		tSetFieldType;
 	char					*tFieldName;
+	const TIFFField			*fip;
 
 	char	blnFillGPSManually = 1;
 
@@ -181,7 +182,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	double			auxDoubleArrayW[N_SIZE];
 	char			auxTextArrayW[N_SIZE][STRSIZE];
 	double			auxDoubleArrayGPS1[3] = {1.0/7.0, 61.23456789012345, 62.3};
-	double			auxDoubleArrayGPS2[3] = {1.0/19.0, 88.34434, 15.0};
+	double			auxDoubleArrayGPS2[3] = {1.0/19.0, 88.34434, 15.12345678901234567890};
 	double			auxDoubleArrayGPSTime[3] = {22.0, 17.0, 15.3456789};
 	double			auxDoubleGPSAltitude     =  3456.7;
 	double			auxDoubleGPSDirection    =  63.7;
@@ -319,13 +320,26 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	}
 #endif	/* -- ADDITIONAL_TAGS -- */
 
+/*================== Rational2Double Interface Check =====================*/
+	/*-- Check, if the TiffLibrary is compiled with the new interface with Rational2Double or still uses the old definitions. 
+	     For that, TIFF_RATIONAL tags with FIELD_CUSTOM are changed from TIFF_SETGET_DOUBLE to TIFF_SETGET_FLOAT for the 
+	     new interface in order to prevent the old reading behaviour.
+	 */
+	fip = TIFFFindField(tif, TIFFTAG_BESTQUALITYSCALE, TIFF_ANY);
+	tSetFieldType = fip->set_field_type;
+	if (tSetFieldType == TIFF_SETGET_DOUBLE)
+		blnIsRational2Double = FALSE;
+	else
+		blnIsRational2Double = TRUE;
+
+
 /*================== Write GPS and EXIF tags =====================*/
 
 	/*-- Set dummy EXIF/GPS tag in original tiff-structure in order to reserve space for final dir_offset value, */
 	/*   which is properly written at the end.  */
 	dir_offset = 0;  /* Zero, in case no Custom-IFD is written */
 
-//#define WRITE_GPS_TAGS
+#define WRITE_GPS_TAGS
 #ifdef WRITE_GPS_TAGS
 	if (!TIFFSetField(tif, TIFFTAG_GPSIFD, dir_offset )) {
 		fprintf (stderr, "Can't write TIFFTAG_GPSIFD\n" );
@@ -382,20 +396,41 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 		 *   Single Rational values do not matter for writing, because TIFFSetField() uses va_arg() which performs "variables promotion" from type float to type double!
 		 *   However, for reading of Rational values ONLY float-variables are allowed - in contrary to the SETGET_DOUBLE specification at tiffFields[] in tif_dirinfo.c.
 		 */
-		 -- to be ReCoded after merge of Rational2Double with EXIF_321 upgrade  !!  
-		for (j=0; j<3; j++) auxFloatArray[j] = (float)auxDoubleArrayGPS1[j];
-		if (!TIFFSetField( tif, GPSTAG_LATITUDE, auxFloatArray)) {
-			fprintf (stderr, "Can't write GPSTAG_LATITUDE\n" );
-			goto failure;
-		}		
+		/*-- ATTENTION: After the upgrade with Rational2Double, the GPSTAG values are defined as double precision
+		 *              and need to be written and also read in double precision!
+		 *              In order to maintain this code for both cases, it is checked above if the TiffLibrary is
+		 *              compiled with the new interface with Rational2Double or still uses the old definitions,
+		 *              by setting blnIsRational2Double above.
+		 */
+		if (!blnIsRational2Double) {
+			for (j = 0; j < 3; j++) auxFloatArray[j] = (float)auxDoubleArrayGPS1[j];
+			if (!TIFFSetField(tif, GPSTAG_LATITUDE, auxFloatArray)) {
+				fprintf(stderr, "Can't write GPSTAG_LATITUDE\n");
+				goto failure;
+			}
+		} else {
+			/* Rational2Double interface for GPSTAG */
+			if (!TIFFSetField(tif, GPSTAG_LATITUDE, auxDoubleArrayGPS1)) {
+				fprintf(stderr, "Can't write GPSTAG_LATITUDE\n");
+				goto failure;
+			}
+		}
 		if (!TIFFSetField( tif, GPSTAG_LONGITUDEREF, "W\0")) {
 			fprintf (stderr, "Can't write GPSTAG_LONGITUDEREF\n" );
 			goto failure;
 		}
-		for (j=0; j<3; j++) auxFloatArray[j] = (float)auxDoubleArrayGPS2[j];
-		if (!TIFFSetField( tif, GPSTAG_LONGITUDE, auxFloatArray)) {
-			fprintf (stderr, "Can't write GPSTAG_LONGITUDE\n" );
-			goto failure;
+		if (!blnIsRational2Double) {
+			for (j=0; j<3; j++) auxFloatArray[j] = (float)auxDoubleArrayGPS2[j];
+			if (!TIFFSetField( tif, GPSTAG_LONGITUDE, auxFloatArray)) {
+				fprintf (stderr, "Can't write GPSTAG_LONGITUDE\n" );
+				goto failure;
+			}
+		} else {
+			/* Rational2Double interface for GPSTAG */
+			if (!TIFFSetField(tif, GPSTAG_LONGITUDE, auxDoubleArrayGPS2)) {
+				fprintf(stderr, "Can't write GPSTAG_LATITUDE\n");
+				goto failure;
+			}
 		}
 		/*-- AltitudeRef: default is above sea level!! */
 		if (!TIFFSetField( tif, GPSTAG_ALTITUDEREF, 0)) {
@@ -441,6 +476,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 			goto failure;
 		}
 
+		/* GPSTAG_GPSHPOSITIONINGERROR	, 1, 1,	TIFF_RATIONAL	, 0, 	TIFF_SETGET_DOUBLE  but here written in float-precision */
 #define GPSHPOSITIONINGERROR_VAL 0.369
 		auxFloat = (float)GPSHPOSITIONINGERROR_VAL;
 		if (!TIFFSetField( tif, GPSTAG_GPSHPOSITIONINGERROR, auxFloat)) {
@@ -770,8 +806,6 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 
 	/*-- Now read some parameters from GPS-directory --*/
 
-	--to be ReCoded after merge of Rational2Double with EXIF_321 upgrade  !!
-		
 	/*-- Fixed Array: GPS-Version is a fixed array (of 4 characters) */
 	retCode = TIFFGetField(tif, GPSTAG_VERSIONID, &pGpsVersion);
 	if (!retCode) { fprintf(stderr, "Can't read %s\n", "GPSTAG_VERSIONID"); }
@@ -791,30 +825,129 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 		fprintf (stderr, "Read value %d of GPSTAG_LATITUDEREF %s differs from set value %s\n", i, "N", pAscii);
 	}
 
-	/*-- Fixed Array: Latitude is an array of 3 Float-values. TIFFGetField() returns a pointer to a temporary float-array. */
+	/*-- Fixed Array: Latitude is an array of 3 Rational-values. TIFFGetField() returns a pointer to a temporary float-/double-array. */
+	/*-- ATTENTION: After the upgrade with Rational2Double, the GPSTAG values are defined as double precision 
+	 *              and need to be written and also read in double precision!
+	 *              In order to maintain this code for both cases, it is checked above if the TiffLibrary is
+	 *              compiled with the new interface with Rational2Double or still uses the old definitions,
+	 *              by setting blnIsRational2Double above.
+	 */
 	retCode = TIFFGetField(tif, GPSTAG_LATITUDE, &pVoidArray);
-	/* Reset arrays for debugging purpose first */
-	memset(auxFloatArray, 0, sizeof(auxFloatArray));
-	memcpy(auxFloatArray, pVoidArray, 3*sizeof(float));
-	/*or step by step: for (i=0; i<3; i++) auxFloatArray[i] = ((float *)pVoidArray)[i]; */
+	if (!blnIsRational2Double) {
+		/* Reset arrays for debugging purpose first */
+		memset(auxFloatArray, 0, sizeof(auxFloatArray));
+		memcpy(auxFloatArray, pVoidArray, 3*sizeof(float));
+		/* for comparison copy to doubleArray */
+		for (i=0; i<3; i++) auxDoubleArray[i] = (double)auxFloatArray[i];
+	} else {
+		/* Rational2Double interface for GPSTAG reads double array */
+		memset(auxDoubleArray, 0, sizeof(auxFloatArray));
+		memcpy(auxDoubleArray, pVoidArray, 3 * sizeof(double));
+	}
 	for (i=0; i<3; i++) {
 		dblDiffLimit = RATIONAL_EPS*auxDoubleArrayGPS1[i];
-		dblDiff = auxFloatArray[i] - auxDoubleArrayGPS1[i];
+		dblDiff = auxDoubleArray[i] - auxDoubleArrayGPS1[i];
 		if (fabs(dblDiff) > fabs(dblDiffLimit)) {
-			fprintf (stderr, "Read value %d of GPSTAG_LATITUDE %f differs from set value %f\n", i, auxFloatArray[i], auxDoubleArrayGPS1[i]);
+			fprintf (stderr, "Read value %d of GPSTAG_LATITUDE %f differs from set value %f\n", i, auxDoubleArray[i], auxDoubleArrayGPS1[i]);
 		}
 	}
 
-		/*-- GPSTAG_DIFFERENTIAL	, 1, 1,	TIFF_SHORT	, 0, 	TIFF_SETGET_UINT16 */
+	/*-- LONGITUDEREF is a fixed String of one character plus ending zero. */
+	retCode = TIFFGetField(tif, GPSTAG_LONGITUDEREF, &pAscii);
+	if (!retCode) { fprintf(stderr, "Can't read %s\n", "GPSTAG_LONGITUDEREF"); }
+	retCode2 = strncmp("W", pAscii, 2);
+	if (retCode2 != 0) {
+		fprintf(stderr, "Read value %d of GPSTAG_LONGITUDEREF %s differs from set value %s\n", i, "W", pAscii);
+	}
+
+	retCode = TIFFGetField(tif, GPSTAG_LONGITUDE, &pVoidArray);
+	if (!blnIsRational2Double) {
+		/* Reset arrays for debugging purpose first */
+		memset(auxFloatArray, 0, sizeof(auxFloatArray));
+		memcpy(auxFloatArray, pVoidArray, 3 * sizeof(float));
+		/* for comparison copy to doubleArray */
+		for (i = 0; i < 3; i++) auxDoubleArray[i] = (double)auxFloatArray[i];
+	} else {
+		/* Rational2Double interface for GPSTAG reads double array */
+		memset(auxDoubleArray, 0, sizeof(auxFloatArray));
+		memcpy(auxDoubleArray, pVoidArray, 3 * sizeof(double));
+	}
+	for (i = 0; i < 3; i++) {
+		dblDiffLimit = RATIONAL_EPS * auxDoubleArrayGPS2[i];
+		dblDiff = auxDoubleArray[i] - auxDoubleArrayGPS2[i];
+		if (fabs(dblDiff) > fabs(dblDiffLimit)) {
+			fprintf(stderr, "Read value %d of GPSTAG_LONGITUDE %f differs from set value %f\n", i, auxDoubleArray[i], auxDoubleArrayGPS2[i]);
+		}
+	}
+
+	/* TIFF_RATIONAL, TIFF_SETGET_DOUBLE */
+	if (!TIFFGetField(tif, GPSTAG_ALTITUDE, &auxDblUnion.dbl)) {
+		fprintf(stderr, "Can't read GPSTAG_ALTITUDE\n");
+		GOTOFAILURE
+	}
+	if (blnIsRational2Double) {
+		/* New interface allows also double precision for TIFF_RATIONAL */
+		auxDouble = auxDblUnion.dbl;
+	} else {
+		/* Old interface reads TIFF_RATIONAL defined as TIFF_SETGET_DOUBLE alwasy as FLOAT */
+		auxDouble = (double)auxDblUnion.flt1;
+	}
+	/* compare read values with written ones */
+	dblDiffLimit = RATIONAL_EPS * auxDoubleGPSAltitude;
+	dblDiff = auxDouble - auxDoubleGPSAltitude;
+	if (fabs(dblDiff) > fabs(dblDiffLimit)) {
+			fprintf(stderr, "Read value of GPSTAG_ALTITUDE %f differs from set value %f\n", auxDouble, auxDoubleGPSAltitude);
+			GOTOFAILURE
+	}
+
+	/*-- TimeStamp is only hh:mm:ss. See also DateTime string  3, TIFF_RATIONAL, TIFF_SETGET_C0_DOUBLE */
+	retCode = TIFFGetField(tif, GPSTAG_TIMESTAMP, &pVoidArray);
+	if (!blnIsRational2Double) {
+		/* Reset arrays for debugging purpose first */
+		memset(auxFloatArray, 0, sizeof(auxFloatArray));
+		memcpy(auxFloatArray, pVoidArray, 3 * sizeof(float));
+		/* for comparison copy to doubleArray */
+		for (i = 0; i < 3; i++) auxDoubleArray[i] = (double)auxFloatArray[i];
+	} else {
+		/* Rational2Double interface for GPSTAG reads double array */
+		memset(auxDoubleArray, 0, sizeof(auxFloatArray));
+		memcpy(auxDoubleArray, pVoidArray, 3 * sizeof(double));
+	}
+	for (i = 0; i < 3; i++) {
+		dblDiffLimit = RATIONAL_EPS * auxDoubleArrayGPSTime[i];
+		dblDiff = auxDoubleArray[i] - auxDoubleArrayGPSTime[i];
+		if (fabs(dblDiff) > fabs(dblDiffLimit)) {
+			fprintf(stderr, "Read value %d of GPSTAG_TIMESTAMP %f differs from set value %f\n", i, auxDoubleArray[i], auxDoubleArrayGPS2[i]);
+			GOTOFAILURE
+		}
+	}
+
+	/*-- GPSTAG_DIFFERENTIAL	, 1, 1,	TIFF_SHORT	, 0, 	TIFF_SETGET_UINT16 */
 	retCode = TIFFGetField(tif, GPSTAG_DIFFERENTIAL, &auxShort);
 	if (auxShort != auxShortArrayW[5]) {
-		fprintf (stderr, "Read value of GPSTAG_DIFFERENTIAL %d differs from set value %d\n", auxShort, auxShortArrayW[5]);
+		fprintf(stderr, "Read value of GPSTAG_DIFFERENTIAL %d differs from set value %d\n", auxShort, auxShortArrayW[5]);
+		GOTOFAILURE
 	}
 
 	/*-- GPSHPOSITIONINGERROR - new tag for EXIF 2.31 --*/
-	retCode = TIFFGetField(tif, GPSTAG_GPSHPOSITIONINGERROR, &auxFloat);
-	if (auxFloat != (float)GPSHPOSITIONINGERROR_VAL) {
-		fprintf (stderr, "Read value of GPSTAG_GPSHPOSITIONINGERROR %f differs from set value %f\n", auxFloat, GPSHPOSITIONINGERROR_VAL);
+	if (!TIFFGetField(tif, GPSTAG_GPSHPOSITIONINGERROR, &auxDblUnion.dbl)) {
+		fprintf(stderr, "Can't read GPSTAG_GPSHPOSITIONINGERROR\n");
+		GOTOFAILURE
+	}
+	if (blnIsRational2Double) {
+		/* New interface allows also double precision for TIFF_RATIONAL */
+		auxDouble = auxDblUnion.dbl;
+	} else {
+		/* Old interface reads TIFF_RATIONAL defined as TIFF_SETGET_DOUBLE alwasy as FLOAT */
+		auxDouble = (double)auxDblUnion.flt1;
+	}
+	/* compare read values with written ones */
+	auxFloat = (float)GPSHPOSITIONINGERROR_VAL;
+	dblDiffLimit = RATIONAL_EPS * auxFloat;
+	dblDiff = auxDouble - auxFloat;
+	if (fabs(dblDiff) > fabs(dblDiffLimit)) {
+		fprintf(stderr, "Read value of GPSTAG_GPSHPOSITIONINGERROR %f differs from set value %f\n", auxDouble, auxFloat);
+		GOTOFAILURE
 	}
 
  /*===============  END reading GPS tags ==========================*/
@@ -845,7 +978,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	nTags = tFieldArray->count;
 	/*-- Check, if the TiffLibrary is compiled with the new interface with Rational2Double or still uses the old definitions. */
 	/* tif points to EXIF tags, so TIFFFindField() can only access the EXIF tag fields */
-	const TIFFField *fip = TIFFFindField(tif, EXIFTAG_EXPOSURETIME, TIFF_ANY);
+	fip = TIFFFindField(tif, EXIFTAG_EXPOSURETIME, TIFF_ANY);
 	tSetFieldType = fip->set_field_type;
 	if (tSetFieldType == TIFF_SETGET_DOUBLE)
 		blnIsRational2Double = FALSE;
@@ -868,7 +1001,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 				/* Either the stringlength is defined as a fixed length in .field_writecount or a NULL-terminated string is used. */
 				if (!TIFFGetField( tif, tTag, &pAscii)) {
 					fprintf (stderr, "Can't read %s\n", tFieldArray->fields[i].field_name);
-					/*goto failure; */
+					GOTOFAILURE
 					break;
 				}
 				/* Save string from temporary buffer and compare with written string. */
@@ -877,6 +1010,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 				retCode2 = strncmp(auxCharArray, auxTextArrayW[i], auxLong);
 				if (retCode2 != 0) {
 					fprintf (stderr, "%d:Read value of %s %s differs from set value %s\n", i, tFieldName, auxCharArray, auxTextArrayW[i]);
+					GOTOFAILURE
 				}
 				break;
 				/*-- For reading, the parameter size is to be observed !! */
@@ -884,7 +1018,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 			case TIFF_SETGET_SINT8:
 				if (!TIFFGetField( tif, tTag, &auxChar)) {
 					fprintf (stderr, "Can't read %s\n", tFieldArray->fields[i].field_name);
-					/*goto failure; */
+					GOTOFAILURE
 					break;
 				}
 				/* compare read values with written ones */
@@ -897,7 +1031,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 			case TIFF_SETGET_SINT16:
 				if (!TIFFGetField( tif, tTag, &auxShort)) {
 					fprintf (stderr, "Can't read %s\n", tFieldArray->fields[i].field_name);
-					/*goto failure; */
+					GOTOFAILURE
 					break;
 				}
 				/* compare read values with written ones */
@@ -912,7 +1046,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 			case TIFF_SETGET_INT:
 				if (!TIFFGetField( tif, tTag, &auxUint32)) {
 					fprintf (stderr, "Can't read %s\n", tFieldArray->fields[i].field_name);
-					/*goto failure; */
+					GOTOFAILURE
 					break;
 				}
 				/* compare read values with written ones */
@@ -924,7 +1058,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 			case TIFF_SETGET_FLOAT:
 				if (!TIFFGetField( tif, tTag, &auxFloat)) {
 					fprintf (stderr, "Can't read %s\n", tFieldArray->fields[i].field_name);
-					/*goto failure; */
+					GOTOFAILURE
 					break;
 				}
 				/* compare read values with written ones */
@@ -935,8 +1069,10 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 					 * However, there are two other EXIF tags where numerator indicates a special value and six other cases where the denominator indicates special values,
 					 * which are not treated within LibTiff!!
 					*/
-					if (!(tTag == EXIFTAG_SUBJECTDISTANCE && auxFloat == -1.0))
+					if (!(tTag == EXIFTAG_SUBJECTDISTANCE && auxFloat == -1.0)) {
 						fprintf (stderr, "%d:Read value of %s %f differs from set value %f\n", i, tFieldName, auxFloat, auxDoubleArrayW[i]);
+						GOTOFAILURE
+					}
 				}
 				break;
 			case TIFF_SETGET_DOUBLE:
@@ -951,7 +1087,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 				 */
 				if (!TIFFGetField(tif, tTag, &auxDblUnion.dbl)) {
 					fprintf(stderr, "Can't read %s\n", tFieldArray->fields[i].field_name);
-					/*goto failure; */
+					GOTOFAILURE
 					break;
 				}
 				if (tType == TIFF_RATIONAL || tType == TIFF_SRATIONAL) {
@@ -972,8 +1108,10 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 				dblDiff = auxDouble - auxDoubleArrayW[i];
 				if (fabs(dblDiff) > fabs(dblDiffLimit)) {
 					/*--: EXIFTAG_SUBJECTDISTANCE: LibTiff returns value of "-1.0" if numerator equals 4294967295 (0xFFFFFFFF) to indicate infinite distance! */
-					if (!(tTag == EXIFTAG_SUBJECTDISTANCE && auxDouble == -1.0))
+					if (!(tTag == EXIFTAG_SUBJECTDISTANCE && auxDouble == -1.0)) {
 						fprintf (stderr, "%d:Read value of %s %f differs from set value %f\n", i, tFieldName, auxDouble, auxDoubleArrayW[i]);
+						GOTOFAILURE
+					}
 				}
 				break;
 
@@ -995,7 +1133,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 						/* fixed array with needed arraysize defined in .field_writecount */
 						if (!TIFFGetField( tif, tTag, &pVoidArray)) {
 							fprintf (stderr, "Can't read %s\n", tFieldArray->fields[i].field_name);
-							/*goto failure; */
+							GOTOFAILURE
 							break;
 						}	
 						/* set tWriteCount to number of read samples for next steps */
@@ -1005,7 +1143,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 						/* Dependent on Cxx, the count parameter is char, short or long. Therefore use unionLong! */
 						if (!TIFFGetField( tif, tTag, &unionLong, &pVoidArray)) {
 							fprintf (stderr, "Can't read %s\n", tFieldArray->fields[i].field_name);
-							/*goto failure; */
+							GOTOFAILURE
 							break;
 						}	
 						/* set tWriteCount to number of read samples for next steps */
@@ -1021,6 +1159,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 							if (fabs(dblDiff) > fabs(dblDiffLimit)) {
 							/*if (auxFloatArray[j] != (float)auxFloatArrayW[i+j]) { */
 								fprintf (stderr, "Read value %d of %s #%d %f differs from set value %f\n", i, tFieldName, j, auxFloatArray[j], auxFloatArrayW[i+j]);
+								GOTOFAILURE
 							}
 						}
 					} else {
@@ -1032,6 +1171,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 							if (fabs(dblDiff) > fabs(dblDiffLimit)) {
 							/*if (auxDoubleArray[j] != auxDoubleArrayW[i+j]) { */
 								fprintf (stderr, "Read value %d of %s #%d %f differs from set value %f\n", i, tFieldName, j, auxDoubleArray[j], auxDoubleArrayW[i+j]);
+								GOTOFAILURE
 							}
 						}
 					}
@@ -1070,7 +1210,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 						/* fixed array with needed arraysize defined in .field_writecount */
 						if (!TIFFGetField( tif, tTag, &pVoidArray)) {
 							fprintf (stderr, "Can't read %s\n", tFieldArray->fields[i].field_name);
-							/*goto failure; */
+							GOTOFAILURE
 							break;
 						}	
 						/* set tWriteCount to number of read samples for next steps */
@@ -1080,7 +1220,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 						/* for test, use always arraysize of VARIABLE_ARRAY_SIZE */
 						if (!TIFFGetField( tif, tTag, &unionLong, &pVoidArray)) {
 							fprintf (stderr, "Can't read %s\n", tFieldArray->fields[i].field_name);
-							/*goto failure; */
+							GOTOFAILURE
 							break;
 						}	
 						/* set tWriteCount to number of read samples for next steps */
@@ -1097,10 +1237,12 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 								/*-- Use exifVersion[] instead of auxCharArrayW[] for differently set EXIFVERSION tag */
 								if (auxCharArray[j] != exifVersion[j]) {
 									fprintf(stderr, "Read value %d of %s #%d %d differs from set value %d\n", i, tFieldName, j, auxCharArray[j], auxCharArrayW[i + j]);
+									GOTOFAILURE
 								}
 							} else {
 								if (auxCharArray[j] != auxCharArrayW[i + j]) {
 									fprintf(stderr, "Read value %d of %s #%d %d differs from set value %d\n", i, tFieldName, j, auxCharArray[j], auxCharArrayW[i + j]);
+									GOTOFAILURE
 								}
 							}
 						}
@@ -1112,6 +1254,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 						for (j=0; j<auxLong; j++) {
 							if (auxShortArray[j] != auxShortArrayW[i+j]) {
 								fprintf (stderr, "Read value %d of %s #%d %d differs from set value %d\n", i, tFieldName, j, auxShortArray[j], auxShortArrayW[i+j]);
+								GOTOFAILURE
 							}
 						}
 					} else if (tSetFieldType == TIFF_SETGET_C0_UINT32 || tSetFieldType == TIFF_SETGET_C0_SINT32 || 
@@ -1122,15 +1265,18 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 						for (j=0; j<auxLong; j++) {
 							if (auxLongArray[j] != auxLongArrayW[i+j]) {
 								fprintf (stderr, "Read value %d of %s #%d %d differs from set value %d\n", i, tFieldName, j, auxLongArray[j], auxLongArrayW[i+j]);
+								GOTOFAILURE
 							}
 						}
 					} else {
 						fprintf (stderr, "SetFieldType %d not defined within switch case reading for UINT for %s.\n", tSetFieldType, tFieldName);
+						GOTOFAILURE
 					}
 				}
 				break;
 			default:
 				fprintf (stderr, "SetFieldType %d not defined within writing switch for %s.\n", tSetFieldType, tFieldName);
+				GOTOFAILURE
 		};  /*-- switch() --*/
 	} /*-- for() --*/
 	/*================= EXIF: END Reading arbitrary data to the EXIF fields END END END ==============*/

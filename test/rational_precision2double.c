@@ -35,7 +35,7 @@
  */
 
 
-//#define FOR_AUTO_TESTING
+#define FOR_AUTO_TESTING
 #ifdef FOR_AUTO_TESTING
 /*  Only for automake and CMake infrastructure the test should: 
     a.) delete any written testfiles when test passed (otherwise autotest will fail)
