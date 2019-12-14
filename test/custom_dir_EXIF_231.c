@@ -46,7 +46,7 @@
 	b.) goto failure, if any failure is detected, which is not necessary when test is initiated manually for debugging
 */
 //#define GOTOFAILURE	goto failure;
-#define GOTOFAILURE
+#define GOTOFAILURE	goto failure;
 #define GOTOFAILURE_GPS
 #define GOTOFAILURE_ALL_EXIF	goto failure;
 #else
