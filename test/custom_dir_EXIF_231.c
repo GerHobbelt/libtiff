@@ -766,10 +766,12 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 
 	/*-- IMAGEWIDTH and -LENGTH are defined as TIFF_SETGET_UINT32 */
 	retCode = TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &auxUint32 );
+	if (!retCode) { fprintf(stderr, "Can't read %s\n", "TIFFTAG_IMAGEWIDTH"); }
 	if (auxUint32 != width) {
 		fprintf (stderr, "Read value of IMAGEWIDTH %d differs from set value %d\n", auxUint32, width);
 	}
 	retCode = TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &auxUint32 );
+	if (!retCode) { fprintf(stderr, "Can't read %s\n", "TIFFTAG_IMAGELENGTH"); }
 	if (auxUint32 != width) {
 		fprintf (stderr, "Read value of TIFFTAG_IMAGELENGTH %d differs from set value %d\n", auxUint32, length);
 	}
@@ -777,12 +779,14 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 #ifdef ADDITIONAL_TAGS
 	/*- TIFFTAG_PIXAR_FOVCOT is a FLOAT parameter of type  FIELD_CUSTOM !! */
 	retCode = TIFFGetField(tif, TIFFTAG_PIXAR_FOVCOT, &auxFloat ); 
+	if (!retCode) { fprintf(stderr, "Can't read %s\n", "TIFFTAG_PIXAR_FOVCOT"); }
 	if (auxFloat != (float)PIXAR_FOVCOT_VAL) {
 		fprintf (stderr, "Read value of TIFFTAG_PIXAR_FOVCOT %f differs from set value %f\n", auxFloat, PIXAR_FOVCOT_VAL);
 	}
 
 	/* - TIFFTAG_BESTQUALITYSCALE is a Rational parameter, FIELD_CUSTOM and TIFF_SETGET_FLOAT  */
 	retCode = TIFFGetField(tif, TIFFTAG_BESTQUALITYSCALE, &auxFloat );
+	if (!retCode) { fprintf(stderr, "Can't read %s\n", "TIFFTAG_BESTQUALITYSCALE"); }
 	if (auxFloat != (float)BESTQUALITYSCALE_VAL) {
 		fprintf (stderr, "Read value of TIFFTAG_BESTQUALITYSCALE %f differs from set value %f\n", auxFloat, BESTQUALITYSCALE_VAL);
 	}
@@ -790,6 +794,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	/* - TIFFTAG_BASELINENOISE, 1, 1, TIFF_RATIONAL, 0, TIFF_SETGET_FLOAT */
 /*-- A T E N T I O N:  this is redefined for TIFF_SETGET_DOUBLE for test . */
 	retCode = TIFFGetField(tif, TIFFTAG_BASELINENOISE, &auxDblUnion.dbl);
+	if (!retCode) { fprintf(stderr, "Can't read %s\n", "TIFFTAG_BASELINENOISE"); }
 	if ((float)auxDblUnion.dbl != (float)BESTQUALITYSCALE_VAL) {
 		fprintf(stderr, "Read double value of TIFFTAG_BASELINENOISE %f differs from set value %f\n", auxDblUnion.dbl, BESTQUALITYSCALE_VAL);
 	}
@@ -801,6 +806,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	/*- Variable Array: TIFFTAG_DECODE is a SRATIONAL parameter TIFF_SETGET_C16_FLOAT type FIELD_CUSTOM with passcount=1 and variable length of array. */
 	retCode = TIFFGetField(tif, TIFFTAG_DECODE, &count16, &pVoidArray );
 	retCode = TIFFGetField(tif, TIFFTAG_DECODE, &count16, &pFloatArray );
+	if (!retCode) { fprintf(stderr, "Can't read %s\n", "TIFFTAG_DECODE"); }
 	/*- pVoidArray points to a Tiff-internal temporary memorypart. Thus, contents needs to be saved. */
 	memcpy(&auxFloatArray, pVoidArray,(count16 * sizeof(auxFloatArray[0])));
 	for (i=0; i<count16; i++) {
@@ -812,6 +818,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	}
 
 	retCode = TIFFGetField(tif, TIFFTAG_BLACKLEVEL, &count16, &pVoidArray);
+	if (!retCode) { fprintf(stderr, "Can't read %s\n", "TIFFTAG_BLACKLEVEL"); }
 	/*- pVoidArray points to a Tiff-internal temporary memorypart. Thus, contents needs to be saved. */
 	memcpy(&auxFloatArray, pVoidArray, (count16 * sizeof(auxFloatArray[0])));
 	for (i = 0; i<count16; i++) {
@@ -866,6 +873,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 		fprintf(stderr, "-- GPS tags are read using standard --\n");
 	}
 	retCode = TIFFGetField(tif, GPSTAG_LATITUDE, &pVoidArray);
+	if (!retCode) { fprintf(stderr, "Can't read %s\n", "GPSTAG_LATITUDE"); }
 	if (!blnIsRational2Double) {
 		/* Reset arrays for debugging purpose first */
 		memset(auxFloatArray, 0, sizeof(auxFloatArray));
@@ -894,6 +902,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	}
 
 	retCode = TIFFGetField(tif, GPSTAG_LONGITUDE, &pVoidArray);
+	if (!retCode) { fprintf(stderr, "Can't read %s\n", "GPSTAG_LONGITUDE"); }
 	if (!blnIsRational2Double) {
 		/* Reset arrays for debugging purpose first */
 		memset(auxFloatArray, 0, sizeof(auxFloatArray));
@@ -935,6 +944,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 
 	/*-- TimeStamp is only hh:mm:ss. See also DateTime string  3, TIFF_RATIONAL, TIFF_SETGET_C0_DOUBLE */
 	retCode = TIFFGetField(tif, GPSTAG_TIMESTAMP, &pVoidArray);
+	if (!retCode) { fprintf(stderr, "Can't read %s\n", "GPSTAG_TIMESTAMP"); }
 	if (!blnIsRational2Double) {
 		/* Reset arrays for debugging purpose first */
 		memset(auxFloatArray, 0, sizeof(auxFloatArray));
@@ -981,6 +991,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 
 	/*-- GPSTAG_DIFFERENTIAL	, 1, 1,	TIFF_SHORT	, 0, 	TIFF_SETGET_UINT16 */
 	retCode = TIFFGetField(tif, GPSTAG_DIFFERENTIAL, &auxShort);
+	if (!retCode) { fprintf(stderr, "Can't read %s\n", "GPSTAG_DIFFERENTIAL"); }
 	if (auxShort != auxShortArrayW[5]) {
 		fprintf(stderr, "Read value of GPSTAG_DIFFERENTIAL %d differs from set value %d\n", auxShort, auxShortArrayW[5]);
 		/*GOTOFAILURE_GPS*/

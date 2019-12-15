@@ -2990,6 +2990,8 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryCheckedRational(TIFF* tif, TIFFD
 		*value=0.0;
 	else
 		*value=(double)m.i[0]/(double)m.i[1];
+	/*--- Rational2Double ERROR-Search ---*/
+	fprintf(stderr, "TIFFReadDirEntryCheckedRational() mi0= %12u, mi1= %12u, val=%14.6f\n", m.i[0], m.i[1], *value);
 	return(TIFFReadDirEntryErrOk);
 }
 
