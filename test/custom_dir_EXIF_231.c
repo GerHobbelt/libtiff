@@ -185,10 +185,10 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	float			auxFloatArrayW[N_SIZE];
 	double			auxDoubleArrayW[N_SIZE];
 	char			auxTextArrayW[N_SIZE][STRSIZE];
-	double			auxDoubleArrayGPS1[3] = {1.0/7.0, 61.23456789012345, 62.3};
+	double			auxDoubleArrayGPS1[3] = {1.0/7.0, 61.23456789012345, 62.0};
 	double			auxDoubleArrayGPS2[3] = {1.0/19.0, 88.34434, 15.12345678901234567890};
 	double			auxDoubleArrayGPSTime[3] = {22.0, 17.0, 15.3456789};
-	double			auxDoubleGPSAltitude     =  3456.7;
+	double			auxDoubleGPSAltitude     =  3456.0;
 	double			auxDoubleGPSDirection    =  63.7;
 	float			auxFloatArrayN1[3] = {1.0f/7.0f, 61.23456789012345f, 62.3f};
 
@@ -309,6 +309,14 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 		fprintf (stderr, "Can't set TIFFTAG_BESTQUALITYSCALE tag.\n");
 		goto failure;
 	}
+
+	/* - TIFFTAG_BASELINENOISE, 1, 1, TIFF_RATIONAL, 0, TIFF_SETGET_FLOAT */
+	/*-- A T E N T I O N:  this is redefined for TIFF_SETGET_DOUBLE for test . */
+	if (!TIFFSetField(tif, TIFFTAG_BASELINENOISE, auxDouble)) {
+		fprintf(stderr, "Can't set TIFFTAG_BASELINENOISE tag.\n");
+		goto failure;
+	}
+
 	
 	/*- Variable Array: TIFFTAG_DECODE is a SRATIONAL parameter TIFF_SETGET_C16_FLOAT type FIELD_CUSTOM with passcount=1 and variable length of array. */
 	if (!TIFFSetField(tif, TIFFTAG_DECODE, 3, auxFloatArrayN1)) {		/* for TIFF_SETGET_C16_DOUBLE */
@@ -776,8 +784,19 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	/* - TIFFTAG_BESTQUALITYSCALE is a Rational parameter, FIELD_CUSTOM and TIFF_SETGET_FLOAT  */
 	retCode = TIFFGetField(tif, TIFFTAG_BESTQUALITYSCALE, &auxFloat );
 	if (auxFloat != (float)BESTQUALITYSCALE_VAL) {
-		fprintf (stderr, "Read value of TIFFTAG_BESTQUALITYSCALE %f differs from set value %f\n", auxFloat, PIXAR_FOVCOT_VAL);
+		fprintf (stderr, "Read value of TIFFTAG_BESTQUALITYSCALE %f differs from set value %f\n", auxFloat, BESTQUALITYSCALE_VAL);
 	}
+
+	/* - TIFFTAG_BASELINENOISE, 1, 1, TIFF_RATIONAL, 0, TIFF_SETGET_FLOAT */
+/*-- A T E N T I O N:  this is redefined for TIFF_SETGET_DOUBLE for test . */
+	retCode = TIFFGetField(tif, TIFFTAG_BASELINENOISE, &auxDblUnion.dbl);
+	if ((float)auxDblUnion.dbl != (float)BESTQUALITYSCALE_VAL) {
+		fprintf(stderr, "Read double value of TIFFTAG_BASELINENOISE %f differs from set value %f\n", auxDblUnion.dbl, BESTQUALITYSCALE_VAL);
+	}
+	if (auxDblUnion.flt1 != (float)BESTQUALITYSCALE_VAL) {
+		fprintf(stderr, "Read float value of TIFFTAG_BASELINENOISE %f differs from set value %f\n", auxDblUnion.flt1, BESTQUALITYSCALE_VAL);
+	}
+
 
 	/*- Variable Array: TIFFTAG_DECODE is a SRATIONAL parameter TIFF_SETGET_C16_FLOAT type FIELD_CUSTOM with passcount=1 and variable length of array. */
 	retCode = TIFFGetField(tif, TIFFTAG_DECODE, &count16, &pVoidArray );
@@ -935,6 +954,30 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 			/*GOTOFAILURE_GPS*/
 		}
 	}
+
+	/* GPSTAG_IMGDIRECTION --- TIFF_RATIONAL, TIFF_SETGET_DOUBLE */
+	if (!TIFFGetField(tif, GPSTAG_IMGDIRECTION, &auxDblUnion.dbl)) {
+		fprintf(stderr, "Can't read GPSTAG_IMGDIRECTION\n");
+		/*GOTOFAILURE_GPS*/
+	}
+	if (blnIsRational2Double) {
+		/* New interface allows also double precision for TIFF_RATIONAL */
+		auxDouble = auxDblUnion.dbl;
+	} else {
+		/* Old interface reads TIFF_RATIONAL defined as TIFF_SETGET_DOUBLE alwasy as FLOAT */
+		auxDouble = (double)auxDblUnion.flt1;
+	}
+	/* compare read values with written ones */
+	dblDiffLimit = RATIONAL_EPS * auxDoubleGPSDirection;
+	dblDiff = auxDouble - auxDoubleGPSDirection;
+	if (fabs(dblDiff) > fabs(dblDiffLimit)) {
+		fprintf(stderr, "Read value of GPSTAG_IMGDIRECTION %f differs from set value %f\n", auxDouble, auxDoubleGPSDirection);
+		/*GOTOFAILURE_GPS*/
+	}
+
+
+
+
 
 	/*-- GPSTAG_DIFFERENTIAL	, 1, 1,	TIFF_SHORT	, 0, 	TIFF_SETGET_UINT16 */
 	retCode = TIFFGetField(tif, GPSTAG_DIFFERENTIAL, &auxShort);
