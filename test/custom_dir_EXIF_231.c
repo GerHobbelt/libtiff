@@ -51,6 +51,8 @@
 #define GOTOFAILURE_ALL_EXIF	goto failure;
 #else
 #define GOTOFAILURE
+#define GOTOFAILURE_GPS
+#define GOTOFAILURE_ALL_EXIF
 #endif
 
 
@@ -111,7 +113,7 @@ main()
 	fprintf(stderr, "-------- Test with ClassicTIFF started  ----------\n");
 	ret1 = write_test_tiff(tif, filename);
 
-	if (ret1 > 0) return(ret1);
+	if (ret1 > 0) return(ret1); else return(4);
 
 	/*--- Test with BIG-TIFF ---*/
 	/* delete file, if exists */
@@ -332,7 +334,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 		blnIsRational2Double = FALSE;
 	} else {
 		blnIsRational2Double = TRUE;
-		fprintf(stderr, "-- Rational2Double detected --\n");
+		fprintf(stderr, "-- Rational2Double from TIFF tag detected --\n");
 	}
 
 /*================== Write GPS and EXIF tags =====================*/
@@ -404,6 +406,11 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 		 *              compiled with the new interface with Rational2Double or still uses the old definitions,
 		 *              by setting blnIsRational2Double above.
 		 */
+		if (blnIsRational2Double) {
+			fprintf(stderr, "-- GPS tags are written using Rational2Double --\n");
+		} else {
+			fprintf(stderr, "-- GPS tags are written using standard --\n");
+		}
 		if (!blnIsRational2Double) {
 			for (j = 0; j < 3; j++) auxFloatArray[j] = (float)auxDoubleArrayGPS1[j];
 			if (!TIFFSetField(tif, GPSTAG_LATITUDE, auxFloatArray)) {
@@ -834,6 +841,11 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	 *              compiled with the new interface with Rational2Double or still uses the old definitions,
 	 *              by setting blnIsRational2Double above.
 	 */
+	if (blnIsRational2Double) {
+		fprintf(stderr, "-- GPS tags are read using Rational2Double --\n");
+	} else {
+		fprintf(stderr, "-- GPS tags are read using standard --\n");
+	}
 	retCode = TIFFGetField(tif, GPSTAG_LATITUDE, &pVoidArray);
 	if (!blnIsRational2Double) {
 		/* Reset arrays for debugging purpose first */
@@ -982,11 +994,12 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	/* tif points to EXIF tags, so TIFFFindField() can only access the EXIF tag fields */
 	fip = TIFFFindField(tif, EXIFTAG_EXPOSURETIME, TIFF_ANY);
 	tSetFieldType = fip->set_field_type;
-	if (tSetFieldType == TIFF_SETGET_DOUBLE)
+	if (tSetFieldType == TIFF_SETGET_DOUBLE) {
 		blnIsRational2Double = FALSE;
-	else
+	} else {
 		blnIsRational2Double = TRUE;
-
+		fprintf(stderr, "-- Rational2Double for reading EXIF tags detected --\n");
+	}
 
 	for (i=0; i<nTags; i++) {
 		tTag = tFieldArray->fields[i].field_tag;
