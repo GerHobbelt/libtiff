@@ -2728,12 +2728,10 @@ void ToRationalEuclideanGCD(double value, int blnUseSignedRange, int blnUseSmall
 	*   For long long nMax = ((9223372036854775807-1)/2); for long nMax = ((2147483647-1)/2);
 	*/
 	if (blnUseSmallRange) {
-		//nMax = (unsigned long long)((ULONG_MAX - 1) / 2);
-		nMax = (unsigned long long)((2147483647 - 1) / 2);
+		nMax = (unsigned long long)((2147483647 - 1) / 2); /* for ULONG range */
 	}
 	else {
-		//nMax = (ULLONG_MAX - 1) / 2;
-		nMax = ((9223372036854775807 - 1) / 2);
+		nMax = ((9223372036854775807 - 1) / 2);				/* for ULLONG range */
 	}
 	fMax = (double)nMax;
 
@@ -2742,12 +2740,12 @@ void ToRationalEuclideanGCD(double value, int blnUseSignedRange, int blnUseSmall
 	*   Also the final returned value of ullNum and ullDenom is limited according to signed- or unsigned-range.
 	*/
 	if (blnUseSignedRange) {
-		maxDenom = LONG_MAX;
-		returnLimit = LONG_MAX;
+		maxDenom = 2147483647UL;  /*LONG_MAX = 0x7FFFFFFFUL*/
+		returnLimit = maxDenom;
 	}
 	else {
-		maxDenom = ULONG_MAX;
-		returnLimit = ULONG_MAX;
+		maxDenom = 0xFFFFFFFFUL;  /*ULONG_MAX = 0xFFFFFFFFUL*/
+		returnLimit = maxDenom;
 	}
 
 	/*-- First generate a rational fraction (bigNum/bigDenom) which represents the value
@@ -2867,7 +2865,7 @@ void DoubleToRational(double value, uint32 *num, uint32 *denom)
 	ToRationalEuclideanGCD(value, FALSE, FALSE, &ullNum, &ullDenom);
 	ToRationalEuclideanGCD(value, FALSE, TRUE, &ullNum2, &ullDenom2);
 	/*--- Rational2Double ERROR-Search ---*/
-	fprintf(stderr, "FromEuclidean: val=%14.6f, num=%12llu, denom=%12llu | num2=%12llu, denom2=%12llu\n\n", value, ullNum, ullDenom, ullNum2, ullDenom2);
+	fprintf(stderr, "FromEuclidean: val=%14.6f, num=%12llu, denom=%12llu | num2=%12llu, denom2=%12llu\n", value, ullNum, ullDenom, ullNum2, ullDenom2);
 	/*-- Double-Check, that returned values fit into ULONG :*/
 	if (ullNum > ULONG_MAX || ullDenom > ULONG_MAX || ullNum2 > ULONG_MAX || ullDenom2 > ULONG_MAX) {
 		fprintf(stderr, "DoubleToRational(): Num or Denom exceeds ULONG: val=%14.6f, num=%12llu, denom=%12llu | num2=%12llu, denom2=%12llu\n", value, ullNum, ullDenom, ullNum2, ullDenom2);
@@ -2885,9 +2883,10 @@ void DoubleToRational(double value, uint32 *num, uint32 *denom)
 		*num = (unsigned long)ullNum2;
 		*denom = (unsigned long)ullDenom2;
 	}
-}  /*-- DoubleToRational2() -------------- */
+	fprintf(stderr, "FromEuclidean: val=%14.6f, num=%12u, denom=%12u <<< returned uint32\n\n", value, *num, *denom);
+}  /*-- DoubleToRational() -------------- */
 
-/**---- DoubleToRational() -----------------------------------------------
+/**---- DoubleToSrational() -----------------------------------------------
 * Calculates the rational fractional of a double input value
 * for SIGNED rationals,
 * using the Euclidean algorithm to find the greatest common divisor (GCD)
@@ -2945,8 +2944,9 @@ void DoubleToSrational(double value, int32 *num, int32 *denom)
 	else {
 		*num = (long)(neg * (long)ullNum2);
 		*denom = (long)ullDenom2;
+		fprintf(stderr, "FromEuclideaS: val=%14.6f, num=%12d, denom=%12d <<< returned signed int32\n\n", neg*value, *num, *denom);
 	}
-}  /*-- DoubleToSrational2() --------------*/
+}  /*-- DoubleToSrational() --------------*/
 
 
 
