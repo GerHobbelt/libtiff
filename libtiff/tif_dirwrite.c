@@ -2728,10 +2728,12 @@ void ToRationalEuclideanGCD(double value, int blnUseSignedRange, int blnUseSmall
 	*   For long long nMax = ((9223372036854775807-1)/2); for long nMax = ((2147483647-1)/2);
 	*/
 	if (blnUseSmallRange) {
-		nMax = (unsigned long long)((ULONG_MAX - 1) / 2);
+		//nMax = (unsigned long long)((ULONG_MAX - 1) / 2);
+		nMax = (unsigned long long)((2147483647 - 1) / 2);
 	}
 	else {
-		nMax = (ULLONG_MAX - 1) / 2;
+		//nMax = (ULLONG_MAX - 1) / 2;
+		nMax = ((9223372036854775807 - 1) / 2);
 	}
 	fMax = (double)nMax;
 
@@ -2756,13 +2758,20 @@ void ToRationalEuclideanGCD(double value, int blnUseSignedRange, int blnUseSmall
 	*-- Break-criteria so that uint64 cast to "bigNum" introduces no error and bigDenom has no overflow,
 	*   and stop with enlargement of fraction when the double-value of it reaches an integer number without fractional part.
 	*/
+#define EPS (1e-10f)
+	double eps = EPS;
+	double floorVal;
 	bigDenom = 1;
 	while ((value != floor(value)) && (value < fMax) && (bigDenom < nMax)) {
 		bigDenom <<= 1;
 		value *= 2;
+		floorVal = floor(value);
+		if ((value - floor(value)<EPS)) {
+			fprintf(stderr, "val=%f == floor(val)=%f --> bigNum\n", value, floor(value));
+		}
 	}
 	bigNum = (unsigned long long)value;
-	fprintf(stderr, "ToEuclidean: valin=%14.6f, BigNum=%12llu, BigDenom=%12llu  maxDenom=%\n", value_in, bigNum, bigDenom);
+	fprintf(stderr, "ToEuclidean: valin=%14.6f, BigNum=%11llu, BigDenom=%11llu  nMax=%10llu, maxDenom=%u\n", value_in, bigNum, bigDenom, nMax, maxDenom);
 
 	/*-- Start Euclidean algorithm to find the greatest common divisor (GCD) -- */
 #define MAX_ITERATIONS 64
@@ -2800,6 +2809,7 @@ void ToRationalEuclideanGCD(double value, int blnUseSignedRange, int blnUseSmall
 		denomSum[1] = denomSum[2];
 	}
 
+	fprintf(stderr, "ToEuclidean: valin=%14.6f, numSum1=%10llu, denomSum1=%10llu, iter=%d, returnLimit=%llu\n", value_in, numSum[1], denomSum[1], i, returnLimit);
 	/*-- Check and adapt for final variable size and return values; reduces internal accuracy; denominator is kept in ULONG-range with maxDenom -- */
 	while (numSum[1] > returnLimit || denomSum[1] > returnLimit) {
 		numSum[1] = numSum[1] / 2;
@@ -2857,7 +2867,7 @@ void DoubleToRational(double value, uint32 *num, uint32 *denom)
 	ToRationalEuclideanGCD(value, FALSE, FALSE, &ullNum, &ullDenom);
 	ToRationalEuclideanGCD(value, FALSE, TRUE, &ullNum2, &ullDenom2);
 	/*--- Rational2Double ERROR-Search ---*/
-	fprintf(stderr, "FromEuclidean: val=%14.6f, num=%12llu, denom=%12llu | num2=%12llu, denom2=%12llu\n", value, ullNum, ullDenom, ullNum2, ullDenom2);
+	fprintf(stderr, "FromEuclidean: val=%14.6f, num=%12llu, denom=%12llu | num2=%12llu, denom2=%12llu\n\n", value, ullNum, ullDenom, ullNum2, ullDenom2);
 	/*-- Double-Check, that returned values fit into ULONG :*/
 	if (ullNum > ULONG_MAX || ullDenom > ULONG_MAX || ullNum2 > ULONG_MAX || ullDenom2 > ULONG_MAX) {
 		fprintf(stderr, "DoubleToRational(): Num or Denom exceeds ULONG: val=%14.6f, num=%12llu, denom=%12llu | num2=%12llu, denom2=%12llu\n", value, ullNum, ullDenom, ullNum2, ullDenom2);
