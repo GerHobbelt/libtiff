@@ -2720,6 +2720,7 @@ void ToRationalEuclideanGCD(double value, int blnUseSignedRange, int blnUseSmall
 	unsigned long long nMax;
 	double fMax;
 	unsigned long maxDenom;
+	double  value_in = value; /*debugging*/
 	/*-- nMax and fMax defines the initial accuracy of the starting fractional,
 	*   or better, the highest used integer numbers used within the starting fractional (bigNum/bigDenom).
 	*   There are two approaches, which can accidentially lead to different accuracies just depending on the value.
@@ -2761,6 +2762,7 @@ void ToRationalEuclideanGCD(double value, int blnUseSignedRange, int blnUseSmall
 		value *= 2;
 	}
 	bigNum = (unsigned long long)value;
+	fprintf(stderr, "ToEuclidean: valin=%14.6f, BigNum=%12llu, BigDenom=%12llu  maxDenom=%\n", value_in, bigNum, bigDenom);
 
 	/*-- Start Euclidean algorithm to find the greatest common divisor (GCD) -- */
 #define MAX_ITERATIONS 64
@@ -2854,9 +2856,13 @@ void DoubleToRational(double value, uint32 *num, uint32 *denom)
 	*/
 	ToRationalEuclideanGCD(value, FALSE, FALSE, &ullNum, &ullDenom);
 	ToRationalEuclideanGCD(value, FALSE, TRUE, &ullNum2, &ullDenom2);
+	/*--- Rational2Double ERROR-Search ---*/
+	fprintf(stderr, "FromEuclidean: val=%14.6f, num=%12llu, denom=%12llu | num2=%12llu, denom2=%12llu\n", value, ullNum, ullDenom, ullNum2, ullDenom2);
 	/*-- Double-Check, that returned values fit into ULONG :*/
-	if (ullNum > ULONG_MAX || ullDenom > ULONG_MAX || ullNum2 > ULONG_MAX || ullDenom2 > ULONG_MAX)
+	if (ullNum > ULONG_MAX || ullDenom > ULONG_MAX || ullNum2 > ULONG_MAX || ullDenom2 > ULONG_MAX) {
+		fprintf(stderr, "DoubleToRational(): Num or Denom exceeds ULONG: val=%14.6f, num=%12llu, denom=%12llu | num2=%12llu, denom2=%12llu\n", value, ullNum, ullDenom, ullNum2, ullDenom2);
 		assert(0);
+	}
 
 	/* Check, which one has higher accuracy and take that. */
 	dblDiff = fabs(value - ((double)ullNum / (double)ullDenom));
@@ -2912,9 +2918,12 @@ void DoubleToSrational(double value, int32 *num, int32 *denom)
 	*/
 	ToRationalEuclideanGCD(value, TRUE, FALSE, &ullNum, &ullDenom);
 	ToRationalEuclideanGCD(value, TRUE, TRUE, &ullNum2, &ullDenom2);
+	fprintf(stderr, "FromEuclideaS: val=%14.6f, num=%12llu, denom=%12llu | num2=%12llu, denom2=%12llu\n", neg*value, ullNum, ullDenom, ullNum2, ullDenom2);
 	/*-- Double-Check, that returned values fit into LONG :*/
-	if (ullNum > LONG_MAX || ullDenom > LONG_MAX || ullNum2 > LONG_MAX || ullDenom2 > LONG_MAX)
+	if (ullNum > LONG_MAX || ullDenom > LONG_MAX || ullNum2 > LONG_MAX || ullDenom2 > LONG_MAX) {
+		fprintf(stderr, "DoubleToSrational(): Num or Denom exceeds ULONG: val=%14.6f, num=%12llu, denom=%12llu | num2=%12llu, denom2=%12llu\n", neg*value, ullNum, ullDenom, ullNum2, ullDenom2);
 		assert(0);
+	}
 
 	/* Check, which one has higher accuracy and take that. */
 	dblDiff = fabs(value - ((double)ullNum / (double)ullDenom));

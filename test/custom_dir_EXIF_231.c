@@ -190,7 +190,8 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	double			auxDoubleArrayGPSTime[3] = {22.0, 17.0, 15.3456789};
 	double			auxDoubleGPSAltitude     =  3456.0;
 	double			auxDoubleGPSDirection    =  63.7;
-	float			auxFloatArrayN1[3] = {1.0f/7.0f, 61.23456789012345f, 62.3f};
+	float			auxFloatArrayN1[3] = { 1.0f / 7.0f, 61.23456789012345f, 62.3f };
+	float			auxFloatArrayN2[3] = { -1.0f / 7.0f, -61.23456789012345f, -62.3f };
 
 	/* -- Variables for reading -- */
 	uint16      count16 = 0;
@@ -319,7 +320,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 
 	
 	/*- Variable Array: TIFFTAG_DECODE is a SRATIONAL parameter TIFF_SETGET_C16_FLOAT type FIELD_CUSTOM with passcount=1 and variable length of array. */
-	if (!TIFFSetField(tif, TIFFTAG_DECODE, 3, auxFloatArrayN1)) {		/* for TIFF_SETGET_C16_DOUBLE */
+	if (!TIFFSetField(tif, TIFFTAG_DECODE, 3, auxFloatArrayN2)) {		/* for TIFF_SETGET_C16_DOUBLE */
 		fprintf (stderr, "Can't set TIFFTAG_DECODE tag.\n");
 		goto failure;
 	}
@@ -810,10 +811,10 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	/*- pVoidArray points to a Tiff-internal temporary memorypart. Thus, contents needs to be saved. */
 	memcpy(&auxFloatArray, pVoidArray,(count16 * sizeof(auxFloatArray[0])));
 	for (i=0; i<count16; i++) {
-		dblDiffLimit = RATIONAL_EPS*auxFloatArrayN1[i];
-		dblDiff = auxFloatArray[i] - auxFloatArrayN1[i];
+		dblDiffLimit = RATIONAL_EPS*auxFloatArrayN2[i];
+		dblDiff = auxFloatArray[i] - auxFloatArrayN2[i];
 		if (fabs(dblDiff) > fabs(dblDiffLimit)) {
-			fprintf (stderr, "Read value %d of TIFFTAG_DECODE Array %f differs from set value %f\n", i, auxFloatArray[i], auxFloatArrayN1[i]);
+			fprintf (stderr, "Read value %d of TIFFTAG_DECODE Array %f differs from set value %f\n", i, auxFloatArray[i], auxFloatArrayN2[i]);
 		}
 	}
 
@@ -855,7 +856,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	/*-- LATITUDEREF is a fixed String of one character plus ending zero. */
 	retCode = TIFFGetField(tif, GPSTAG_LATITUDEREF, &pAscii);
 	if (!retCode) { fprintf(stderr, "Can't read %s\n", "GPSTAG_LATITUDEREF"); }
-	retCode2 = strncmp("N", pAscii, 2);
+	retCode2 = strncmp("N", pAscii, 1);
 	if (retCode2 != 0) {
 		fprintf (stderr, "Read value %d of GPSTAG_LATITUDEREF %s differs from set value %s\n", i, "N", pAscii);
 	}
@@ -896,7 +897,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	/*-- LONGITUDEREF is a fixed String of one character plus ending zero. */
 	retCode = TIFFGetField(tif, GPSTAG_LONGITUDEREF, &pAscii);
 	if (!retCode) { fprintf(stderr, "Can't read %s\n", "GPSTAG_LONGITUDEREF"); }
-	retCode2 = strncmp("W", pAscii, 2);
+	retCode2 = strncmp("W", pAscii, 1);
 	if (retCode2 != 0) {
 		fprintf(stderr, "Read value %d of GPSTAG_LONGITUDEREF %s differs from set value %s\n", i, "W", pAscii);
 	}
