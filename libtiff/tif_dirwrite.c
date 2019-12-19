@@ -2720,7 +2720,6 @@ void ToRationalEuclideanGCD(double value, int blnUseSignedRange, int blnUseSmall
 	unsigned long long nMax;
 	double fMax;
 	unsigned long maxDenom;
-	double  value_in = value; /*debugging*/
 	/*-- nMax and fMax defines the initial accuracy of the starting fractional,
 	*   or better, the highest used integer numbers used within the starting fractional (bigNum/bigDenom).
 	*   There are two approaches, which can accidentially lead to different accuracies just depending on the value.
@@ -2756,20 +2755,12 @@ void ToRationalEuclideanGCD(double value, int blnUseSignedRange, int blnUseSmall
 	*-- Break-criteria so that uint64 cast to "bigNum" introduces no error and bigDenom has no overflow,
 	*   and stop with enlargement of fraction when the double-value of it reaches an integer number without fractional part.
 	*/
-#define EPS (1e-10f)
-	double eps = EPS;
-	double floorVal;
 	bigDenom = 1;
 	while ((value != floor(value)) && (value < fMax) && (bigDenom < nMax)) {
 		bigDenom <<= 1;
 		value *= 2;
-		floorVal = floor(value);
-		if ((value - floor(value)<EPS)) {
-			fprintf(stderr, "val=%f == floor(val)=%f --> bigNum\n", value, floor(value));
-		}
 	}
 	bigNum = (unsigned long long)value;
-	fprintf(stderr, "ToEuclidean: valin=%14.6f, BigNum=%11llu, BigDenom=%11llu  nMax=%10llu, maxDenom=%u\n", value_in, bigNum, bigDenom, nMax, maxDenom);
 
 	/*-- Start Euclidean algorithm to find the greatest common divisor (GCD) -- */
 #define MAX_ITERATIONS 64
@@ -2807,7 +2798,6 @@ void ToRationalEuclideanGCD(double value, int blnUseSignedRange, int blnUseSmall
 		denomSum[1] = denomSum[2];
 	}
 
-	fprintf(stderr, "ToEuclidean: valin=%14.6f, numSum1=%10llu, denomSum1=%10llu, iter=%d, returnLimit=%llu\n", value_in, numSum[1], denomSum[1], i, returnLimit);
 	/*-- Check and adapt for final variable size and return values; reduces internal accuracy; denominator is kept in ULONG-range with maxDenom -- */
 	while (numSum[1] > returnLimit || denomSum[1] > returnLimit) {
 		numSum[1] = numSum[1] / 2;
@@ -2818,7 +2808,7 @@ void ToRationalEuclideanGCD(double value, int blnUseSignedRange, int blnUseSmall
 	*ullNum = numSum[1];
 	*ullDenom = denomSum[1];
 
-}  /*-- euclideanGCD() -------------- */
+}  /*-- ToRationalEuclideanGCD() -------------- */
 
 
 /**---- DoubleToRational() -----------------------------------------------
@@ -2841,7 +2831,7 @@ void DoubleToRational(double value, uint32 *num, uint32 *denom)
 
 	/*-- Check for too big numbers (> ULONG_MAX) -- */
 	if (value > ULONG_MAX) {
-		*num = 0xFFFFFFFF;
+		*num = 0xFFFFFFFFUL;
 		*denom = 0;
 		return;
 	}
@@ -2852,9 +2842,9 @@ void DoubleToRational(double value, uint32 *num, uint32 *denom)
 		return;
 	}
 	/*-- Check for too small numbers for "unsigned long" type rationals -- */
-	if (value < 1.0 / (double)0xFFFFFFFFU) {
+	if (value < 1.0 / (double)0xFFFFFFFFUL) {
 		*num = 0;
-		*denom = 0xFFFFFFFFU;
+		*denom = 0xFFFFFFFFUL;
 		return;
 	}
 
@@ -2864,11 +2854,9 @@ void DoubleToRational(double value, uint32 *num, uint32 *denom)
 	*/
 	ToRationalEuclideanGCD(value, FALSE, FALSE, &ullNum, &ullDenom);
 	ToRationalEuclideanGCD(value, FALSE, TRUE, &ullNum2, &ullDenom2);
-	/*--- Rational2Double ERROR-Search ---*/
-	fprintf(stderr, "FromEuclidean: val=%14.6f, num=%12llu, denom=%12llu | num2=%12llu, denom2=%12llu\n", value, ullNum, ullDenom, ullNum2, ullDenom2);
 	/*-- Double-Check, that returned values fit into ULONG :*/
 	if (ullNum > ULONG_MAX || ullDenom > ULONG_MAX || ullNum2 > ULONG_MAX || ullDenom2 > ULONG_MAX) {
-		fprintf(stderr, "DoubleToRational(): Num or Denom exceeds ULONG: val=%14.6f, num=%12llu, denom=%12llu | num2=%12llu, denom2=%12llu\n", value, ullNum, ullDenom, ullNum2, ullDenom2);
+		TIFFErrorExt(0, "TIFFLib: DoubeToRational()", " Num or Denom exceeds ULONG: val=%14.6f, num=%12llu, denom=%12llu | num2=%12llu, denom2=%12llu", value, ullNum, ullDenom, ullNum2, ullDenom2);
 		assert(0);
 	}
 
@@ -2883,7 +2871,6 @@ void DoubleToRational(double value, uint32 *num, uint32 *denom)
 		*num = (unsigned long)ullNum2;
 		*denom = (unsigned long)ullDenom2;
 	}
-	fprintf(stderr, "FromEuclidean: val=%14.6f, num=%12u, denom=%12u <<< returned uint32\n\n", value, *num, *denom);
 }  /*-- DoubleToRational() -------------- */
 
 /**---- DoubleToSrational() -----------------------------------------------
@@ -2903,7 +2890,7 @@ void DoubleToSrational(double value, int32 *num, int32 *denom)
 
 	/*-- Check for too big numbers (> LONG_MAX) -- */
 	if (value > LONG_MAX) {
-		*num = 0x7FFFFFFF;
+		*num = 0x7FFFFFFFL;
 		*denom = 0;
 		return;
 	}
@@ -2914,9 +2901,9 @@ void DoubleToSrational(double value, int32 *num, int32 *denom)
 		return;
 	}
 	/*-- Check for too small numbers for "long" type rationals -- */
-	if (value < 1.0 / (double)0x7FFFFFFF) {
+	if (value < 1.0 / (double)0x7FFFFFFFL) {
 		*num = 0;
-		*denom = 0x7FFFFFFF;
+		*denom = 0x7FFFFFFFL;
 		return;
 	}
 
@@ -2927,10 +2914,9 @@ void DoubleToSrational(double value, int32 *num, int32 *denom)
 	*/
 	ToRationalEuclideanGCD(value, TRUE, FALSE, &ullNum, &ullDenom);
 	ToRationalEuclideanGCD(value, TRUE, TRUE, &ullNum2, &ullDenom2);
-	fprintf(stderr, "FromEuclideaS: val=%14.6f, num=%12llu, denom=%12llu | num2=%12llu, denom2=%12llu\n", neg*value, ullNum, ullDenom, ullNum2, ullDenom2);
 	/*-- Double-Check, that returned values fit into LONG :*/
 	if (ullNum > LONG_MAX || ullDenom > LONG_MAX || ullNum2 > LONG_MAX || ullDenom2 > LONG_MAX) {
-		fprintf(stderr, "DoubleToSrational(): Num or Denom exceeds ULONG: val=%14.6f, num=%12llu, denom=%12llu | num2=%12llu, denom2=%12llu\n", neg*value, ullNum, ullDenom, ullNum2, ullDenom2);
+		TIFFErrorExt(0, "TIFFLib: DoubeToSrational()", " Num or Denom exceeds LONG: val=%14.6f, num=%12llu, denom=%12llu | num2=%12llu, denom2=%12llu", neg*value, ullNum, ullDenom, ullNum2, ullDenom2);
 		assert(0);
 	}
 
@@ -2944,7 +2930,6 @@ void DoubleToSrational(double value, int32 *num, int32 *denom)
 	else {
 		*num = (long)(neg * (long)ullNum2);
 		*denom = (long)ullDenom2;
-		fprintf(stderr, "FromEuclideaS: val=%14.6f, num=%12d, denom=%12d <<< returned signed int32\n\n", neg*value, *num, *denom);
 	}
 }  /*-- DoubleToSrational() --------------*/
 

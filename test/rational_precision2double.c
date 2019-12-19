@@ -69,6 +69,7 @@
 
 
 int write_test_tiff(TIFF *tif, const char *filenameRead, int blnAllCustomTags);
+int addTags(TIFF *tif);
 
 #define	SPP	3		/* Samples per pixel */
 const uint16	width = 1;
@@ -77,6 +78,91 @@ const uint16	bps = 8;
 const uint16	photometric = PHOTOMETRIC_RGB;
 const uint16	rows_per_strip = 1;
 const uint16	planarconfig = PLANARCONFIG_CONTIG;
+
+/*-- Additional custom TIFF tags for testing of Rational2Double precision --*/
+#define TIFFTAG_RATIONAL_DOUBLE		60000
+#define TIFFTAG_SRATIONAL_DOUBLE		60001
+#define TIFFTAG_RATIONAL_C0_DOUBLE		60002
+#define TIFFTAG_SRATIONAL_C16_DOUBLE		60003
+
+
+/*--- TIFFField Definition ---
+	field_tag: the tag number. For instance 277 for the SamplesPerPixel tag. Builtin tags will generally have a #define in tiff.h for each known tag.
+	field_readcount: The number of values which should be read. The special value TIFF_VARIABLE (-1) indicates that a variable number of values may be read. The special value TIFFTAG_SPP (-2) indicates that there should be one value for each sample as defined by TIFFTAG_SAMPLESPERPIXEL. The special value TIFF_VARIABLE2 (-3) is presumably similar to TIFF_VARIABLE though I am not sure what the distinction in behaviour is. This field is TIFF_VARIABLE for variable length ascii fields.
+	field_writecount: The number of values which should be written. Generally the same as field_readcount. A few built-in exceptions exist, but I haven't analysed why they differ.
+	field_type: Type of the field. One of TIFF_BYTE, TIFF_ASCII, TIFF_SHORT, TIFF_LONG, TIFF_RATIONAL, TIFF_SBYTE, TIFF_UNDEFINED, TIFF_SSHORT, TIFF_SLONG, TIFF_SRATIONAL, TIFF_FLOAT, TIFF_DOUBLE or TIFF_IFD. Note that some fields can support more than one type (for instance short and long). These fields should have multiple TIFFFieldInfos.
+	reserved:
+	set_field_type: TIFF_SETGET_DOUBLE
+	get_field_type: - not used -
+	field_bit: Built-in tags stored in special fields in the TIFF structure have assigned field numbers to distinguish them (ie. FIELD_SAMPLESPERPIXEL). New tags should generally just use FIELD_CUSTOM indicating they are stored in the generic tag list.
+	field_oktochange: TRUE if it is OK to change this tag value while an image is being written. FALSE for stuff that must be set once and then left unchanged (like ImageWidth, or PhotometricInterpretation for instance).
+	field_passcount: If TRUE, then the count value must be passed in TIFFSetField(), and TIFFGetField(), otherwise the count is not required. This should generally be TRUE for non-ascii variable count tags unless the count is implicit (such as with the colormap).
+	field_name: A name for the tag. Normally mixed case (studly caps) like "StripByteCounts" and relatively short.
+*/
+
+static const TIFFField
+tifFieldInfo[] = {
+	{ TIFFTAG_RATIONAL_DOUBLE, 1, 1, TIFF_RATIONAL, 0, TIFF_SETGET_DOUBLE, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "Rational2Double_U_Double", NULL },
+	{ TIFFTAG_SRATIONAL_DOUBLE, 1, 1, TIFF_SRATIONAL, 0, TIFF_SETGET_DOUBLE, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "Rational2Double_S_Double", NULL },
+	{ TIFFTAG_RATIONAL_C0_DOUBLE, 3, 3, TIFF_RATIONAL, 0, TIFF_SETGET_C0_DOUBLE, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "Rational2Double_C0", NULL },
+	{ TIFFTAG_SRATIONAL_C16_DOUBLE, -1, -1, TIFF_SRATIONAL, 0, TIFF_SETGET_C16_DOUBLE, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "Rational2Double_S_C16", NULL },
+};
+
+#define	N(a)	(sizeof (a) / sizeof (a[0]))
+
+/*--- Add aditional Rational-Double Tags to TIFF 
+	  ref: html\addingtags.html but with new function _TIFFMergeFields(). 
+---*/
+
+/* In libtiff 3.6.0 a new mechanism was introduced allowing libtiff to read unrecognised tags automatically. 
+    When an unknown tags is encountered, it is automatically internally defined with a default name and a type derived from the tag value in the file. 
+	Applications only need to predefine application specific tags if they need to be able to set them in a file, or if particular calling conventions 
+	are desired for TIFFSetField() and TIFFGetField().
+    When tags are autodefined like this the field_readcount and field_writecount values are always TIFF_VARIABLE. 
+	The field_passcount is always TRUE, and the field_bit is FIELD_CUSTOM. The field name will be "Tag %d" where the %d is the tag number.
+*/
+
+/*The tags need to be defined for each TIFF file opened - and when reading they should be defined before the tags of the file are read, 
+  yet a valid TIFF * is needed to merge the tags against. In order to get them registered at the appropriate part of the setup process, 
+  it is necessary to register our merge function as an extender callback with libtiff. This is done with TIFFSetTagExtender(). 
+  We also keep track of the previous tag extender (if any) so that we can call it from our extender allowing a chain of customizations to take effect. 
+*/
+static TIFFExtendProc _ParentExtender = NULL;
+static void _XTIFFDefaultDirectory(TIFF *tif);
+
+static
+void _XTIFFInitialize(void)
+{
+    static int first_time=1;
+	
+    if (! first_time) return; /* Been there. Done that. */
+first_time = 0;
+
+/* Grab the inherited method and install */
+_ParentExtender = TIFFSetTagExtender(_XTIFFDefaultDirectory);
+}
+
+/* The extender callback is looks like this.
+It merges in our new fields and then calls the next extender if there is one in effect.
+*/
+static void
+_XTIFFDefaultDirectory(TIFF *tif)
+{
+	uint32 n, nadded;
+
+	/* Install the extended Tag field info */
+	n = N(tifFieldInfo);
+	//_TIFFMergeFields(tif, const TIFFField info[], uint32 n);
+	nadded = _TIFFMergeFields(tif, tifFieldInfo, n);
+
+	/* Since an XTIFF client module may have overridden
+	* the default directory method, we call it now to
+	* allow it to set up the rest of its own methods.
+	*/
+
+	if (_ParentExtender)
+		(*_ParentExtender)(tif);
+}
 
 
 int
@@ -89,6 +175,8 @@ main()
 	int				ret;
 	int				errorNo;
 
+	/*-- Initialize TIFF-Extender to add additonal TIFF-Tags --*/
+	_XTIFFInitialize();
 
 	fprintf(stderr, "==== Test if Set()/Get() interface for some custom rational tags behave as before change. ====\n");
 	/* --- Test with Classic-TIFF ---*/
@@ -107,6 +195,7 @@ main()
 	}
 	fprintf(stderr, "-------- Test with ClassicTIFF started  ----------\n");
 	ret = write_test_tiff(tif, filenameClassicTiff, FALSE);
+	if (ret > 0) return(ret);
 
 	/*--- Test with BIG-TIFF ---*/
 	/* delete file, if exists */
@@ -122,6 +211,7 @@ main()
 	}
 	fprintf(stderr, "\n-------- Test with BigTIFF started  ----------\n");
 	ret = write_test_tiff(tif, filenameBigTiff, FALSE);
+	if (ret > 0) return(ret);
 
 
 	fprintf(stderr, "\n\n==== Test automatically, if all custom rational tags are written/read correctly. ====\n");
@@ -141,6 +231,7 @@ main()
 	}
 	fprintf(stderr, "-------- Test with ClassicTIFF started  ----------\n");
 	ret = write_test_tiff(tif, filenameClassicTiff, TRUE);
+	if (ret > 0) return(ret);
 
 	/*--- Test with BIG-TIFF ---*/
 	/* delete file, if exists */
@@ -156,12 +247,8 @@ main()
 	}
 	fprintf(stderr, "\n-------- Test with BigTIFF started  ----------\n");
 	ret = write_test_tiff(tif, filenameBigTiff, TRUE);
-
-
+	return(ret);
 } /* main() */
-
-
-
 
 
 
@@ -185,11 +272,13 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 	long	nTags;
 
 	const TIFFFieldArray* tFieldArray;
+	const TIFFField** tifFields;          /* actual field info */
 	unsigned long			tTag;
 	TIFFDataType			tType;
 	short					tWriteCount;
 	TIFFSetGetFieldType		tSetFieldType;
 	unsigned short			tFieldBit;
+	const TIFFField			*fip;
 	char* tFieldName;
 
 
@@ -233,6 +322,7 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 	double		dblDiff, dblDiffLimit;
 	float		fltDiff, fltDiffLimit;
 #define RATIONAL_EPS (1.0/30000.0) /* reduced difference of rational values, approx 3.3e-5 */
+
 
 	/*-- Fill test data arrays for writing ----------- */
 	for (i = 0; i < N_SIZE; i++) {
@@ -389,9 +479,41 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 			goto failure;
 		}
 
+		/*-- Check, if the TiffLibrary is compiled with the new interface with Rational2Double or still uses the old definitions. */
+		/*   tags to check: TIFFTAG_BESTQUALITYSCALE, TIFFTAG_BASELINENOISE, TIFFTAG_BASELINESHARPNESS, */
+		fip = TIFFFindField(tif, TIFFTAG_BESTQUALITYSCALE, TIFF_ANY);
+		tSetFieldType = fip->set_field_type;
+		if (tSetFieldType == TIFF_SETGET_DOUBLE)
+			blnIsRational2Double = FALSE;
+		else
+			blnIsRational2Double = TRUE;
+
+		/*--- Write now additional Rational2Double test tags ---*/
+		/*--- However, this additional tags are only written as Double correctly,
+			  if blnIsRational2Double  is defined!
+		 ------------------------------------------------------*/
+		if (blnIsRational2Double) {
+			if (!TIFFSetField(tif, TIFFTAG_RATIONAL_DOUBLE, auxDoubleArrayW[100])) {
+				fprintf(stderr, "Can't set TIFFTAG_RATIONAL_DOUBLE tag.\n");
+				goto failure;
+			}
+			if (!TIFFSetField(tif, TIFFTAG_SRATIONAL_DOUBLE, (-1.0 * auxDoubleArrayW[101]))) {
+				fprintf(stderr, "Can't set TIFFTAG_SRATIONAL_DOUBLE tag.\n");
+				goto failure;
+			}
+			if (!TIFFSetField(tif, TIFFTAG_RATIONAL_C0_DOUBLE, &auxDoubleArrayW[110])) {
+				fprintf(stderr, "Can't set TIFFTAG_RATIONAL_C0_DOUBLE tag.\n");
+				goto failure;
+			}
+			if (!TIFFSetField(tif, TIFFTAG_SRATIONAL_C16_DOUBLE, 2, &auxDoubleArrayW[120])) {
+				fprintf(stderr, "Can't set TIFFTAG_SRATIONAL_C16_DOUBLE tag.\n");
+				goto failure;
+			}
+		}
+
 	} else { /* blnAllCustomTags */
 		/*==== Automatically check all custom rational tags == WRITING ===*/
-		/*-- Get array, where EXIF tag fields are defined --*/
+		/*-- Get array, where TIFF tag fields are defined --*/
 		tFieldArray = _TIFFGetFields();
 		nTags = tFieldArray->count;
 
@@ -479,7 +601,7 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 /*=========================  READING  =============  READING  ========================================*/
 	/* Ok, now test whether we can read written values in the EXIF directory. */
 	tif = TIFFOpen(filenameRead, "r");
-	
+
 
 	/*-- Read some parameters out of the main directory --*/
 
@@ -521,14 +643,20 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 
 
 
+	/*-- Check, if the TiffLibrary is compiled with the new interface with Rational2Double or still uses the old definitions. */
+	/*   tags to check: TIFFTAG_BESTQUALITYSCALE, TIFFTAG_BASELINENOISE, TIFFTAG_BASELINESHARPNESS, */
+	fip = TIFFFindField(tif, TIFFTAG_BESTQUALITYSCALE, TIFF_ANY);
+	tSetFieldType = fip->set_field_type;
+	if (tSetFieldType == TIFF_SETGET_DOUBLE)
+		blnIsRational2Double = FALSE;
+	else
+		blnIsRational2Double = TRUE;
 
 
 	if (!blnAllCustomTags) {
 
 		/*- TIFFTAG_BESTQUALITYSCALE is a Rational parameter (TIFF_RATIONAL, TIFF_SETGET_DOUBLE) with field_bit=FIELD_CUSTOM!
 			and written with double parameter -*/
-			/*- First read with Float-parameter  -  which should be correct -*/
-
 		/*- Read into a union to test the correct precision (float  or double) returned.
 		 *   Float-parameter should be correct, but double-parameter should give a wrong value
 		 */
@@ -546,10 +674,9 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 		/*--- Now the same for a Signed Rational ---*/
 		/*- TIFFTAG_BASELINEEXPOSURE is a Rational parameter (TIFF_SRATIONAL, TIFF_SETGET_DOUBLE) with field_bit=FIELD_CUSTOM! -
 			and written with double parameter - */
-
-			/*- Read into a union to test the correct precision (float  or double) returned.
-			 *   Float-parameter should be correct, but double-parameter should give a wrong value
-			 */
+		/*- Read into a union to test the correct precision (float  or double) returned.
+		 *   Float-parameter should be correct, but double-parameter should give a wrong value
+		 */
 		auxDblUnion.dbl = 0;
 		retCode = TIFFGetField(tif, TIFFTAG_BASELINEEXPOSURE, &auxDblUnion.dbl);
 		dblDiffLimit = RATIONAL_EPS * (double)BASELINEEXPOSURE_VAL;
@@ -560,12 +687,6 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 			fprintf(stderr, "whereas Double-Read value of TIFFTAG_BESTQUALITYSCALE %.12f is nearly equal to set value %.12f\n", auxDblUnion.dbl, BASELINEEXPOSURE_VAL);
 			GOTOFAILURE
 		}
-		/*----
-		else {
-			fprintf(stderr, "Rational TIFFTAG_BASELINEEXPOSURE tag is written with double-precision value of %.18f\n  (flt=%.18f)\n  but read value has only limited precision of %.18f \n  with fltDiff= %e and dblDiff=%e\n", BASELINEEXPOSURE_VAL, (float)BASELINEEXPOSURE_VAL, auxDblUnion.flt1, fltDiff, auxDblUnion.flt1 - (double)BASELINEEXPOSURE_VAL);
-		}
-		-----*/
-
 
 		/*- Variable Array: TIFFTAG_DECODE is a SRATIONAL parameter TIFF_SETGET_C16_FLOAT type FIELD_CUSTOM with passcount=1 and variable length of array. */
 		retCode = TIFFGetField(tif, TIFFTAG_DECODE, &count16, &pVoidArray);
@@ -577,6 +698,7 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 			dblDiff = auxFloatArray[i] - auxFloatArrayN1[i];
 			if (fabs(dblDiff) > fabs(dblDiffLimit)) {
 				fprintf(stderr, "Read value %d of TIFFTAG_DECODE Array %f differs from set value %f\n", i, auxFloatArray[i], auxFloatArrayN1[i]);
+				GOTOFAILURE
 			}
 		}
 
@@ -588,22 +710,72 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 			dblDiff = auxFloatArray[i] - auxFloatArrayN1[i];
 			if (fabs(dblDiff) > fabs(dblDiffLimit)) {
 				fprintf(stderr, "Read value %d of TIFFTAG_BLACKLEVEL Array %f differs from set value %f\n", i, auxFloatArray[i], auxFloatArrayN1[i]);
+				GOTOFAILURE
 			}
 		}
+
+
+		/*--- Read now additional Rational2Double test tags ---
+		      This should be now with nearly double precision
+			  However, this additional tags are only read as Double,
+			  if blnIsRational2Double  is defined!
+	     ------------------------------------------------------*/
+		if (blnIsRational2Double) {
+			auxDblUnion.dbl = 0;
+			retCode = TIFFGetField(tif, TIFFTAG_RATIONAL_DOUBLE, &auxDblUnion.dbl);
+			if (!retCode) { fprintf(stderr, "Can't read %s\n", "TIFFTAG_RATIONAL_DOUBLE"); GOTOFAILURE }
+			dblDiffLimit = RATIONAL_EPS * auxDoubleArrayW[100];
+			dblDiff = auxDblUnion.dbl - auxDoubleArrayW[100];
+			if (fabs(dblDiff) > fabs(dblDiffLimit)) {
+				fprintf(stderr, "Read value of TIFFTAG_RATIONAL_DOUBLE %f differs from set value %f\n", auxDblUnion.dbl, auxDoubleArrayW[100]);
+				GOTOFAILURE
+			}
+
+			auxDblUnion.dbl = 0;
+			retCode = TIFFGetField(tif, TIFFTAG_SRATIONAL_DOUBLE, &auxDblUnion.dbl);
+			if (!retCode) { fprintf(stderr, "Can't read %s\n", "TIFFTAG_SRATIONAL_DOUBLE"); GOTOFAILURE }
+			auxDouble = -1.0 * auxDoubleArrayW[101];
+			dblDiffLimit = RATIONAL_EPS * auxDouble;
+			dblDiff = auxDblUnion.dbl - auxDouble;
+			if (fabs(dblDiff) > fabs(dblDiffLimit)) {
+				fprintf(stderr, "Read value of TIFFTAG_SRATIONAL_DOUBLE %f differs from set value %f\n", auxDblUnion.dbl, auxDouble);
+				GOTOFAILURE
+			}
+
+			/*- Fixed Array: TIFFTAG_RATIONAL_C0_DOUBLE, 3, 3, TIFF_RATIONAL, 0, TIFF_SETGET_C0_DOUBLE */
+			count16 = 3; /* set fixed array length for checking */
+			retCode = TIFFGetField(tif, TIFFTAG_RATIONAL_C0_DOUBLE, &pVoidArray);
+			/*- pVoidArray points to a Tiff-internal temporary memorypart. Thus, contents needs to be saved. */
+			memcpy(&auxDoubleArray, pVoidArray, (count16 * sizeof(auxDoubleArray[0])));
+			for (i = 0; i < count16; i++) {
+				dblDiffLimit = RATIONAL_EPS * auxDoubleArrayW[110 + i];
+				dblDiff = auxDoubleArray[i] - auxDoubleArrayW[110 + i];
+				if (fabs(dblDiff) > fabs(dblDiffLimit)) {
+					fprintf(stderr, "Read value %d of TIFFTAG_RATIONAL_C0_DOUBLE Array %f differs from set value %f\n", i, auxDoubleArray[i], auxDoubleArrayW[110 + i]);
+					GOTOFAILURE
+				}
+			}
+
+			/*- Variable Array: TIFFTAG_SRATIONAL_C16_DOUBLE, -1, -1, TIFF_SRATIONAL, 0, TIFF_SETGET_C16_DOUBLE  */
+			retCode = TIFFGetField(tif, TIFFTAG_SRATIONAL_C16_DOUBLE, &count16, &pVoidArray);
+			/*- pVoidArray points to a Tiff-internal temporary memorypart. Thus, contents needs to be saved. */
+			memcpy(&auxDoubleArray, pVoidArray, (count16 * sizeof(auxDoubleArray[0])));
+			for (i = 0; i < count16; i++) {
+				dblDiffLimit = RATIONAL_EPS * auxDoubleArrayW[120 + i];
+				dblDiff = auxDoubleArray[i] - auxDoubleArrayW[120 + i];
+				if (fabs(dblDiff) > fabs(dblDiffLimit)) {
+					fprintf(stderr, "Read value %d of TIFFTAG_SRATIONAL_C16_DOUBLE Array %f differs from set value %f\n", i, auxDoubleArray[i], auxDoubleArrayW[120 + i]);
+					GOTOFAILURE
+				}
+			}
+		}
+
 	} else {  /* blnAllCustomTags */
 		/*==== Automatically check all custom rational tags == READING ===*/
 
-		/*-- Get array, where EXIF tag fields are defined --*/
+		/*-- Get array, where standard TIFF tag fields are defined --*/
 		tFieldArray = _TIFFGetFields();
 		nTags = tFieldArray->count;
-		/*-- Check, if the TiffLibrary is compiled with the new interface with Rational2Double or still uses the old definitions. */
-		/*   tags to check: TIFFTAG_BESTQUALITYSCALE, TIFFTAG_BASELINENOISE, TIFFTAG_BASELINESHARPNESS, */
-		const TIFFField *fip = TIFFFindField(tif, TIFFTAG_BESTQUALITYSCALE, TIFF_ANY); 
-		tSetFieldType = fip->set_field_type;
-		if (tSetFieldType == TIFF_SETGET_DOUBLE)
-			blnIsRational2Double = FALSE;
-		else
-			blnIsRational2Double = TRUE;
 
 		for (i = 0; i < nTags; i++) {
 			tTag = tFieldArray->fields[i].field_tag;
@@ -621,7 +793,7 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 					case TIFF_SETGET_FLOAT:
 						if (!TIFFGetField(tif, tTag, &auxFloat)) {
 							fprintf(stderr, "Can't read %s\n", tFieldArray->fields[i].field_name);
-							/*goto failure; */
+							GOTOFAILURE
 							break;
 						}
 						/* compare read values with written ones */
@@ -632,8 +804,10 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 							 * However, there are two other EXIF tags where numerator indicates a special value and six other cases where the denominator indicates special values,
 							 * which are not treated within LibTiff!!
 							*/
-							if (!(tTag == EXIFTAG_SUBJECTDISTANCE && auxFloat == -1.0))
+							if (!(tTag == EXIFTAG_SUBJECTDISTANCE && auxFloat == -1.0)) {
 								fprintf(stderr, "%d:Read value of %s %f differs from set value %f\n", i, tFieldName, auxFloat, auxDoubleArrayW[i]);
+								GOTOFAILURE
+							}
 						}
 						break;
 					case TIFF_SETGET_DOUBLE:
@@ -647,7 +821,7 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 						 */
 						if (!TIFFGetField(tif, tTag, &auxDblUnion.dbl)) {
 							fprintf(stderr, "Can't read %s\n", tFieldArray->fields[i].field_name);
-							/*goto failure; */
+							GOTOFAILURE
 							break;
 						}
 						if (tType == TIFF_RATIONAL || tType == TIFF_SRATIONAL) {
@@ -683,6 +857,7 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 						/*-- Check, if it is a single parameter, a fixed array or a variable array */
 						if (tWriteCount == 1) {
 							fprintf(stderr, "Reading: WriteCount for .set_field_type %d should be -1 or greather than 1!  %s\n", tSetFieldType, tFieldArray->fields[i].field_name);
+							GOTOFAILURE
 						} else {
 							/*-- Either fix or variable array --*/
 							/* For arrays, distinguishing between float or double is essential. */
@@ -691,7 +866,7 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 								/* fixed array with needed arraysize defined in .field_writecount */
 								if (!TIFFGetField(tif, tTag, &pVoidArray)) {
 									fprintf(stderr, "Can't read %s\n", tFieldArray->fields[i].field_name);
-									/*goto failure; */
+									GOTOFAILURE
 									break;
 								}
 								/* set tWriteCount to number of read samples for next steps */
@@ -701,7 +876,7 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 								/* Dependent on Cxx, the count parameter is char, short or long. Therefore use unionLong! */
 								if (!TIFFGetField(tif, tTag, &auxLongUnion, &pVoidArray)) {
 									fprintf(stderr, "Can't read %s\n", tFieldArray->fields[i].field_name);
-									/*goto failure; */
+									GOTOFAILURE
 									break;
 								}
 								/* set tWriteCount to number of read samples for next steps */
@@ -746,14 +921,13 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 
 
 
-
 	TIFFClose(tif);
 	
 	/* All tests passed; delete file and exit with success status. */
 #ifdef FOR_AUTO_TESTING
 	unlink(filenameRead);
 #endif
-	fprintf (stderr, "-------- Test finished  ----------\n");
+	fprintf(stderr, "-------- Test finished OK ----------\n");
 	return 0;
 
 failure:
@@ -762,5 +936,6 @@ failure:
 	 * Do not remove the file for further manual investigation.
 	 */
 	TIFFClose(tif);
+	fprintf(stderr, "-------- Test finished with FAILURE --------\n");
 	return 1;
 }

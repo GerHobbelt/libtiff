@@ -45,7 +45,6 @@
 	a.) delete any written testfiles when test passed (otherwise autotest will fail)
 	b.) goto failure, if any failure is detected, which is not necessary when test is initiated manually for debugging
 */
-//#define GOTOFAILURE	goto failure;
 #define GOTOFAILURE	goto failure;
 #define GOTOFAILURE_GPS	goto failure;
 #define GOTOFAILURE_ALL_EXIF	goto failure;
@@ -113,7 +112,7 @@ main()
 	fprintf(stderr, "-------- Test with ClassicTIFF started  ----------\n");
 	ret1 = write_test_tiff(tif, filename);
 
-	if (ret1 > 0) return(ret1); else return(4);
+	if (ret1 > 0) return(ret1);
 
 	/*--- Test with BIG-TIFF ---*/
 	/* delete file, if exists */
@@ -284,9 +283,8 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 		fprintf (stderr, "Can't set TIFFTAG_PIXAR_FOVCOT tag.\n");
 		goto failure;
 	}
-	/*- TIFFTAG_STONITS is a DOUBLE parameter!
-	 *-- Unfortunately, TIFF_SETGET_DOUBLE is used for TIFF_RATIONAL but those have to be read with FLOAT !!!
-	 *   Only TIFFTAG_STONITS is a TIFF_DOUBLE, which has to be read as DOUBLE!!
+	/*- TIFFTAG_STONITS is a DOUBLE parameter! (TIFF_DOUBLE, 0, TIFF_SETGET_DOUBLE)
+	 *   Only TIFFTAG_STONITS is a TIFF_DOUBLE. Therefore, it has to be read as DOUBLE!!
      */
 	auxDouble = 6.123456789;
 	auxFloat = (float)auxDouble;
@@ -312,7 +310,6 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	}
 
 	/* - TIFFTAG_BASELINENOISE, 1, 1, TIFF_RATIONAL, 0, TIFF_SETGET_FLOAT */
-	/*-- A T E N T I O N:  this is redefined for TIFF_SETGET_DOUBLE for test . */
 	if (!TIFFSetField(tif, TIFFTAG_BASELINENOISE, auxDouble)) {
 		fprintf(stderr, "Can't set TIFFTAG_BASELINENOISE tag.\n");
 		goto failure;
@@ -320,14 +317,20 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 
 	
 	/*- Variable Array: TIFFTAG_DECODE is a SRATIONAL parameter TIFF_SETGET_C16_FLOAT type FIELD_CUSTOM with passcount=1 and variable length of array. */
-	if (!TIFFSetField(tif, TIFFTAG_DECODE, 3, auxFloatArrayN2)) {		/* for TIFF_SETGET_C16_DOUBLE */
+	if (!TIFFSetField(tif, TIFFTAG_DECODE, 3, auxFloatArrayN2)) {
 		fprintf (stderr, "Can't set TIFFTAG_DECODE tag.\n");
 		goto failure;
 	}
 	
 	/*- Varable Array:  TIFF_RATIONAL, 0, TIFF_SETGET_C16_FLOAT */
-	if (!TIFFSetField(tif, TIFFTAG_BLACKLEVEL, 3, auxFloatArrayN1)) {				/* für TIFF_SETGET_C16_FLOAT */
+	if (!TIFFSetField(tif, TIFFTAG_BLACKLEVEL, 3, auxFloatArrayN1)) {
 		fprintf (stderr, "Can't set TIFFTAG_BLACKLEVEL tag.\n");
+		goto failure;
+	}
+
+	/*- Fixed Array: TIFFTAG_DEFAULTCROPSIZE, 2, 2, TIFF_RATIONAL, 0, TIFF_SETGET_C0_FLOAT */
+	if (!TIFFSetField(tif, TIFFTAG_DEFAULTCROPSIZE, &auxFloatArrayW[0])) {
+		fprintf(stderr, "Can't set TIFFTAG_DEFAULTCROPSIZE tag.\n");
 		goto failure;
 	}
 #endif	/* -- ADDITIONAL_TAGS -- */
@@ -759,7 +762,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	fprintf (stderr, "-------- Continue Test  ---------- reading ...\n");
 
 /*=========================  READING  =============  READING  ========================================*/
-	/* Ok, now test whether we can read written values in the EXIF directory. */
+	/* Ok, now test whether we can read written values correctly. */
 	tif = TIFFOpen(filenameRead, "r");
 	
 
@@ -793,12 +796,8 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	}
 
 	/* - TIFFTAG_BASELINENOISE, 1, 1, TIFF_RATIONAL, 0, TIFF_SETGET_FLOAT */
-/*-- A T E N T I O N:  this is redefined for TIFF_SETGET_DOUBLE for test . */
 	retCode = TIFFGetField(tif, TIFFTAG_BASELINENOISE, &auxDblUnion.dbl);
 	if (!retCode) { fprintf(stderr, "Can't read %s\n", "TIFFTAG_BASELINENOISE"); }
-	if ((float)auxDblUnion.dbl != (float)BESTQUALITYSCALE_VAL) {
-		fprintf(stderr, "Read double value of TIFFTAG_BASELINENOISE %f differs from set value %f\n", auxDblUnion.dbl, BESTQUALITYSCALE_VAL);
-	}
 	if (auxDblUnion.flt1 != (float)BESTQUALITYSCALE_VAL) {
 		fprintf(stderr, "Read float value of TIFFTAG_BASELINENOISE %f differs from set value %f\n", auxDblUnion.flt1, BESTQUALITYSCALE_VAL);
 	}
@@ -829,6 +828,20 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 			fprintf(stderr, "Read value %d of TIFFTAG_BLACKLEVEL Array %f differs from set value %f\n", i, auxFloatArray[i], auxFloatArrayN1[i]);
 		}
 	}
+
+	/*- Fixed Array: TIFFTAG_DEFAULTCROPSIZE, 2, 2, TIFF_RATIONAL, 0, TIFF_SETGET_C0_FLOAT */
+	retCode = TIFFGetField(tif, TIFFTAG_DEFAULTCROPSIZE, &pVoidArray);
+	if (!retCode) { fprintf(stderr, "Can't read %s\n", "TIFFTAG_DEFAULTCROPSIZE"); }
+	/*- pVoidArray points to a Tiff-internal temporary memorypart. Thus, contents needs to be saved. */
+	memcpy(&auxFloatArray, pVoidArray, (2 * sizeof(auxFloatArray[0])));
+	for (i = 0; i < 2; i++) {
+		dblDiffLimit = RATIONAL_EPS * auxFloatArrayW[i];
+		dblDiff = auxFloatArray[i] - auxFloatArrayW[i];
+		if (fabs(dblDiff) > fabs(dblDiffLimit)) {
+			fprintf(stderr, "Read value %d of TIFFTAG_DEFAULTCROPSIZE Array %f differs from set value %f\n", i, auxFloatArray[i], auxFloatArrayW[i]);
+		}
+	}
+
 #endif	/*-- ADDITIONAL_TAGS --*/
 
 
@@ -926,7 +939,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	/* TIFF_RATIONAL, TIFF_SETGET_DOUBLE */
 	if (!TIFFGetField(tif, GPSTAG_ALTITUDE, &auxDblUnion.dbl)) {
 		fprintf(stderr, "Can't read GPSTAG_ALTITUDE\n");
-		/*GOTOFAILURE_GPS*/
+		GOTOFAILURE_GPS
 	}
 	if (blnIsRational2Double) {
 		/* New interface allows also double precision for TIFF_RATIONAL */
@@ -940,7 +953,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	dblDiff = auxDouble - auxDoubleGPSAltitude;
 	if (fabs(dblDiff) > fabs(dblDiffLimit)) {
 			fprintf(stderr, "Read value of GPSTAG_ALTITUDE %f differs from set value %f\n", auxDouble, auxDoubleGPSAltitude);
-			/*GOTOFAILURE_GPS*/
+			GOTOFAILURE_GPS
 	}
 
 	/*-- TimeStamp is only hh:mm:ss. See also DateTime string  3, TIFF_RATIONAL, TIFF_SETGET_C0_DOUBLE */
@@ -962,14 +975,14 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 		dblDiff = auxDoubleArray[i] - auxDoubleArrayGPSTime[i];
 		if (fabs(dblDiff) > fabs(dblDiffLimit)) {
 			fprintf(stderr, "Read value %d of GPSTAG_TIMESTAMP %f differs from set value %f\n", i, auxDoubleArray[i], auxDoubleArrayGPS2[i]);
-			/*GOTOFAILURE_GPS*/
+			GOTOFAILURE_GPS
 		}
 	}
 
 	/* GPSTAG_IMGDIRECTION --- TIFF_RATIONAL, TIFF_SETGET_DOUBLE */
 	if (!TIFFGetField(tif, GPSTAG_IMGDIRECTION, &auxDblUnion.dbl)) {
 		fprintf(stderr, "Can't read GPSTAG_IMGDIRECTION\n");
-		/*GOTOFAILURE_GPS*/
+		GOTOFAILURE_GPS
 	}
 	if (blnIsRational2Double) {
 		/* New interface allows also double precision for TIFF_RATIONAL */
@@ -983,25 +996,21 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	dblDiff = auxDouble - auxDoubleGPSDirection;
 	if (fabs(dblDiff) > fabs(dblDiffLimit)) {
 		fprintf(stderr, "Read value of GPSTAG_IMGDIRECTION %f differs from set value %f\n", auxDouble, auxDoubleGPSDirection);
-		/*GOTOFAILURE_GPS*/
+		GOTOFAILURE_GPS
 	}
-
-
-
-
 
 	/*-- GPSTAG_DIFFERENTIAL	, 1, 1,	TIFF_SHORT	, 0, 	TIFF_SETGET_UINT16 */
 	retCode = TIFFGetField(tif, GPSTAG_DIFFERENTIAL, &auxShort);
 	if (!retCode) { fprintf(stderr, "Can't read %s\n", "GPSTAG_DIFFERENTIAL"); }
 	if (auxShort != auxShortArrayW[5]) {
 		fprintf(stderr, "Read value of GPSTAG_DIFFERENTIAL %d differs from set value %d\n", auxShort, auxShortArrayW[5]);
-		/*GOTOFAILURE_GPS*/
+		GOTOFAILURE_GPS
 	}
 
 	/*-- GPSHPOSITIONINGERROR - new tag for EXIF 2.31 --*/
 	if (!TIFFGetField(tif, GPSTAG_GPSHPOSITIONINGERROR, &auxDblUnion.dbl)) {
 		fprintf(stderr, "Can't read GPSTAG_GPSHPOSITIONINGERROR\n");
-		/*GOTOFAILURE_GPS*/
+		GOTOFAILURE_GPS
 	}
 	if (blnIsRational2Double) {
 		/* New interface allows also double precision for TIFF_RATIONAL */
@@ -1016,7 +1025,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	dblDiff = auxDouble - auxFloat;
 	if (fabs(dblDiff) > fabs(dblDiffLimit)) {
 		fprintf(stderr, "Read value of GPSTAG_GPSHPOSITIONINGERROR %f differs from set value %f\n", auxDouble, auxFloat);
-		/*GOTOFAILURE_GPS*/
+		GOTOFAILURE_GPS
 	}
 
  /*===============  END reading GPS tags ==========================*/
@@ -1051,6 +1060,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	tSetFieldType = fip->set_field_type;
 	if (tSetFieldType == TIFF_SETGET_DOUBLE) {
 		blnIsRational2Double = FALSE;
+		fprintf(stderr, "-- EXIF tags read with standard --\n");
 	} else {
 		blnIsRational2Double = TRUE;
 		fprintf(stderr, "-- Rational2Double for reading EXIF tags detected --\n");
@@ -1064,7 +1074,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 		tFieldName = tFieldArray->fields[i].field_name;		
 		pVoid = NULL;
 
-		/*-- dependent on set_field_type write value --*/
+		/*-- dependent on set_field_type read value --*/
 		switch (tSetFieldType)
 		{
 			case TIFF_SETGET_ASCII:
@@ -1148,13 +1158,14 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 			case TIFF_SETGET_DOUBLE:
 				/*-- Unfortunately, TIFF_SETGET_DOUBLE is used for TIFF_RATIONAL but those have to be read with FLOAT !!! */
 				/*   Only TIFFTAG_STONITS is a TIFF_DOUBLE, which has to be read as DOUBLE!! */
-				/*   Only after update with Rational2Double feature, also TIFF_RATIONAL can be read in double precision!!! */
-				/*   Therefore, use a union to avoid overflow in TIFFGetField() return value
+				/*-- ATTENTION: ----
+				/*   Only after update with Rational2Double feature, also TIFF_RATIONAL can be read in double precision!!! 
+				 *   Therefore, use a union to avoid overflow in TIFFGetField() return value
 				 *   and depending on version check for the right interface here:
 				 *   - old interface:  correct value should be here a float
 				 *   - new interface:  correct value should be here a double
 				 *   Interface version (old/new) is determined above.
-				 */
+				 -------------------*/
 				if (!TIFFGetField(tif, tTag, &auxDblUnion.dbl)) {
 					fprintf(stderr, "Can't read %s\n", tFieldArray->fields[i].field_name);
 					GOTOFAILURE_ALL_EXIF
@@ -1362,7 +1373,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 #ifdef FOR_AUTO_TESTING
 	unlink(filenameRead);
 #endif
-	fprintf (stderr, "-------- Test finished  ----------\n");
+	fprintf (stderr, "-------- Test finished OK ----------\n");
 	return 0;
 
 failure:
