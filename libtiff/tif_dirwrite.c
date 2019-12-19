@@ -29,6 +29,7 @@
  */
 #include "tiffiop.h"
 #include <float.h>		/*--: for Rational2Double */
+#include <math.h>		/*--: for Rational2Double */
 
 #ifdef HAVE_IEEEFP
 #define TIFFCvtNativeToIEEEFloat(tif, n, fp)
@@ -165,11 +166,6 @@ void DoubleToRational(double f, uint32 *num, uint32 *denom);
 void DoubleToSrational(double f, int32 *num, int32 *denom);
 void DoubleToRational_direct(double value, unsigned long *num, unsigned long *denom);
 void DoubleToSrational_direct(double value, long *num, long *denom);
-/*--: Rational2Double: limits.h for definition of ULONG_MAX etc. */
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <limits.h>
 
 #ifdef notdef
 static int TIFFWriteDirectoryTagCheckedFloat(TIFF* tif, uint32* ndir, TIFFDirEntry* dir, uint16 tag, float value);
@@ -2830,7 +2826,7 @@ void DoubleToRational(double value, uint32 *num, uint32 *denom)
 	}
 
 	/*-- Check for too big numbers (> ULONG_MAX) -- */
-	if (value > ULONG_MAX) {
+	if (value > 0xFFFFFFFFUL) {
 		*num = 0xFFFFFFFFUL;
 		*denom = 0;
 		return;
@@ -2855,7 +2851,7 @@ void DoubleToRational(double value, uint32 *num, uint32 *denom)
 	ToRationalEuclideanGCD(value, FALSE, FALSE, &ullNum, &ullDenom);
 	ToRationalEuclideanGCD(value, FALSE, TRUE, &ullNum2, &ullDenom2);
 	/*-- Double-Check, that returned values fit into ULONG :*/
-	if (ullNum > ULONG_MAX || ullDenom > ULONG_MAX || ullNum2 > ULONG_MAX || ullDenom2 > ULONG_MAX) {
+	if (ullNum > 0xFFFFFFFFUL || ullDenom > 0xFFFFFFFFUL || ullNum2 > 0xFFFFFFFFUL || ullDenom2 > 0xFFFFFFFFUL) {
 		TIFFErrorExt(0, "TIFFLib: DoubeToRational()", " Num or Denom exceeds ULONG: val=%14.6f, num=%12llu, denom=%12llu | num2=%12llu, denom2=%12llu", value, ullNum, ullDenom, ullNum2, ullDenom2);
 		assert(0);
 	}
@@ -2889,7 +2885,7 @@ void DoubleToSrational(double value, int32 *num, int32 *denom)
 	if (value < 0) { neg = -1; value = -value; }
 
 	/*-- Check for too big numbers (> LONG_MAX) -- */
-	if (value > LONG_MAX) {
+	if (value > 0x7FFFFFFFL) {
 		*num = 0x7FFFFFFFL;
 		*denom = 0;
 		return;
@@ -2915,7 +2911,7 @@ void DoubleToSrational(double value, int32 *num, int32 *denom)
 	ToRationalEuclideanGCD(value, TRUE, FALSE, &ullNum, &ullDenom);
 	ToRationalEuclideanGCD(value, TRUE, TRUE, &ullNum2, &ullDenom2);
 	/*-- Double-Check, that returned values fit into LONG :*/
-	if (ullNum > LONG_MAX || ullDenom > LONG_MAX || ullNum2 > LONG_MAX || ullDenom2 > LONG_MAX) {
+	if (ullNum > 0x7FFFFFFFL || ullDenom > 0x7FFFFFFFL || ullNum2 > 0x7FFFFFFFL || ullDenom2 > 0x7FFFFFFFL) {
 		TIFFErrorExt(0, "TIFFLib: DoubeToSrational()", " Num or Denom exceeds LONG: val=%14.6f, num=%12llu, denom=%12llu | num2=%12llu, denom2=%12llu", neg*value, ullNum, ullDenom, ullNum2, ullDenom2);
 		assert(0);
 	}
