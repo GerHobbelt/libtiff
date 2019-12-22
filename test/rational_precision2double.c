@@ -294,6 +294,7 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 	double			auxDoubleArrayW[N_SIZE];
 	char			auxTextArrayW[N_SIZE][STRSIZE];
 	float			auxFloatArrayN1[3] = {1.0f / 7.0f, 61.23456789012345f, 62.3f};
+	float			auxFloatArrayResolutions[4] = {5.456789f, 6.666666f, 0.0033f, 5.0f / 213.0f};
 
 	/* -- Variables for reading -- */
 	uint16      count16 = 0;
@@ -374,9 +375,29 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 		goto failure;
 	}
 
+	/*--- Standard tags with TIFF_RATIONAL and TIFF_SETGET_DOUBLE to TIFF_SETGET_FLOAT change. ---
+	 *     They can be written either using float or double but have to be read using float.
+	-------------------------------------------------------------------------------------------- */
+	if (!TIFFSetField(tif, TIFFTAG_XRESOLUTION, auxFloatArrayResolutions[0])) {
+			fprintf(stderr, "Can't set TIFFTAG_XRESOLUTION tag.\n");
+			goto failure;
+		}
+	/* Test here the double input possibility */
+	if (!TIFFSetField(tif, TIFFTAG_YRESOLUTION, (double)auxFloatArrayResolutions[1])) {
+		fprintf(stderr, "Can't set TIFFTAG_YRESOLUTION tag.\n");
+		goto failure;
+	}
+	if (!TIFFSetField(tif, TIFFTAG_XPOSITION, auxFloatArrayResolutions[2])) {
+		fprintf(stderr, "Can't set TIFFTAG_XPOSITION tag.\n");
+		goto failure;
+	}
+	if (!TIFFSetField(tif, TIFFTAG_YPOSITION, auxFloatArrayResolutions[3])) {
+		fprintf(stderr, "Can't set TIFFTAG_YPOSITION tag.\n");
+		goto failure;
+	}
 
-	/*--- Some additional FIELD_CUSTOM tags to check standard interface ---*/
 
+	/*--- Some additional FIELD_CUSTOM tags to check standard interface ------------*/
 	/*- TIFFTAG_INKSET is a SHORT parameter (TIFF_SHORT, TIFF_SETGET_UINT16) with field_bit=FIELD_CUSTOM !! -*/
 	if (!TIFFSetField(tif, TIFFTAG_INKSET, 34)) {
 		fprintf(stderr, "Can't set TIFFTAG_INKSET tag.\n");
@@ -614,6 +635,35 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 	retCode = TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &auxUint32 );
 	if (auxUint32 != width) {
 		fprintf (stderr, "Read value of TIFFTAG_IMAGELENGTH %d differs from set value %d\n", auxUint32, length);
+		GOTOFAILURE
+	}
+
+	/*--- Standard tags with TIFF_RATIONAL and TIFF_SETGET_DOUBLE to TIFF_SETGET_FLOAT change. ---
+	 *     They can be written either using float or double but have to be read using float.
+	-------------------------------------------------------------------------------------------- */
+	dblDiffLimit = RATIONAL_EPS;
+	retCode = TIFFGetField(tif, TIFFTAG_XRESOLUTION, &auxFloat);
+	dblDiff = auxFloat - auxFloatArrayResolutions[0];
+	if (fabs(dblDiff) > fabs(dblDiffLimit)) {
+		fprintf(stderr, "Read value of TIFFTAG_XRESOLUTION %f differs from set value %f\n", auxFloat, auxFloatArrayResolutions[0]);
+		GOTOFAILURE
+	}
+	retCode = TIFFGetField(tif, TIFFTAG_YRESOLUTION, &auxFloat);
+	dblDiff = auxFloat - auxFloatArrayResolutions[1];
+	if (fabs(dblDiff) > fabs(dblDiffLimit)) {
+		fprintf(stderr, "Read value of TIFFTAG_YRESOLUTION %f differs from set value %f\n", auxFloat, auxFloatArrayResolutions[1]);
+		GOTOFAILURE
+	}
+	retCode = TIFFGetField(tif, TIFFTAG_XPOSITION, &auxFloat);
+	dblDiff = auxFloat - auxFloatArrayResolutions[2];
+	if (fabs(dblDiff) > fabs(dblDiffLimit)) {
+		fprintf(stderr, "Read value of TIFFTAG_XPOSITION %f differs from set value %f\n", auxFloat, auxFloatArrayResolutions[2]);
+		GOTOFAILURE
+	}
+	retCode = TIFFGetField(tif, TIFFTAG_YPOSITION, &auxFloat);
+	dblDiff = auxFloat - auxFloatArrayResolutions[3];
+	if (fabs(dblDiff) > fabs(dblDiffLimit)) {
+		fprintf(stderr, "Read value of TIFFTAG_YPOSITION %f differs from set value %f\n", auxFloat, auxFloatArrayResolutions[3]);
 		GOTOFAILURE
 	}
 
