@@ -290,12 +290,12 @@ TIFFVGetFieldDefaulted(TIFF* tif, uint32 tag, va_list ap)
 		*va_arg(ap, uint32 *) = td->td_imagedepth;
 		return (1);
 	case TIFFTAG_YCBCRCOEFFICIENTS:
-		{
-			/* defaults are from CCIR Recommendation 601-1 */
-			static float ycbcrcoeffs[] = { 0.299f, 0.587f, 0.114f };
-			*va_arg(ap, float **) = ycbcrcoeffs;
-			return 1;
-		}
+		/* defaults are from CCIR Recommendation 601-1 */
+		tif->tif_ycbcrcoeffs[0] = 0.299f;
+		tif->tif_ycbcrcoeffs[1] = 0.587f;
+		tif->tif_ycbcrcoeffs[2] = 0.114f;
+		*va_arg(ap, float **) = tif->tif_ycbcrcoeffs;
+		return 1;
 	case TIFFTAG_YCBCRSUBSAMPLING:
 		*va_arg(ap, uint16 *) = td->td_ycbcrsubsampling[0];
 		*va_arg(ap, uint16 *) = td->td_ycbcrsubsampling[1];
@@ -304,17 +304,13 @@ TIFFVGetFieldDefaulted(TIFF* tif, uint32 tag, va_list ap)
 		*va_arg(ap, uint16 *) = td->td_ycbcrpositioning;
 		return (1);
 	case TIFFTAG_WHITEPOINT:
-		{
-			static float whitepoint[2];
-
-			/* TIFF 6.0 specification tells that it is no default
-			   value for the WhitePoint, but AdobePhotoshop TIFF
-			   Technical Note tells that it should be CIE D50. */
-			whitepoint[0] =	D50_X0 / (D50_X0 + D50_Y0 + D50_Z0);
-			whitepoint[1] =	D50_Y0 / (D50_X0 + D50_Y0 + D50_Z0);
-			*va_arg(ap, float **) = whitepoint;
-			return 1;
-		}
+		/* TIFF 6.0 specification tells that it is no default
+		   value for the WhitePoint, but AdobePhotoshop TIFF
+		   Technical Note tells that it should be CIE D50. */
+		tif->tif_whitepoint[0] =	D50_X0 / (D50_X0 + D50_Y0 + D50_Z0);
+		tif->tif_whitepoint[1] =	D50_Y0 / (D50_X0 + D50_Y0 + D50_Z0);
+		*va_arg(ap, const float **) = tif->tif_whitepoint;
+		return 1;
 	case TIFFTAG_TRANSFERFUNCTION:
 		if (!td->td_transferfunction[0] &&
 		    !TIFFDefaultTransferFunction(td)) {
