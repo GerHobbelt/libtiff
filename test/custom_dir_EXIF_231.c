@@ -213,7 +213,6 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 		float	flt2;
 	} auxDblUnion;
 	void		*pVoidArray;
-	float		*pFloatArray;
 	char        *pAscii;
 	char		auxCharArray[2*STRSIZE];
 	short		auxShortArray[2*N_SIZE];
@@ -1171,7 +1170,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 				/*-- Unfortunately, TIFF_SETGET_DOUBLE is used for TIFF_RATIONAL but those have to be read with FLOAT !!! */
 				/*   Only TIFFTAG_STONITS is a TIFF_DOUBLE, which has to be read as DOUBLE!! */
 				/*-- ATTENTION: ----
-				/*   Only after update with Rational2Double feature, also TIFF_RATIONAL can be read in double precision!!! 
+				 *   Only after update with Rational2Double feature, also TIFF_RATIONAL can be read in double precision!!! 
 				 *   Therefore, use a union to avoid overflow in TIFFGetField() return value
 				 *   and depending on version check for the right interface here:
 				 *   - old interface:  correct value should be here a float
