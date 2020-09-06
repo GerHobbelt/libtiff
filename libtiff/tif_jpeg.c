@@ -1028,6 +1028,7 @@ JPEGSetupDecode(TIFF* tif)
 	/* Grab parameters that are same for all strips/tiles */
 	sp->photometric = td->td_photometric;
 	switch (sp->photometric) {
+	case PHOTOMETRIC_ITULAB:
 	case PHOTOMETRIC_YCBCR:
 		sp->h_sampling = td->td_ycbcrsubsampling[0];
 		sp->v_sampling = td->td_ycbcrsubsampling[1];
@@ -1813,6 +1814,24 @@ JPEGSetupEncode(TIFF* tif)
 			  "PhotometricInterpretation %d not allowed for JPEG",
 			  (int) sp->photometric);
 		return (0);
+	case PHOTOMETRIC_ITULAB:
+		/*
+		 * RFC 2301  6.2.2 Extension Fields
+		 * The JPEG compression standard allows for the a*b* chroma components of
+		 * an image to be subsampled relative to the L* lightness component. The
+		 * extension fields ChromaSubSampling and ChromaPositioning define the
+		 * subsampling. They are the same as YCbCrSubSampling and YCbCrPositioning
+		 * in TIFF, but have been renamed to reflect their applicability to other
+		 * color spaces.
+		 *
+		 *  The default value for ChromaSubSampling is (2,2), which is the
+		 * default for chroma subsampling in color fax [T.4, Annex E]. No
+		 * chroma subsampling, i.e. ChromaSubSampling = (1,1), is an option
+		 * for color fax
+		 */
+		sp->h_sampling = td->td_ycbcrsubsampling[0];
+		sp->v_sampling = td->td_ycbcrsubsampling[1];
+		break;
 	default:
 		/* TIFF 6.0 forbids subsampling of all other color spaces */
 		sp->h_sampling = 1;
