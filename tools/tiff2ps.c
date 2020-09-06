@@ -2264,7 +2264,7 @@ PS_Lvl2page(FILE* fd, TIFF* tif, uint32 w, uint32 h)
 		if (alpha) {
 			int adjust, i, j = 0;
 			int ncomps = samplesperpixel - extrasamples;
-			for (i = 0; i < byte_count; i+=samplesperpixel) {
+			for (i = 0; (i + ncomps) < byte_count; i+=samplesperpixel) {
 				adjust = 255 - buf_data[i + ncomps];
 				switch (ncomps) {
 					case 1:
@@ -2966,10 +2966,10 @@ tsize_t Ascii85EncodeBlock( uint8 * ascii85_p, unsigned f_eod, const uint8 * raw
 
         for ( ; raw_l > 3; raw_l -= 4 )
         {
-            val32  = *(++raw_p) << 24;
-            val32 += *(++raw_p) << 16;
-            val32 += *(++raw_p) <<  8;
-            val32 += *(++raw_p);
+            val32  = (uint32)*(++raw_p) << 24;
+            val32 += (uint32)*(++raw_p) << 16;
+            val32 += (uint32)*(++raw_p) <<  8;
+            val32 += (uint32)*(++raw_p);
     
             if ( val32 == 0 )                   /* Special case */
             {

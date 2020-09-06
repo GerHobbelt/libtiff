@@ -2108,8 +2108,8 @@ update_output_file (TIFF **tiffout, char *mode, int autoindex,
                     char *outname, unsigned int *page)
   {
   static int findex = 0;    /* file sequence indicator */
+  size_t basename_len;
   char  *sep;
-  char   filenum[18];
   char   export_ext[16];
   char   exportname[PATH_MAX];
 
@@ -2120,12 +2120,13 @@ update_output_file (TIFF **tiffout, char *mode, int autoindex,
     *tiffout = NULL;
     }
 
-  strcpy (export_ext, ".tiff");
-  memset (filenum, '\0', sizeof(filenum));
+  memcpy (export_ext, ".tiff", 6);
   memset (exportname, '\0', sizeof(exportname));
 
-  /* Leave room for page number portion of the new filename */
-  strncpy (exportname, outname, sizeof(exportname) - sizeof(filenum));
+  /* Leave room for page number portion of the new filename :
+   * hyphen + 6 digits + dot + 4 extension characters + null terminator */
+  #define FILENUM_MAX_LENGTH (1+6+1+4+1)
+  strncpy (exportname, outname, sizeof(exportname) - FILENUM_MAX_LENGTH);
   if (*tiffout == NULL)   /* This is a new export file */
     {
     if (autoindex)
@@ -2137,8 +2138,9 @@ update_output_file (TIFF **tiffout, char *mode, int autoindex,
         *sep = '\0';
         }
       else
-        strncpy (export_ext, ".tiff", 5);
+        memcpy (export_ext, ".tiff", 5);
       export_ext[5] = '\0';
+      basename_len = strlen(exportname);
 
       /* MAX_EXPORT_PAGES limited to 6 digits to prevent string overflow of pathname */
       if (findex > MAX_EXPORT_PAGES)
@@ -2147,10 +2149,8 @@ update_output_file (TIFF **tiffout, char *mode, int autoindex,
         return 1;
         }
 
-      snprintf(filenum, sizeof(filenum), "-%03d%.5s", findex, export_ext);
-      filenum[sizeof(filenum)-1] = '\0';
-      /* We previously assured that there will be space for 'filenum' */
-      strcat (exportname, filenum);
+      /* We previously assured that there will be space left */
+      snprintf(exportname + basename_len, sizeof(exportname) - basename_len, "-%03d%.5s", findex, export_ext);
       }
     exportname[sizeof(exportname) - 1] = '\0';
 
@@ -9144,7 +9144,6 @@ static int
 invertImage(uint16 photometric, uint16 spp, uint16 bps, uint32 width, uint32 length, unsigned char *work_buff)
   {
   uint32   row, col;
-  unsigned char  bytebuff1, bytebuff2, bytebuff3, bytebuff4;
   unsigned char *src;
   uint16        *src_uint16;
   uint32        *src_uint32;
@@ -9174,7 +9173,7 @@ invertImage(uint16 photometric, uint16 spp, uint16 bps, uint32 width, uint32 len
              for (row = 0; row < length; row++)
                for (col = 0; col < width; col++)
                  {
-		 *src_uint32 = (uint32)0xFFFFFFFF - *src_uint32;
+		 *src_uint32 = ~(*src_uint32);
                   src_uint32++;
                  }
             break;
@@ -9182,39 +9181,15 @@ invertImage(uint16 photometric, uint16 spp, uint16 bps, uint32 width, uint32 len
              for (row = 0; row < length; row++)
                for (col = 0; col < width; col++)
                  {
-		 *src_uint16 = (uint16)0xFFFF - *src_uint16;
+		 *src_uint16 = ~(*src_uint16);
                   src_uint16++;
                  }
             break;
-    case 8: for (row = 0; row < length; row++)
-              for (col = 0; col < width; col++)
-                {
-		*src = (uint8)255 - *src;
-                 src++;
-                }
-            break;
-    case 4: for (row = 0; row < length; row++)
-              for (col = 0; col < width; col++)
-                {
-		bytebuff1 = 16 - (uint8)(*src & 240 >> 4);
-		bytebuff2 = 16 - (*src & 15);
-		*src = bytebuff1 << 4 & bytebuff2;
-                src++;
-                }
-            break;
-    case 2: for (row = 0; row < length; row++)
-              for (col = 0; col < width; col++)
-                {
-		bytebuff1 = 4 - (uint8)(*src & 192 >> 6);
-		bytebuff2 = 4 - (uint8)(*src & 48  >> 4);
-		bytebuff3 = 4 - (uint8)(*src & 12  >> 2);
-		bytebuff4 = 4 - (uint8)(*src & 3);
-		*src = (bytebuff1 << 6) | (bytebuff2 << 4) | (bytebuff3 << 2) | bytebuff4;
-                src++;
-                }
-            break;
+    case 8:
+    case 4:
+    case 2:
     case 1: for (row = 0; row < length; row++)
-              for (col = 0; col < width; col += 8 /(spp * bps))
+              for (col = 0; col < width; col += 8 / bps)
                 {
                 *src = ~(*src);
                 src++;
