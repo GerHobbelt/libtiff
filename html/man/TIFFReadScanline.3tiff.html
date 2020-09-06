@@ -28,7 +28,7 @@
 <td width="8%"></td>
 <td width="91%">
 <p>TIFFReadScanline &minus; read and decode a scanline of
-data from an open <small>TIFF</small> file</p>
+data from an open <small>TIFF</small> file (only striped images).</p>
 </td>
 </table>
 <a name="SYNOPSIS"></a>
@@ -59,12 +59,13 @@ supplied) data buffer <i>buf</i>. The data are returned
 decompressed and, in the native byte- and bit-ordering, but
 are otherwise packed (see further below). The buffer must be
 large enough to hold an entire scanline of data.
-Applications should call the routine <i>TIFFScanlineSize</i>
+Applications should call the routine <A HREF=TIFFsize.3tiff.html><i>TIFFScanlineSize()</i></a>
 to find out the size (in bytes) of a scanline buffer. The
 <i>row</i> parameter is always used by
 <i>TIFFReadScanline</i>; the <i>sample</i> parameter is used
 only if data are organized in separate planes
 (<i>PlanarConfiguration</i>=2).</p>
+<p><i>TIFFReadScanline</i> cannot read data from a tiled image! </p>
 </td>
 </table>
 <a name="NOTES"></a>

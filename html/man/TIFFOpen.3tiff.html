@@ -226,7 +226,7 @@ with bits filled from Most Significant Bit (
 
 <p>Force image data that is read or written to be treated
 with bits filled in the same order as the native
-<small>CPU.</small></p>
+<small>CPU.</small> (as defined with HOST_FILLORDER in tif_conf.h)</p>
 </td>
 <td width="0%">
 </td>
@@ -318,6 +318,35 @@ directory. That could be useful in case of the broken first
 directory. We can open the file and proceed to the other
 directories.</p>
 </td>
+
+<td width="0%">
+</td>
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="2%">
+<p><b>4</b></p>
+</td>
+<td width="6%"></td>
+<td width="80%">
+
+<p>ClassicTIFF for creating a file in standard TIFF (default).</p>
+</td>
+
+<td width="0%">
+</td>
+<tr valign="top" align="left">
+<td width="10%"></td>
+<td width="2%">
+<p><b>8</b></p>
+</td>
+<td width="6%"></td>
+<td width="80%">
+
+<p>BigTIFF: Creates the file in Big-Tiff manner.</p>
+</td>
+
+
+
 <td width="0%">
 </td>
 </table>

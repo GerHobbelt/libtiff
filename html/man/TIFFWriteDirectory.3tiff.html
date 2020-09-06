@@ -12,6 +12,7 @@
 <a href="#NAME">NAME</a><br>
 <a href="#SYNOPSIS">SYNOPSIS</a><br>
 <a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#NOTES">NOTES</a><br>
 <a href="#RETURN VALUES">RETURN VALUES</a><br>
 <a href="#DIAGNOSTICS">DIAGNOSTICS</a><br>
 <a href="#SEE ALSO">SEE ALSO</a><br>
@@ -42,7 +43,9 @@ in an open <small>TIFF</small> file</p>
 <!-- INDENTATION -->
 <p><b>int TIFFWriteDirectory(TIFF *</b><i>tif</i><b>)<br>
 int TIFFRewriteDirectory(TIFF *</b><i>tif</i><b>)<br>
-int TIFFCheckpointDirectory(TIFF *</b><i>tif</i><b>)</b></p>
+int TIFFCheckpointDirectory(TIFF *</b><i>tif</i><b>)<br>
+int TIFFWriteCheck(TIFF *</b><i>tif</i><b>, int </b><i>bTiled</i><b>, const char *</b><i>module</i><b>)
+</b></p>
 </td>
 </table>
 <a name="DESCRIPTION"></a>
@@ -55,12 +58,14 @@ int TIFFCheckpointDirectory(TIFF *</b><i>tif</i><b>)</b></p>
 <td width="91%">
 <p><i>TIFFWriteDirectory</i> will write the contents of the
 current directory to the file and setup to create a new
-subfile in the same file. Applications only need to call
+subfile in the same file. <i>TIFFWriteDirectory</i> will free up the directory data structures in memory.
+Applications only need to call
 <i>TIFFWriteDirectory</i> when writing multiple subfiles to
 a single <small>TIFF</small> file. <i>TIFFWriteDirectory</i>
 is automatically called by <i>TIFFClose</i> and
 <i>TIFFFlush</i> to write a modified directory if the file
-is open for writing.</p>
+is open for writing. <i>TIFFWriteDirectory</i> sets the current directory index, but NOT the CurrentDirOffset!
+</p>
 <!-- INDENTATION -->
 <p>The <i>TIFFRewriteDirectory</i> function operates
 similarly to <i>TIFFWriteDirectory,</i> but can be called
@@ -77,8 +82,9 @@ location.</p>
 <!-- INDENTATION -->
 <p>The <i>TIFFCheckpointDirectory</i> writes the current
 state of the tiff directory into the file to make what is
-currently in the file readable. Unlike
-<i>TIFFWriteDirectory, TIFFCheckpointDirectory</i> does not
+currently in the file readable. However, sometimes the file-writing is delayed, especially if 
+<i>TIFFCheckpointDirectory</i> is called several times.
+<BR>Unlike<i>TIFFWriteDirectory, TIFFCheckpointDirectory</i> does not
 free up the directory data structures in memory, so they can
 be updated (as strips/tiles are written) and written again.
 Reading such a partial file you will at worst get a tiff
@@ -87,6 +93,37 @@ incomplete, but you will at least get all the valid data in
 the file before that. When the file is complete, just use
 <i>TIFFWriteDirectory</i> as usual to finish it off
 cleanly.</p>
+<p>The <i>TIFFWriteCheck()</i> verifies that the file is writable and that the directory
+information is setup properly.  In doing the latter we also "freeze" the state of the directory so
+that important information is not changed.<BR>
+On the first write verify all the required information has been setup and initialize any data structures that
+had to wait until directory information was set.
+Note that a lot of our work is assumed to remain valid because we disallow any of the important parameters
+from changing after we start writing (i.e. once TIFF_BEENWRITING is set, TIFFSetField will only allow
+the image's length to be changed).<br>
+<b><small><i> bTiled</i></b></small> boolean indicating if the image is tiled;<br>
+<b><small><i> module</i></b></small> source module name for error messages.
+</p>
+</td>
+</table>
+<a name="NOTES"></a>
+<h2>NOTES</h2>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="8%"></td>
+<td width="91%">
+<p>Be aware, that <i>TIFFWriteDirectory()</i> frees the <i>*tif</i> structure and sets up a new one. 
+Therefore, the current directory index, retrieved with <i>TIFFCurrentDirectory()</i>, is NOT valid, nor the directory offset using <i>TIFFCurrentDirOffset()</i>.
+<i>TIFFCurrentDirectory()</i> will return the index of the previously directory, if a valid one was written. 
+<i>TIFFCurrentDirOffset()</i> will only return a valid directory offset, after the values are reread from file using <i>TIFFSetDirectory()</i> or <i>TIFFReadDirectory()</i>.
+<br>In contrast, <i>TIFFCheckpointDirectory()</i> updates the current directory index and the directory offset in the <i>*tif</i> structure!
+</p>
+<p><i>TIFFCheckpointDirectory()</i> itself does not reset the TIFF_DIRTYDIRECT flag. Only a following <i>TIFFSetDirectory()</i> 
+or <i>TIFFCreateDirectory()</i> will clear the flag.<BR>
+If TIFF_DIRTYDIRECT flag is set when the file is closed, the dirctory will be re-written at the end of the file instead of just been updated.
+</p>
 </td>
 </table>
 <a name="RETURN VALUES"></a>

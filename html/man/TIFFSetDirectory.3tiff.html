@@ -12,6 +12,7 @@
 <a href="#NAME">NAME</a><br>
 <a href="#SYNOPSIS">SYNOPSIS</a><br>
 <a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#NOTES">NOTES</a><br>
 <a href="#RETURN VALUES">RETURN VALUES</a><br>
 <a href="#DIAGNOSTICS">DIAGNOSTICS</a><br>
 <a href="#SEE ALSO">SEE ALSO</a><br>
@@ -63,7 +64,20 @@ zero.</p>
 <i>TIFFSetDirectory</i>, except the directory is specified
 as a file offset instead of an index; this is required for
 accessing subdirectories linked through a <i>SubIFD</i>
-tag.</p>
+tag (like EXIF or GPS custom directories).</p>
+</td>
+</table>
+<a name="NOTES"></a>
+<h2>NOTES</h2>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="8%"></td>
+<td width="91%">
+<p>Before changing a directory, pending writes should be written to file using <i>TIFFWriteDirectory(), TIFFCheckpointDirectory(), TIFFFlush()</i><br>
+In contrast <i>TIFFFlush()</i> only writes the current values but not necessaryly the consistent ones. This is performed by <i>TIFFCheckpointDirectory()</i> or <i>TIFFWriteCheck()</i> followed by <i>TIFFFlush()</i>.<br>
+</p>
 </td>
 </table>
 <a name="RETURN VALUES"></a>
