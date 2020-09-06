@@ -31,6 +31,7 @@
  *
  */
 
+#include "tif_predict.h"
 #include "webp/decode.h"
 #include "webp/encode.h"
 
@@ -43,6 +44,7 @@
  * file using WEBP compression/decompression.
  */
 typedef struct {
+  TIFFPredictorState predict;
   uint16           nSamples;               /* number of samples per pixel */
   
   int              lossless;               /* lossy/lossless compression */
@@ -535,6 +537,8 @@ TWebPCleanup(TIFF* tif)
 
   assert(sp != 0);
 
+  (void)TIFFPredictorCleanup(tif);
+
   tif->tif_tagmethods.vgetfield = sp->vgetparent;
   tif->tif_tagmethods.vsetfield = sp->vsetparent;
 
@@ -685,6 +689,10 @@ TIFFInitWebP(TIFF* tif, int scheme)
   tif->tif_encodetile = TWebPEncode;
   tif->tif_cleanup = TWebPCleanup;
 
+  /*
+   * Setup predictor setup.
+   */
+  (void) TIFFPredictorInit(tif);
   return 1;
 bad:
   TIFFErrorExt(tif->tif_clientdata, module,
