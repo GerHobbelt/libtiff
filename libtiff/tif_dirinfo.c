@@ -329,7 +329,8 @@ static TIFFField
 gpsFields[] = {
 	/*  For the GPS tag definitions in gpsFields[] the standard definition for Rationals is TIFF_SETGET_DOUBLE and TIFF_SETGET_C0_FLOAT.
 	 *-- ATTENTION: After the upgrade with Rational2Double, the GPSTAG values can now be written and also read in double precision!
-	 *              So, standard definition for GPSTAG changes from is kept to TIFF_SETGET_DOUBLE 
+	 *              In order to achieve double precision for GPS tags:
+	 *              Standard definitions for GPSTAG is kept to TIFF_SETGET_DOUBLE 
 	 *              and TIFF_SETGET_C0_FLOAT is changed to TIFF_SETGET_C0_DOUBLE.
 	 */
 	{		GPSTAG_VERSIONID	, 4, 4, 	TIFF_BYTE	, 0, 	TIFF_SETGET_C0_UINT8	, TIFF_SETGET_UINT8	, FIELD_CUSTOM	, 1, 0, 	"VersionID", NULL },

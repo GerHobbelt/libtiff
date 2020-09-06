@@ -26,9 +26,16 @@
  * TIFF Library
  *
  * -- Module copied from custom_dir.c --
+ *===========  Purpose ===================================================================================
  * Extended and amended version for testing of EXIF 2.32, GPS and handling of custom fields.
  *
  * EXIF 2.32 and GPS are defined in amended files tif_dirinfo.c, tif_dirread.c, tiff.h, tiffio.h, tif_dir.h, tif_dir.c
+ *
+ *-- ATTENTION: After the upgrade with Rational2Double, the GPSTAG values are defined as double precision
+ *              and need to be written and also read in double precision!
+ *              In order to maintain this code for both cases, it is checked above if the TiffLibrary is
+ *              compiled with the new interface with Rational2Double or still uses the old definitions,
+ *              by setting blnIsRational2Double above.
  *
  */
 
@@ -96,6 +103,7 @@ main()
 	TIFF			*tif;
 	int				ret, ret1, ret2;
 
+	fprintf(stderr, "==== Test automatically if all EXIF and GPS tags are written/read correctly. ====\n");
 	/* --- Test with Classic-TIFF ---*/
 	/* delete file, if exists */
 	ret = unlink(filename);
@@ -214,7 +222,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	float		auxFloatArray[2*N_SIZE];
 	double		auxDoubleArray[2*N_SIZE];
 	double		dblDiff, dblDiffLimit;
-#define RATIONAL_EPS (1.0/30000.0)
+#define RATIONAL_EPS (1.0/30000.0) /* reduced difference of rational values, approx 3.3e-5 */
 
 	/*-- Fill test data arrays for writing ----------- */
 	for (i=0; i<N_SIZE; i++) {
@@ -236,7 +244,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 		auxDoubleArrayW[i] = (double)((i+1)*3689)/4.5697;
 	}
 
-
+	/*-- Setup standard tags of a simple tiff file --*/
 	if (!TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, width)) {
 		fprintf (stderr, "Can't set ImageWidth tag.\n");
 		goto failure;
@@ -270,26 +278,29 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 #ifdef ADDITIONAL_TAGS
 	/*-- Additional tags to check Rational standard tags, which are also defined as FIELD_CUSTOM */
 
-	/*- TIFFTAG_INKSET is a SHORT parameter of type FIELD_CUSTOM !! */
-	if (!TIFFSetField(tif, TIFFTAG_INKSET, 34 )) {
-		fprintf (stderr, "Can't set Whitepoint tag.\n");
+	/*- TIFFTAG_INKSET is a SHORT parameter (TIFF_SHORT, TIFF_SETGET_UINT16) with field_bit=FIELD_CUSTOM !! -*/
+	if (!TIFFSetField(tif, TIFFTAG_INKSET, 34)) {
+		fprintf(stderr, "Can't set TIFFTAG_INKSET tag.\n");
 		goto failure;
 	}
 
-	/*- TIFFTAG_PIXAR_FOVCOT is a FLOAT parameter of type  FIELD_CUSTOM !! */
-#define PIXAR_FOVCOT_VAL	5.123456789
+	/*- TIFFTAG_PIXAR_FOVCOT is a FLOAT parameter ( TIFF_FLOAT, TIFF_SETGET_FLOAT) with field_bit=FIELD_CUSTOM !! -*/
+	/*  - can be written with Double but has to be read with float parameter                                       */
+#define PIXAR_FOVCOT_VAL	5.123456789123456789
 	auxFloat = (float)PIXAR_FOVCOT_VAL;
-	if (!TIFFSetField(tif, TIFFTAG_PIXAR_FOVCOT, auxFloat )) {
-		fprintf (stderr, "Can't set TIFFTAG_PIXAR_FOVCOT tag.\n");
+	auxDouble = (double)PIXAR_FOVCOT_VAL;
+	if (!TIFFSetField(tif, TIFFTAG_PIXAR_FOVCOT, auxDouble)) {
+		fprintf(stderr, "Can't set TIFFTAG_PIXAR_FOVCOT tag.\n");
 		goto failure;
 	}
-	/*- TIFFTAG_STONITS is a DOUBLE parameter! (TIFF_DOUBLE, 0, TIFF_SETGET_DOUBLE)
-	 *   Only TIFFTAG_STONITS is a TIFF_DOUBLE. Therefore, it has to be read as DOUBLE!!
-     */
-	auxDouble = 6.123456789;
+	/*- TIFFTAG_STONITS is a DOUBLE parameter (TIFF_DOUBLE, TIFF_SETGET_DOUBLE) with field_bit=FIELD_CUSTOM!
+	 *   Only TIFFTAG_STONITS is a TIFF_DOUBLE, which has to be read as DOUBLE!!
+	 */
+#define STONITS_VAL 6.123456789123456789
+	auxDouble = STONITS_VAL;
 	auxFloat = (float)auxDouble;
-	if (!TIFFSetField(tif, TIFFTAG_STONITS, auxDouble )) {
-		fprintf (stderr, "Can't set TIFFTAG_STONITS tag.\n");
+	if (!TIFFSetField(tif, TIFFTAG_STONITS, auxDouble)) {
+		fprintf(stderr, "Can't set TIFFTAG_STONITS tag.\n");
 		goto failure;
 	}
 
@@ -316,15 +327,16 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	}
 
 	
-	/*- Variable Array: TIFFTAG_DECODE is a SRATIONAL parameter TIFF_SETGET_C16_FLOAT type FIELD_CUSTOM with passcount=1 and variable length of array. */
+	/*--- For static or variable ARRAYs the case is different ---*/
+/*- Variable Array: TIFFTAG_DECODE is a SRATIONAL parameter TIFF_SETGET_C16_FLOAT type FIELD_CUSTOM with passcount=1 and variable length of array. */
 	if (!TIFFSetField(tif, TIFFTAG_DECODE, 3, auxFloatArrayN2)) {
-		fprintf (stderr, "Can't set TIFFTAG_DECODE tag.\n");
+		fprintf(stderr, "Can't set TIFFTAG_DECODE tag.\n");
 		goto failure;
 	}
-	
+
 	/*- Varable Array:  TIFF_RATIONAL, 0, TIFF_SETGET_C16_FLOAT */
 	if (!TIFFSetField(tif, TIFFTAG_BLACKLEVEL, 3, auxFloatArrayN1)) {
-		fprintf (stderr, "Can't set TIFFTAG_BLACKLEVEL tag.\n");
+		fprintf(stderr, "Can't set TIFFTAG_BLACKLEVEL tag.\n");
 		goto failure;
 	}
 
@@ -339,6 +351,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	/*-- Check, if the TiffLibrary is compiled with the new interface with Rational2Double or still uses the old definitions. 
 	     For that, TIFF_RATIONAL tags with FIELD_CUSTOM are changed from TIFF_SETGET_DOUBLE to TIFF_SETGET_FLOAT for the 
 	     new interface in order to prevent the old reading behaviour.
+	     Tags to check: TIFFTAG_BESTQUALITYSCALE, TIFFTAG_BASELINENOISE, TIFFTAG_BASELINESHARPNESS
 	 */
 	fip = TIFFFindField(tif, TIFFTAG_BESTQUALITYSCALE, TIFF_ANY);
 	tSetFieldType = fip->set_field_type;
@@ -580,7 +593,8 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 #ifdef WRITE_ALL_EXIF_TAGS
 #define READ_ALL_EXIF_TAGS
 	/*================= EXIF: Write arbitrary data to the EXIF fields ==============*/
-	/*-- Get array, where EXIF tag fields are defined --*/
+	/*-- Get array, where EXIF tag fields are defined 
+	*    EXIF tags are written automatically with the defined precision according to its tSetFieldType using the code below  --*/
 	tFieldArray = _TIFFGetExifFields();
 	nTags = tFieldArray->count;
 
@@ -1159,7 +1173,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 				/*-- Unfortunately, TIFF_SETGET_DOUBLE is used for TIFF_RATIONAL but those have to be read with FLOAT !!! */
 				/*   Only TIFFTAG_STONITS is a TIFF_DOUBLE, which has to be read as DOUBLE!! */
 				/*-- ATTENTION: ----
-				/*   Only after update with Rational2Double feature, also TIFF_RATIONAL can be read in double precision!!! 
+				 *   Only after update with Rational2Double feature, also TIFF_RATIONAL can be read in double precision!!! 
 				 *   Therefore, use a union to avoid overflow in TIFFGetField() return value
 				 *   and depending on version check for the right interface here:
 				 *   - old interface:  correct value should be here a float
@@ -1373,7 +1387,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 #ifdef FOR_AUTO_TESTING
 	unlink(filenameRead);
 #endif
-	fprintf (stderr, "-------- Test finished OK ----------\n");
+	fprintf(stderr, "-------- Test finished OK ----------\n");
 	return 0;
 
 failure:
