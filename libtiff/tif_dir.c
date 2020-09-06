@@ -124,7 +124,7 @@ setExtraSamples(TIFF* tif, va_list ap, uint32* v)
         {
                 TIFFWarningExt(tif->tif_clientdata,module,
                     "ExtraSamples tag value is changing, "
-                    "but TransferFunction was read with a different value. Cancelling it");
+                    "but TransferFunction was read with a different value. Canceling it");
                 TIFFClrFieldBit(tif,FIELD_TRANSFERFUNCTION);
                 _TIFFfree(td->td_transferfunction[0]);
                 td->td_transferfunction[0] = NULL;
@@ -206,7 +206,7 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 		/*
 		 * If the data require post-decoding processing to byte-swap
 		 * samples, set it up here.  Note that since tags are required
-		 * to be ordered, compression code can override this behaviour
+		 * to be ordered, compression code can override this behavior
 		 * in the setup method if it wants to roll the post decoding
 		 * work in with its normal work.
 		 */
@@ -276,7 +276,7 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
             {
                 TIFFWarningExt(tif->tif_clientdata,module,
                     "SamplesPerPixel tag value is changing, "
-                    "but SMinSampleValue tag was read with a different value. Cancelling it");
+                    "but SMinSampleValue tag was read with a different value. Canceling it");
                 TIFFClrFieldBit(tif,FIELD_SMINSAMPLEVALUE);
                 _TIFFfree(td->td_sminsamplevalue);
                 td->td_sminsamplevalue = NULL;
@@ -285,7 +285,7 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
             {
                 TIFFWarningExt(tif->tif_clientdata,module,
                     "SamplesPerPixel tag value is changing, "
-                    "but SMaxSampleValue tag was read with a different value. Cancelling it");
+                    "but SMaxSampleValue tag was read with a different value. Canceling it");
                 TIFFClrFieldBit(tif,FIELD_SMAXSAMPLEVALUE);
                 _TIFFfree(td->td_smaxsamplevalue);
                 td->td_smaxsamplevalue = NULL;
@@ -297,7 +297,7 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
             {
                     TIFFWarningExt(tif->tif_clientdata,module,
                         "SamplesPerPixel tag value is changing, "
-                        "but TransferFunction was read with a different value. Cancelling it");
+                        "but TransferFunction was read with a different value. Canceling it");
                     TIFFClrFieldBit(tif,FIELD_TRANSFERFUNCTION);
                     _TIFFfree(td->td_transferfunction[0]);
                     td->td_transferfunction[0] = NULL;
@@ -1033,19 +1033,19 @@ _TIFFVGetField(TIFF* tif, uint32 tag, va_list ap)
 			*va_arg(ap, uint16*) = td->td_halftonehints[1];
 			break;
 		case TIFFTAG_COLORMAP:
-			*va_arg(ap, uint16**) = td->td_colormap[0];
-			*va_arg(ap, uint16**) = td->td_colormap[1];
-			*va_arg(ap, uint16**) = td->td_colormap[2];
+			*va_arg(ap, const uint16**) = td->td_colormap[0];
+			*va_arg(ap, const uint16**) = td->td_colormap[1];
+			*va_arg(ap, const uint16**) = td->td_colormap[2];
 			break;
 		case TIFFTAG_STRIPOFFSETS:
 		case TIFFTAG_TILEOFFSETS:
 			_TIFFFillStriles( tif );
-			*va_arg(ap, uint64**) = td->td_stripoffset_p;
+			*va_arg(ap, const uint64**) = td->td_stripoffset_p;
 			break;
 		case TIFFTAG_STRIPBYTECOUNTS:
 		case TIFFTAG_TILEBYTECOUNTS:
 			_TIFFFillStriles( tif );
-			*va_arg(ap, uint64**) = td->td_stripbytecount_p;
+			*va_arg(ap, const uint64**) = td->td_stripbytecount_p;
 			break;
 		case TIFFTAG_MATTEING:
 			*va_arg(ap, uint16*) =
@@ -1054,7 +1054,7 @@ _TIFFVGetField(TIFF* tif, uint32 tag, va_list ap)
 			break;
 		case TIFFTAG_EXTRASAMPLES:
 			*va_arg(ap, uint16*) = td->td_extrasamples;
-			*va_arg(ap, uint16**) = td->td_sampleinfo;
+			*va_arg(ap, const uint16**) = td->td_sampleinfo;
 			break;
 		case TIFFTAG_TILEWIDTH:
 			*va_arg(ap, uint32*) = td->td_tilewidth;
@@ -1089,7 +1089,7 @@ _TIFFVGetField(TIFF* tif, uint32 tag, va_list ap)
 			break;
 		case TIFFTAG_SUBIFD:
 			*va_arg(ap, uint16*) = td->td_nsubifd;
-			*va_arg(ap, uint64**) = td->td_subifd;
+			*va_arg(ap, const uint64**) = td->td_subifd;
 			break;
 		case TIFFTAG_YCBCRPOSITIONING:
 			*va_arg(ap, uint16*) = td->td_ycbcrpositioning;
@@ -1099,20 +1099,20 @@ _TIFFVGetField(TIFF* tif, uint32 tag, va_list ap)
 			*va_arg(ap, uint16*) = td->td_ycbcrsubsampling[1];
 			break;
 		case TIFFTAG_TRANSFERFUNCTION:
-			*va_arg(ap, uint16**) = td->td_transferfunction[0];
+			*va_arg(ap, const uint16**) = td->td_transferfunction[0];
 			if (td->td_samplesperpixel - td->td_extrasamples > 1) {
-				*va_arg(ap, uint16**) = td->td_transferfunction[1];
-				*va_arg(ap, uint16**) = td->td_transferfunction[2];
+				*va_arg(ap, const uint16**) = td->td_transferfunction[1];
+				*va_arg(ap, const uint16**) = td->td_transferfunction[2];
 			} else {
-				*va_arg(ap, uint16**) = NULL;
-				*va_arg(ap, uint16**) = NULL;
+				*va_arg(ap, const uint16**) = NULL;
+				*va_arg(ap, const uint16**) = NULL;
 			}
 			break;
 		case TIFFTAG_REFERENCEBLACKWHITE:
-			*va_arg(ap, float**) = td->td_refblackwhite;
+			*va_arg(ap, const float**) = td->td_refblackwhite;
 			break;
 		case TIFFTAG_INKNAMES:
-			*va_arg(ap, char**) = td->td_inknames;
+			*va_arg(ap, const char**) = td->td_inknames;
 			break;
 		default:
 			{
@@ -1154,7 +1154,7 @@ _TIFFVGetField(TIFF* tif, uint32 tag, va_list ap)
 							*va_arg(ap, uint32*) = (uint32)tv->count;
 						else  /* Assume TIFF_VARIABLE */
 							*va_arg(ap, uint16*) = (uint16)tv->count;
-						*va_arg(ap, void **) = tv->value;
+						*va_arg(ap, const void **) = tv->value;
 						ret_val = 1;
 					} else if (fip->field_tag == TIFFTAG_DOTRANGE
 						   && strcmp(fip->field_name,"DotRange") == 0) {

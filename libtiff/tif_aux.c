@@ -270,7 +270,7 @@ TIFFVGetFieldDefaulted(TIFF* tif, uint32 tag, va_list ap)
 		return (1);
 	case TIFFTAG_EXTRASAMPLES:
 		*va_arg(ap, uint16 *) = td->td_extrasamples;
-		*va_arg(ap, uint16 **) = td->td_sampleinfo;
+		*va_arg(ap, const uint16 **) = td->td_sampleinfo;
 		return (1);
 	case TIFFTAG_MATTEING:
 		*va_arg(ap, uint16 *) =
@@ -294,7 +294,7 @@ TIFFVGetFieldDefaulted(TIFF* tif, uint32 tag, va_list ap)
 		tif->tif_ycbcrcoeffs[0] = 0.299f;
 		tif->tif_ycbcrcoeffs[1] = 0.587f;
 		tif->tif_ycbcrcoeffs[2] = 0.114f;
-		*va_arg(ap, float **) = tif->tif_ycbcrcoeffs;
+		*va_arg(ap, const float **) = tif->tif_ycbcrcoeffs;
 		return 1;
 	case TIFFTAG_YCBCRSUBSAMPLING:
 		*va_arg(ap, uint16 *) = td->td_ycbcrsubsampling[0];
@@ -317,16 +317,16 @@ TIFFVGetFieldDefaulted(TIFF* tif, uint32 tag, va_list ap)
 			TIFFErrorExt(tif->tif_clientdata, tif->tif_name, "No space for \"TransferFunction\" tag");
 			return (0);
 		}
-		*va_arg(ap, uint16 **) = td->td_transferfunction[0];
+		*va_arg(ap, const uint16 **) = td->td_transferfunction[0];
 		if (td->td_samplesperpixel - td->td_extrasamples > 1) {
-			*va_arg(ap, uint16 **) = td->td_transferfunction[1];
-			*va_arg(ap, uint16 **) = td->td_transferfunction[2];
+			*va_arg(ap, const uint16 **) = td->td_transferfunction[1];
+			*va_arg(ap, const uint16 **) = td->td_transferfunction[2];
 		}
 		return (1);
 	case TIFFTAG_REFERENCEBLACKWHITE:
 		if (!td->td_refblackwhite && !TIFFDefaultRefBlackWhite(td))
 			return (0);
-		*va_arg(ap, float **) = td->td_refblackwhite;
+		*va_arg(ap, const float **) = td->td_refblackwhite;
 		return (1);
 	}
 	return 0;
