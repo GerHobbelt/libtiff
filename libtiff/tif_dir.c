@@ -1113,6 +1113,9 @@ _TIFFVGetField(TIFF* tif, uint32 tag, va_list ap)
 			break;
 		case TIFFTAG_INKNAMES:
 			*va_arg(ap, const char**) = td->td_inknames;
+			/* return the length of the buffer so the caller
+			 * can avoid buffer overrun */
+			ret_val = (int)td->td_inknameslen;
 			break;
 		default:
 			{

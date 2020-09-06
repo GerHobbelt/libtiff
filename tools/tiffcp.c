@@ -826,18 +826,25 @@ tiffcp(TIFF* in, TIFF* out)
 	{
 		uint16 ninks;
 		const char* inknames;
-		if (TIFFGetField(in, TIFFTAG_NUMBEROFINKS, &ninks)) {
-			TIFFSetField(out, TIFFTAG_NUMBEROFINKS, ninks);
-			if (TIFFGetField(in, TIFFTAG_INKNAMES, &inknames)) {
-				int inknameslen = strlen(inknames) + 1;
-				const char* cp = inknames;
-				while (ninks > 1) {
-					cp = strchr(cp, '\0');
-                                        cp++;
-                                        inknameslen += (strlen(cp) + 1);
-					ninks--;
+		int inknameslen = TIFFGetField(in, TIFFTAG_INKNAMES, &inknames);
+		if (TIFFGetField(in, TIFFTAG_NUMBEROFINKS, &ninks) && inknameslen > 0) {
+			const char* cp = inknames;
+			uint16 ink = 0;
+			while (ink < ninks && cp < (inknames + inknameslen)) {
+				while (*cp) {
+					if (cp >= (inknames + inknameslen)) {
+						break;
+					}
+					cp++;
 				}
+				cp++;
+				ink++;
+			}
+			if (ink == ninks && cp <= (inknames + inknameslen)) {
+				TIFFSetField(out, TIFFTAG_NUMBEROFINKS, ninks);
 				TIFFSetField(out, TIFFTAG_INKNAMES, inknameslen, inknames);
+			} else {
+				TIFFWarning(TIFFFileName(in), "error in ink names, numberofinks=%hu, inknameslen=%d", ninks, inknameslen);
 			}
 		}
 	}
