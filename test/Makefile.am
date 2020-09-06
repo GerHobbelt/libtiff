@@ -55,7 +55,11 @@ CLEANFILES = test_packbits.tif o-*
 if HAVE_JPEG
 JPEG_DEPENDENT_CHECK_PROG=raw_decode
 JPEG_DEPENDENT_TESTSCRIPTS=\
-	tiff2rgba-quad-tile.jpg.sh
+	tiff2rgba-quad-tile.jpg.sh \
+	tiff2rgba-ojpeg_zackthecat_subsamp22_single_strip.sh \
+	tiff2rgba-ojpeg_chewey_subsamp21_multi_strip.sh \
+	tiff2rgba-ojpeg_single_strip_no_rowsperstrip.sh
+
 else
 JPEG_DEPENDENT_CHECK_PROG=
 JPEG_DEPENDENT_TESTSCRIPTS=
@@ -171,7 +175,10 @@ TIFFIMAGES = \
 	images/rgb-3c-8b.tiff \
 	images/quad-tile.jpg.tiff \
 	images/quad-lzw-compat.tiff \
-	images/lzw-single-strip.tiff
+	images/lzw-single-strip.tiff \
+	images/ojpeg_zackthecat_subsamp22_single_strip.tiff \
+	images/ojpeg_chewey_subsamp21_multi_strip.tiff \
+	images/ojpeg_single_strip_no_rowsperstrip.tiff
 
 PNMIMAGES = \
 	images/minisblack-1c-8b.pgm \

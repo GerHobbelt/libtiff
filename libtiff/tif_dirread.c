@@ -3902,11 +3902,51 @@ TIFFReadDirectory(TIFF* tif)
 					break;
 				case TIFFTAG_STRIPOFFSETS:
 				case TIFFTAG_TILEOFFSETS:
+					switch( dp->tdir_type )
+					{
+					    case TIFF_SHORT:
+					    case TIFF_LONG:
+					    case TIFF_LONG8:
+					        break;
+					    default:
+                                                /* Warn except if directory typically created with TIFFDeferStrileArrayWriting() */
+                                                if( !(tif->tif_mode == O_RDWR &&
+                                                      dp->tdir_count == 0 &&
+                                                      dp->tdir_type == 0 &&
+                                                      dp->tdir_offset.toff_long8 == 0) )
+                                                {
+                                                    fip = TIFFFieldWithTag(tif,dp->tdir_tag);
+                                                    TIFFWarningExt(tif->tif_clientdata,module,
+                                                                   "Invalid data type for tag %s",
+                                                                   fip ? fip->field_name : "unknown tagname");
+                                                }
+                                                break;
+                                        }
 					_TIFFmemcpy( &(tif->tif_dir.td_stripoffset_entry),
 					   dp, sizeof(TIFFDirEntry) );
 					break;
 				case TIFFTAG_STRIPBYTECOUNTS:
 				case TIFFTAG_TILEBYTECOUNTS:
+					switch( dp->tdir_type )
+					{
+					    case TIFF_SHORT:
+					    case TIFF_LONG:
+					    case TIFF_LONG8:
+					        break;
+					    default:
+						/* Warn except if directory typically created with TIFFDeferStrileArrayWriting() */
+                                                if( !(tif->tif_mode == O_RDWR &&
+                                                      dp->tdir_count == 0 &&
+                                                      dp->tdir_type == 0 &&
+                                                      dp->tdir_offset.toff_long8 == 0) )
+                                                {
+                                                    fip = TIFFFieldWithTag(tif,dp->tdir_tag);
+                                                    TIFFWarningExt(tif->tif_clientdata,module,
+                                                                   "Invalid data type for tag %s",
+                                                                   fip ? fip->field_name : "unknown tagname");
+                                                }
+                                                break;
+                                        }
 					_TIFFmemcpy( &(tif->tif_dir.td_stripbytecount_entry),
 					   dp, sizeof(TIFFDirEntry) );
 					break;
@@ -6068,6 +6108,12 @@ int _TIFFPartialReadStripArray( TIFF* tif, TIFFDirEntry* dirent,
     {
         sizeofval = sizeof(uint64);
     }
+    else if( dirent->tdir_type == TIFF_SLONG8 )
+    {
+        /* Non conformant but used by some images as in */
+        /* https://github.com/OSGeo/gdal/issues/2165 */
+        sizeofval = sizeof(int64);
+    }
     else
     {
         TIFFErrorExt(tif->tif_clientdata, module,
@@ -6140,7 +6186,7 @@ int _TIFFPartialReadStripArray( TIFF* tif, TIFFDirEntry* dirent,
          _TIFFUnsanitizedAddUInt64AndInt(nOffset, (i + 1) * sizeofvalint) <= nOffsetEndPage;
          ++i )
     {
-        if( sizeofval == sizeof(uint16) )
+        if( dirent->tdir_type == TIFF_SHORT )
         {
             uint16 val;
             memcpy(&val,
@@ -6150,7 +6196,7 @@ int _TIFFPartialReadStripArray( TIFF* tif, TIFFDirEntry* dirent,
                 TIFFSwabShort(&val);
             panVals[strile + i] = val;
         }
-        else if( sizeofval == sizeof(uint32) )
+        else if( dirent->tdir_type == TIFF_LONG )
         {
             uint32 val;
             memcpy(&val,
@@ -6160,7 +6206,7 @@ int _TIFFPartialReadStripArray( TIFF* tif, TIFFDirEntry* dirent,
                 TIFFSwabLong(&val);
             panVals[strile + i] = val;
         }
-        else
+        else if( dirent->tdir_type == TIFF_LONG8 )
         {
             uint64 val;
             memcpy(&val,
@@ -6169,6 +6215,17 @@ int _TIFFPartialReadStripArray( TIFF* tif, TIFFDirEntry* dirent,
             if( bSwab )
                 TIFFSwabLong8(&val);
             panVals[strile + i] = val;
+        }
+        else /* if( dirent->tdir_type == TIFF_SLONG8 ) */
+        {
+            /* Non conformant data type */
+            int64 val;
+            memcpy(&val,
+                   buffer + (nOffset - nOffsetStartPage) + i * sizeofvalint,
+                   sizeof(val));
+            if( bSwab )
+                TIFFSwabLong8((uint64*) &val);
+            panVals[strile + i] = (uint64) val;
         }
     }
     return 1;
