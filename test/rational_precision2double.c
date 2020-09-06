@@ -46,8 +46,9 @@
 #define GOTOFAILURE
 #endif
 
-
+#ifdef _MSC_VER
 #pragma warning( disable : 4101)
+#endif
 
 #include "tif_config.h"
 #include <stdio.h>
@@ -154,6 +155,7 @@ _XTIFFDefaultDirectory(TIFF *tif)
 	n = N(tifFieldInfo);
 	//_TIFFMergeFields(tif, const TIFFField info[], uint32 n);
 	nadded = _TIFFMergeFields(tif, tifFieldInfo, n);
+        (void)nadded;
 
 	/* Since an XTIFF client module may have overridden
 	* the default directory method, we call it now to
@@ -183,7 +185,7 @@ main()
 	/* delete file, if exists */
 	ret = unlink(filenameClassicTiff);
 	errorNo = errno;
-	if (ret != 0 && errno != ENOENT) {
+	if (ret != 0 && errorNo != ENOENT) {
 		fprintf(stderr, "Can't delete test TIFF file %s.\n", filenameClassicTiff);
 	}
 
@@ -200,7 +202,8 @@ main()
 	/*--- Test with BIG-TIFF ---*/
 	/* delete file, if exists */
 	ret = unlink(filenameBigTiff);
-	if (ret != 0 && errno != ENOENT) {
+	errorNo = errno;
+	if (ret != 0 && errorNo != ENOENT) {
 		fprintf(stderr, "Can't delete test TIFF file %s.\n", filenameBigTiff);
 	}
 
@@ -219,7 +222,7 @@ main()
 	/* delete file, if exists */
 	ret = unlink(filenameClassicTiff);
 	errorNo = errno;
-	if (ret != 0 && errno != ENOENT) {
+	if (ret != 0 && errorNo != ENOENT) {
 		fprintf(stderr, "Can't delete test TIFF file %s.\n", filenameClassicTiff);
 	}
 
@@ -396,8 +399,8 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 		goto failure;
 	}
 
+	/*--- Some additional FIELD_CUSTOM tags to check standard interface ---*/
 
-	/*--- Some additional FIELD_CUSTOM tags to check standard interface ------------*/
 	/*- TIFFTAG_INKSET is a SHORT parameter (TIFF_SHORT, TIFF_SETGET_UINT16) with field_bit=FIELD_CUSTOM !! -*/
 	if (!TIFFSetField(tif, TIFFTAG_INKSET, 34)) {
 		fprintf(stderr, "Can't set TIFFTAG_INKSET tag.\n");
@@ -518,7 +521,8 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 				fprintf(stderr, "Can't set TIFFTAG_RATIONAL_DOUBLE tag.\n");
 				goto failure;
 			}
-			if (!TIFFSetField(tif, TIFFTAG_SRATIONAL_DOUBLE, (-1.0 * auxDoubleArrayW[101]))) {
+			/* test for plain integers */
+			if (!TIFFSetField(tif, TIFFTAG_SRATIONAL_DOUBLE, (-1.0 ))) {
 				fprintf(stderr, "Can't set TIFFTAG_SRATIONAL_DOUBLE tag.\n");
 				goto failure;
 			}
@@ -602,7 +606,7 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 	}	/* blnAllCustomTags */  /*==== END END - Automatically check all custom rational tags  == WRITING END ===*/
 
 	/*-- Write dummy pixel data. --*/
-	if (!TIFFWriteScanline(tif, buf, 0, 0) < 0) {
+	if (TIFFWriteScanline(tif, buf, 0, 0) < 0) {
 		fprintf (stderr, "Can't write image data.\n");
 		goto failure;
 	}
@@ -784,7 +788,7 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 			auxDblUnion.dbl = 0;
 			retCode = TIFFGetField(tif, TIFFTAG_SRATIONAL_DOUBLE, &auxDblUnion.dbl);
 			if (!retCode) { fprintf(stderr, "Can't read %s\n", "TIFFTAG_SRATIONAL_DOUBLE"); GOTOFAILURE }
-			auxDouble = -1.0 * auxDoubleArrayW[101];
+			auxDouble = -1.0; 
 			dblDiffLimit = RATIONAL_EPS * auxDouble;
 			dblDiff = auxDblUnion.dbl - auxDouble;
 			if (fabs(dblDiff) > fabs(dblDiffLimit)) {
