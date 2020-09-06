@@ -66,6 +66,8 @@ test/raw_decode
 test/rewrite
 test/short_tag
 test/strip_rw
+test/defer_strile_loading
+test/defer_strile_writing
 test/*.log
 test/*.trs
 test/o-*

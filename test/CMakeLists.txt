@@ -35,6 +35,7 @@ set(TESTSCRIPTS
     ppm2tiff_pbm.sh
     ppm2tiff_pgm.sh
     ppm2tiff_ppm.sh
+    fax2tiff.sh
     tiffcp-g3.sh
     tiffcp-g3-1d.sh
     tiffcp-g3-1d-fill.sh
@@ -151,6 +152,7 @@ set(UNCOMPRESSEDIMAGES
 # files which are not currently used by the tests.
 set(IMAGES_EXTRA_DIST
     images/README.txt
+    images/miniswhite-1c-1b.g3
     ${BMPIMAGES}
     ${GIFIMAGES}
     ${PNMIMAGES}
@@ -185,6 +187,12 @@ endif()
 
 add_executable(custom_dir custom_dir.c)
 target_link_libraries(custom_dir tiff port)
+
+add_executable(defer_strile_loading defer_strile_loading.c)
+target_link_libraries(defer_strile_loading tiff port)
+
+add_executable(defer_strile_writing defer_strile_writing.c)
+target_link_libraries(defer_strile_writing tiff port)
 
 set(TEST_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/output")
 file(MAKE_DIRECTORY "${TEST_OUTPUT}")
