@@ -46,6 +46,7 @@ bin_PROGRAMS = \
 	tiffdither \
 	tiffdump \
 	tiffinfo \
+	tiffjoin \
 	tiffmedian \
 	tiffset \
 	tiffsplit
@@ -114,6 +115,9 @@ tiffdump_LDADD = $(LIBTIFF) $(LIBPORT)
 
 tiffinfo_SOURCES = tiffinfo.c
 tiffinfo_LDADD = $(LIBTIFF) $(LIBPORT)
+
+tiffjoin_SOURCES = tiffjoin.c
+tiffjoin_LDADD = $(LIBTIFF) $(LIBPORT)
 
 tiffmedian_SOURCES = tiffmedian.c
 tiffmedian_LDADD = $(LIBTIFF) $(LIBPORT)

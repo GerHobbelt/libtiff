@@ -57,6 +57,7 @@ OBJS=\
 	tiffdither.o \
 	tiffdump.o \
 	tiffinfo.o \
+	tiffjoin.o \
 	tiffmedian.o \
 	tiffsplit.o \
 	raw2tiff.o \
@@ -75,6 +76,7 @@ ALL=\
 	tiffdither.ttp \
 	tiffdump.ttp \
 	tiffinfo.ttp \
+	tiffjoin.ttp \
 	tiffmedian.ttp \
 	tiffsplit.ttp \
 	raw2tiff.ttp \
@@ -91,6 +93,8 @@ tiffcp.ttp:   tiffcp.c ${LIBTIFF}
 	${CC} -o tiffcp.ttp ${CFLAGS} tiffcp.c ${LIBS}
 tiffdump.ttp: tiffdump.c
 	${CC} -o tiffdump.ttp ${CFLAGS} tiffdump.c -lm ${LIBS}
+tiffjoin.ttp: tiffjoin.c ${LIBTIFF}
+	${CC} -o tiffjoin.ttp ${CFLAGS} tiffjoin.c ${LIBS}
 tiffmedian.ttp: tiffmedian.c ${LIBTIFF}
 	${CC} -o tiffmedian.ttp ${CFLAGS} tiffmedian.c ${LIBS}
 tiffsplit.ttp: tiffsplit.c ${LIBTIFF}
