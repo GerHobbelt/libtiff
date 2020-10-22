@@ -269,6 +269,12 @@ TWebPPreDecode(TIFF* tif, uint16 s)
       segment_height = td->td_rowsperstrip;
   }
 
+  if( segment_width > 16383 || segment_height > 16383 ) {
+      TIFFErrorExt(tif->tif_clientdata, module,
+                   "WEBP maximum image dimensions are 16383 x 16383.");
+      return 0;
+  }
+
   if( (sp->state & LSTATE_INIT_DECODE) == 0 )
       tif->tif_setupdecode(tif);
       
@@ -358,7 +364,7 @@ TWebPSetupEncode(TIFF* tif)
   }
 
   if (!WebPConfigInitInternal(&sp->sEncoderConfig, WEBP_PRESET_DEFAULT,
-                              sp->quality_level,
+                              (float)sp->quality_level,
                               WEBP_ENCODER_ABI_VERSION)) {
     TIFFErrorExt(tif->tif_clientdata, module,
       "Error creating WebP encoder configuration.");
@@ -583,7 +589,7 @@ TWebPVSetField(TIFF* tif, uint32 tag, va_list ap)
     #if WEBP_ENCODER_ABI_VERSION >= 0x0100
     sp->lossless = va_arg(ap, int);
     if (sp->lossless){
-      sp->quality_level = 100.0f;      
+      sp->quality_level = 100;
     }
     return 1;
     #else
@@ -632,6 +638,7 @@ TIFFInitWebP(TIFF* tif, int scheme)
   static const char module[] = "TIFFInitWebP";
   WebPState* sp;
 
+  (void)scheme;
   assert( scheme == COMPRESSION_WEBP );
 
   /*
@@ -660,7 +667,7 @@ TIFFInitWebP(TIFF* tif, int scheme)
   tif->tif_tagmethods.vsetfield = TWebPVSetField;	/* hook for codec tags */
 
   /* Default values for codec-specific fields */
-  sp->quality_level = 75.0f;		/* default comp. level */
+  sp->quality_level = 75;		/* default comp. level */
   sp->lossless = 0; /* default to false */
   sp->state = 0;
   sp->nSamples = 0;

@@ -2501,6 +2501,7 @@ TIFFInitJPEG(TIFF* tif, int scheme)
 {
 	JPEGState* sp;
 
+        (void)scheme;
 	assert(scheme == COMPRESSION_JPEG);
 
 	/*
