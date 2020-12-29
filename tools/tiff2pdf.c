@@ -2087,9 +2087,17 @@ void t2p_read_tiff_size(T2P* t2p, TIFF* input){
 #endif
 		(void) 0;
 	}
-	k = checkMultiply64(TIFFScanlineSize(input), t2p->tiff_length, t2p);
-	if(t2p->tiff_planar==PLANARCONFIG_SEPARATE){
-		k = checkMultiply64(k, t2p->tiff_samplesperpixel, t2p);
+#ifdef JPEG_SUPPORT
+	if(t2p->pdf_compression == T2P_COMPRESS_JPEG
+	   && t2p->tiff_photometric == PHOTOMETRIC_YCBCR) {
+		k = checkMultiply64(TIFFNumberOfStrips(input), TIFFStripSize(input), t2p);
+	} else
+#endif
+	{
+		k = checkMultiply64(TIFFScanlineSize(input), t2p->tiff_length, t2p);
+		if(t2p->tiff_planar==PLANARCONFIG_SEPARATE){
+			k = checkMultiply64(k, t2p->tiff_samplesperpixel, t2p);
+		}
 	}
 	if (k == 0) {
 		/* Assume we had overflow inside TIFFScanlineSize */
@@ -2229,6 +2237,9 @@ int t2p_tile_is_corner_edge(T2P_TILES tiles, ttile_t tile){
 	return(t2p_tile_is_right_edge(tiles, tile) & t2p_tile_is_bottom_edge(tiles, tile) );
 }
 
+#if defined(JPEG_SUPPORT) || defined(OJPEG_SUPPORT)
+static const unsigned char jpeg_eof_marker[] = { 0xff, 0xd9 };
+#endif
 
 /*
 	This function reads the raster image data from the input TIFF for an image and writes 
@@ -2448,11 +2459,10 @@ tsize_t t2p_readwrite_pdf_image(T2P* t2p, TIFF* input, TIFF* output){
 					}
 					bufferoffset += retTIFFReadRawStrip;
 				}
-				if( ! ( (buffer[bufferoffset-1]==0xd9) && (buffer[bufferoffset-2]==0xff) ) ){
-						buffer[bufferoffset++]=0xff;
-						buffer[bufferoffset++]=0xd9;
-				}
 				t2pWriteFile(output, (tdata_t) buffer, bufferoffset);
+				if( ! ( (buffer[bufferoffset-1]==0xd9) && (buffer[bufferoffset-2]==0xff) ) ){
+					t2pWriteFile(output, (tdata_t) jpeg_eof_marker, sizeof(jpeg_eof_marker));
+				}
 				_TIFFfree(buffer);
 				return(bufferoffset);
 #if 0
@@ -2533,9 +2543,8 @@ tsize_t t2p_readwrite_pdf_image(T2P* t2p, TIFF* input, TIFF* output){
 						return(0);
 				}
 			}
-			buffer[bufferoffset++]=0xff; 
-			buffer[bufferoffset++]=0xd9;
 			t2pWriteFile(output, (tdata_t) buffer, bufferoffset);
+			t2pWriteFile(output, (tdata_t) jpeg_eof_marker, sizeof(jpeg_eof_marker));
 			_TIFFfree(stripbuffer);
 			_TIFFfree(buffer);
 			return(bufferoffset);
@@ -2999,9 +3008,8 @@ tsize_t t2p_readwrite_pdf_image_tile(T2P* t2p, TIFF* input, TIFF* output, ttile_
 				return(0);
 			}
 			bufferoffset += retTIFFReadRawTile;
-			((unsigned char*)buffer)[bufferoffset++]=0xff;
-			((unsigned char*)buffer)[bufferoffset++]=0xd9;
 			t2pWriteFile(output, (tdata_t) buffer, bufferoffset);
+			t2pWriteFile(output, (tdata_t) jpeg_eof_marker, sizeof(jpeg_eof_marker));
 			_TIFFfree(buffer);
 			return(bufferoffset);
 		}
@@ -3321,6 +3329,14 @@ tsize_t t2p_readwrite_pdf_image_tile(T2P* t2p, TIFF* input, TIFF* output, ttile_
 		break;
 	}
 
+	if (TIFFStripSize(output) > t2p->tiff_datasize) {
+		TIFFError(TIFF2PDF_MODULE,
+		         "Size mismatch input %ld, output %ld",
+		          t2p->tiff_datasize, TIFFStripSize(output));
+		_TIFFfree(buffer);
+		t2p->t2p_error = T2P_ERR_ERROR;
+		return(0);
+	}
 	t2p_enable(output);
 	t2p->outputwritten = 0;
 	bufferoffset = TIFFWriteEncodedStrip(output, (tstrip_t) 0, buffer,
@@ -5648,6 +5664,13 @@ tsize_t t2p_write_pdf(T2P* t2p, TIFF* input, TIFF* output){
 				written += t2p_write_pdf_stream_start(output);
 				streamlen=written;
 				t2p_read_tiff_size_tile(t2p, input, i2);
+				if (t2p->tiff_maxdatasize && (t2p->tiff_datasize > t2p->tiff_maxdatasize)) {
+					TIFFError(TIFF2PDF_MODULE,
+						"Allocation of " TIFF_UINT64_FORMAT " bytes is forbidden. Limit is " TIFF_UINT64_FORMAT ". Use -m option to change limit",
+						(uint64)t2p->tiff_datasize, (uint64)t2p->tiff_maxdatasize);
+					t2p->t2p_error = T2P_ERR_ERROR;
+					return (0);
+				}
 				written += t2p_readwrite_pdf_image_tile(t2p, input, output, i2);
 				t2p_write_advance_directory(t2p, output);
 				if(t2p->t2p_error!=T2P_ERR_OK){return(0);}
