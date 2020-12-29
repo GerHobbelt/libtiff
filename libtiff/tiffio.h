@@ -262,9 +262,9 @@ typedef struct {
 #endif
 
 #if !defined(__GNUC__) && !defined(__clang__) && !defined(__attribute__)
-#  define TIFF_ATTRIBUTE(x)    __attribute__(x)
-#else
 #  define TIFF_ATTRIBUTE(x) /*nothing*/
+#else
+#  define TIFF_ATTRIBUTE(x)    __attribute__(x)
 #endif
 
 #if defined(c_plusplus) || defined(__cplusplus)
