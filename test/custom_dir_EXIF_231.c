@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2012, Frank Warmerdam <warmerdam@pobox.com>
  *
@@ -41,7 +40,7 @@
 
 
 /*------------
- * This version writes the GPS and EXIF tags correctly, without additonal main-IFD and parameters!
+ * This version writes the GPS and EXIF tags correctly, without additional main-IFD and parameters!
  * In contrary, custom_dir.c does write additional main-IFD and parameters to file.
  -------------*/
 
@@ -334,7 +333,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 		goto failure;
 	}
 
-	/*- Varable Array:  TIFF_RATIONAL, 0, TIFF_SETGET_C16_FLOAT */
+	/*- Variable Array:  TIFF_RATIONAL, 0, TIFF_SETGET_C16_FLOAT */
 	if (!TIFFSetField(tif, TIFFTAG_BLACKLEVEL, 3, auxFloatArrayN1)) {
 		fprintf(stderr, "Can't set TIFFTAG_BLACKLEVEL tag.\n");
 		goto failure;
@@ -661,7 +660,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 				/* _Cxx_ just defines the size of the count parameter for the array as C0=char, C16=short or C32=long */
 				/*-- Check, if it is a single parameter, a fixed array or a variable array */
 				if (tWriteCount == 1) {
-					fprintf (stderr, "WriteCount for .set_field_type %d should be -1 or greather than 1!  %s\n", tSetFieldType, tFieldArray->fields[i].field_name);
+					fprintf (stderr, "WriteCount for .set_field_type %d should be -1 or greater than 1!  %s\n", tSetFieldType, tFieldArray->fields[i].field_name);
 				} else {
 					/*-- Either fix or variable array --*/
 					/* For arrays, distinguishing between float or double is essential, even for writing */
@@ -709,7 +708,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 				/* _Cxx_ just defines the size of the count parameter for the array as C0=char, C16=short or C32=long */
 				/*-- Check, if it is a single parameter, a fixed array or a variable array */
 				if (tWriteCount == 1) {
-					fprintf (stderr, "WriteCount for .set_field_type %d should be -1 or greather than 1!  %s\n", tSetFieldType, tFieldArray->fields[i].field_name);
+					fprintf (stderr, "WriteCount for .set_field_type %d should be -1 or greater than 1!  %s\n", tSetFieldType, tFieldArray->fields[i].field_name);
 				} else {
 					/*-- Either fix or variable array --*/
 					/* Now decide between fixed or variable array */
@@ -959,7 +958,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 		/* New interface allows also double precision for TIFF_RATIONAL */
 		auxDouble = auxDblUnion.dbl;
 	} else {
-		/* Old interface reads TIFF_RATIONAL defined as TIFF_SETGET_DOUBLE alwasy as FLOAT */
+		/* Old interface reads TIFF_RATIONAL defined as TIFF_SETGET_DOUBLE always as FLOAT */
 		auxDouble = (double)auxDblUnion.flt1;
 	}
 	/* compare read values with written ones */
@@ -1002,7 +1001,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 		/* New interface allows also double precision for TIFF_RATIONAL */
 		auxDouble = auxDblUnion.dbl;
 	} else {
-		/* Old interface reads TIFF_RATIONAL defined as TIFF_SETGET_DOUBLE alwasy as FLOAT */
+		/* Old interface reads TIFF_RATIONAL defined as TIFF_SETGET_DOUBLE always as FLOAT */
 		auxDouble = (double)auxDblUnion.flt1;
 	}
 	/* compare read values with written ones */
@@ -1030,7 +1029,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 		/* New interface allows also double precision for TIFF_RATIONAL */
 		auxDouble = auxDblUnion.dbl;
 	} else {
-		/* Old interface reads TIFF_RATIONAL defined as TIFF_SETGET_DOUBLE alwasy as FLOAT */
+		/* Old interface reads TIFF_RATIONAL defined as TIFF_SETGET_DOUBLE always as FLOAT */
 		auxDouble = (double)auxDblUnion.flt1;
 	}
 	/* compare read values with written ones */
@@ -1191,7 +1190,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 						auxDouble = auxDblUnion.dbl;
 					}
 					else {
-						/* Old interface reads TIFF_RATIONAL defined as TIFF_SETGET_DOUBLE alwasy as FLOAT */
+						/* Old interface reads TIFF_RATIONAL defined as TIFF_SETGET_DOUBLE always as FLOAT */
 						auxDouble = (double)auxDblUnion.flt1;
 					}
 				}
@@ -1219,7 +1218,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 				/* _Cxx_ just defines the size of the count parameter for the array as C0=char, C16=short or C32=long */
 				/*-- Check, if it is a single parameter, a fixed array or a variable array */
 				if (tWriteCount == 1) {
-					fprintf (stderr, "Reading: WriteCount for .set_field_type %d should be -1 or greather than 1!  %s\n", tSetFieldType, tFieldArray->fields[i].field_name);
+					fprintf (stderr, "Reading: WriteCount for .set_field_type %d should be -1 or greater than 1!  %s\n", tSetFieldType, tFieldArray->fields[i].field_name);
 				} else {
 					/*-- Either fix or variable array --*/
 					/* For arrays, distinguishing between float or double is essential. */
@@ -1297,7 +1296,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 				/* _Cxx_ just defines the size of the count parameter for the array as C0=char, C16=short or C32=long */
 				/*-- Check, if it is a single parameter, a fixed array or a variable array */
 				if (tWriteCount == 1) {
-					fprintf (stderr, "WriteCount for .set_field_type %d should be -1 or greather than 1!  %s\n", tSetFieldType, tFieldArray->fields[i].field_name);
+					fprintf (stderr, "WriteCount for .set_field_type %d should be -1 or greater than 1!  %s\n", tSetFieldType, tFieldArray->fields[i].field_name);
 				} else {
 					/*-- Either fix or variable array --*/
 					/* Now decide between fixed or variable array */
