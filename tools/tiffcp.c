@@ -37,6 +37,7 @@
  */
 
 #include "tif_config.h"
+#include "libport.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -56,14 +57,6 @@
 #endif
 #ifndef EXIT_FAILURE
 #define EXIT_FAILURE 1
-#endif
-
-#ifndef HAVE_GETOPT
-extern int getopt(int argc, char * const argv[], const char *optstring);
-#endif
-
-#if defined(VMS)
-# define unlink delete
 #endif
 
 #define	streq(a,b)	(strcmp(a,b) == 0)
@@ -114,7 +107,7 @@ static int pageInSeq = 0;
 static void* limitMalloc(tmsize_t s)
 {
 	if (maxMalloc && (s > maxMalloc)) {
-		fprintf(stderr, "MemoryLimitError: allocation of " TIFF_UINT64_FORMAT " bytes is forbidden. Limit is " TIFF_UINT64_FORMAT ".\n",
+		fprintf(stderr, "MemoryLimitError: allocation of %" TIFF_UINT64_FORMAT " bytes is forbidden. Limit is %" TIFF_UINT64_FORMAT ".\n",
 		        (uint64)s, (uint64)maxMalloc);
 		fprintf(stderr, "                  use -m option to change limit.\n");
 		return NULL;
@@ -320,7 +313,7 @@ main(int argc, char* argv[])
 		}
 		if (diroff != 0 && !TIFFSetSubDirectory(in, diroff)) {
 			TIFFError(TIFFFileName(in),
-			    "Error, setting subdirectory at " TIFF_UINT64_FORMAT, diroff);
+			    "Error, setting subdirectory at %" TIFF_UINT64_FORMAT, diroff);
 			(void) TIFFClose(in);
 			(void) TIFFClose(out);
 			return (EXIT_FAILURE);

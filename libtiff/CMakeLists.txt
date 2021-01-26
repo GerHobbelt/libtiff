@@ -32,11 +32,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tiffconf.h.cmake.in
 
 extra_dist(
   SConstruct
-  tif_config.h-vms
   tif_config.vc.h
-  tif_config.wince.h
   tiffconf.vc.h
-  tiffconf.wince.h
   libtiff.def
   libtiff.map
   libtiffxx.map)
@@ -118,6 +115,7 @@ target_include_directories(tiff
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+    PRIVATE
         ${TIFF_INCLUDES}
 )
 target_link_libraries(tiff ${TIFF_LIBRARY_DEPS})

@@ -109,6 +109,7 @@ static   char tiffcrop_version_id[] = "2.4";
 static   char tiffcrop_rev_date[] = "12-13-2010";
 
 #include "tif_config.h"
+#include "libport.h"
 #include "tiffiop.h"
 
 #include <stdio.h>
@@ -135,19 +136,7 @@ static   char tiffcrop_rev_date[] = "12-13-2010";
 #define EXIT_FAILURE 1
 #endif
 
-#ifndef HAVE_GETOPT
-extern int getopt(int argc, char * const argv[], const char *optstring);
-#endif
-
-#ifdef NEED_LIBPORT
-# include "libport.h"
-#endif
-
 #include "tiffio.h"
-
-#if defined(VMS)
-# define unlink delete
-#endif
 
 #ifndef PATH_MAX
 #define PATH_MAX 1024
@@ -636,7 +625,7 @@ static tmsize_t maxMalloc = DEFAULT_MAX_MALLOC;
 static void* limitMalloc(tmsize_t s)
 {
   if (maxMalloc && (s > maxMalloc)) {
-    fprintf(stderr, "MemoryLimitError: allocation of " TIFF_UINT64_FORMAT " bytes is forbidden. Limit is " TIFF_UINT64_FORMAT ".\n",
+    fprintf(stderr, "MemoryLimitError: allocation of %" TIFF_UINT64_FORMAT " bytes is forbidden. Limit is %" TIFF_UINT64_FORMAT ".\n",
             (uint64)s, (uint64)maxMalloc);
     fprintf(stderr, "                  use -k option to change limit.\n"); return NULL;
   }
