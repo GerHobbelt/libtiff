@@ -461,11 +461,7 @@ extern int TIFFInitZSTD(TIFF*, int);
 #ifdef WEBP_SUPPORT
 extern int TIFFInitWebP(TIFF*, int);
 #endif
-#ifdef VMS
 extern const TIFFCodec _TIFFBuiltinCODECS[];
-#else
-extern TIFFCodec _TIFFBuiltinCODECS[];
-#endif
 
 #if defined(__cplusplus)
 }

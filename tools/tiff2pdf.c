@@ -850,49 +850,45 @@ success:
 }
 
 static void usage_info(int code) {
-	static const char* lines[]={
-	"usage:  tiff2pdf [options] input.tiff",
-	"where options are:",
-	" -o: output to file name",
+	static const char lines[]=
+	"usage:  tiff2pdf [options] input.tiff\n"
+	"where options are:\n"
+	" -o: output to file name\n"
 #ifdef JPEG_SUPPORT
-	" -j: compress with JPEG", 
+	" -j: compress with JPEG\n"
 #endif
 #ifdef ZIP_SUPPORT
-	" -z: compress with Zip/Deflate",
+	" -z: compress with Zip/Deflate\n"
 #endif
 #if defined(JPEG_SUPPORT) || defined(ZIP_SUPPORT)
-	" -q: compression quality",
-	" -n: no compressed data passthrough",
-	" -d: do not compress (decompress)",
+	" -q: compression quality\n"
+	" -n: no compressed data passthrough\n"
+	" -d: do not compress (decompress)\n"
 #endif
-	" -i: invert colors",
-	" -u: set distance unit, 'i' for inch, 'm' for centimeter",
-	" -x: set x resolution default in dots per unit",
-	" -y: set y resolution default in dots per unit",
-	" -w: width in units",
-	" -l: length in units",
-	" -r: 'd' for resolution default, 'o' for resolution override",
-	" -p: paper size, eg \"letter\", \"legal\", \"A4\"",
-	" -F: make the tiff fill the PDF page",
-	" -f: set PDF \"Fit Window\" user preference",
-	" -e: date, overrides image or current date/time default, YYYYMMDDHHMMSS",
-	" -c: sets document creator, overrides image software default",
-	" -a: sets document author, overrides image artist default",
-	" -t: sets document title, overrides image document name default",
-	" -s: sets document subject, overrides image image description default",
-	" -k: sets document keywords",
-	" -b: set PDF \"Interpolate\" user preference",
-	" -m: set memory allocation limit (in MiB). set to 0 to disable limit",
-	" -h: usage",
-	NULL
-	};
-	int i=0;
+	" -i: invert colors\n"
+	" -u: set distance unit, 'i' for inch, 'm' for centimeter\n"
+	" -x: set x resolution default in dots per unit\n"
+	" -y: set y resolution default in dots per unit\n"
+	" -w: width in units\n"
+	" -l: length in units\n"
+	" -r: 'd' for resolution default, 'o' for resolution override\n"
+	" -p: paper size, eg \"letter\", \"legal\", \"A4\"\n"
+	" -F: make the tiff fill the PDF page\n"
+	" -f: set PDF \"Fit Window\" user preference\n"
+	" -e: date, overrides image or current date/time default, YYYYMMDDHHMMSS\n"
+	" -c: sets document creator, overrides image software default\n"
+	" -a: sets document author, overrides image artist default\n"
+	" -t: sets document title, overrides image document name default\n"
+	" -s: sets document subject, overrides image image description default\n"
+	" -k: sets document keywords\n"
+	" -b: set PDF \"Interpolate\" user preference\n"
+	" -m: set memory allocation limit (in MiB). set to 0 to disable limit\n"
+	" -h: usage\n"
+	;
 	FILE * out = (code == EXIT_SUCCESS) ? stdout : stderr;
 
 	fprintf(out, "%s\n\n", TIFFGetVersion());
-	for (i=0;lines[i]!=NULL;i++){
-		fprintf(out, "%s\n", lines[i]);
-	}
+        fprintf(out, "%s", lines);
 
 	return;
 }
@@ -1966,11 +1962,22 @@ void t2p_read_tiff_data(T2P* t2p, TIFF* input){
 	return;
 }
 
-/*
+/**
+ * checks for overflow
+ */
+static void t2p_set_tiff_datasize(T2P* t2p, uint64 k) {
+	if (k != (uint64)(tmsize_t)k || (tmsize_t)k < 0) {
+		TIFFError(TIFF2PDF_MODULE, "Integer overflow");
+		t2p->t2p_error = T2P_ERR_ERROR;
+		return;
+	}
+	t2p->tiff_datasize = (tmsize_t)k;
+}
+
+/**
 	This function returns the necessary size of a data buffer to contain the raw or 
 	uncompressed image data from the input TIFF for a page.
 */
-
 void t2p_read_tiff_size(T2P* t2p, TIFF* input){
 
 	uint64* sbc=NULL;
@@ -1979,28 +1986,20 @@ void t2p_read_tiff_size(T2P* t2p, TIFF* input){
 	tstrip_t i=0;
 	tstrip_t stripcount=0;
 #endif
-        uint64 k = 0;
+	uint64 k = 0;
 
 	if(t2p->pdf_transcode == T2P_TRANSCODE_RAW){
-#ifdef CCITT_SUPPORT
-		if(t2p->pdf_compression == T2P_COMPRESS_G4 ){
-			TIFFGetField(input, TIFFTAG_STRIPBYTECOUNTS, &sbc);
-            if (sbc[0] != (uint64)(tmsize_t)sbc[0]) {
-                TIFFError(TIFF2PDF_MODULE, "Integer overflow");
-                t2p->t2p_error = T2P_ERR_ERROR;
-            }
-			t2p->tiff_datasize=(tmsize_t)sbc[0];
-			return;
-		}
+#if defined(CCITT_SUPPORT) || defined(ZIP_SUPPORT)
+#if defined(CCITT_SUPPORT) && defined(ZIP_SUPPORT)
+		if(t2p->pdf_compression == T2P_COMPRESS_G4 || t2p->pdf_compression == T2P_COMPRESS_ZIP)
+#elif defined(CCITT_SUPPORT)
+		if(t2p->pdf_compression == T2P_COMPRESS_G4)
+#else
+		if(t2p->pdf_compression == T2P_COMPRESS_ZIP)
 #endif
-#ifdef ZIP_SUPPORT
-		if(t2p->pdf_compression == T2P_COMPRESS_ZIP){
+		{
 			TIFFGetField(input, TIFFTAG_STRIPBYTECOUNTS, &sbc);
-            if (sbc[0] != (uint64)(tmsize_t)sbc[0]) {
-                TIFFError(TIFF2PDF_MODULE, "Integer overflow");
-                t2p->t2p_error = T2P_ERR_ERROR;
-            }
-			t2p->tiff_datasize=(tmsize_t)sbc[0];
+			t2p_set_tiff_datasize(t2p, sbc[0]);
 			return;
 		}
 #endif
@@ -2029,11 +2028,7 @@ void t2p_read_tiff_size(T2P* t2p, TIFF* input){
 							k = checkAdd64(k, 6, t2p);
 							k = checkAdd64(k, stripcount, t2p);
 							k = checkAdd64(k, stripcount, t2p);
-							t2p->tiff_datasize = (tsize_t) k;
-							if ((uint64) t2p->tiff_datasize != k) {
-								TIFFError(TIFF2PDF_MODULE, "Integer overflow");
-								t2p->t2p_error = T2P_ERR_ERROR;
-							}
+							t2p_set_tiff_datasize(t2p, k);
 							return;
 						}
 						return;
@@ -2049,11 +2044,7 @@ void t2p_read_tiff_size(T2P* t2p, TIFF* input){
 			k = checkAdd64(k, stripcount, t2p);
 			k = checkAdd64(k, stripcount, t2p);
 			k = checkAdd64(k, 2048, t2p);
-			t2p->tiff_datasize = (tsize_t) k;
-			if ((uint64) t2p->tiff_datasize != k) {
-				TIFFError(TIFF2PDF_MODULE, "Integer overflow");
-				t2p->t2p_error = T2P_ERR_ERROR;
-			}
+			t2p_set_tiff_datasize(t2p, k);
 			return;
 		}
 #endif
@@ -2083,11 +2074,7 @@ void t2p_read_tiff_size(T2P* t2p, TIFF* input){
 			}
 			k = checkAdd64(k, 2, t2p); /* use EOI of last strip */
 			k = checkAdd64(k, 6, t2p); /* for DRI marker of first strip */
-			t2p->tiff_datasize = (tsize_t) k;
-			if ((uint64) t2p->tiff_datasize != k) {
-				TIFFError(TIFF2PDF_MODULE, "Integer overflow");
-				t2p->t2p_error = T2P_ERR_ERROR;
-			}
+			t2p_set_tiff_datasize(t2p, k);
 			return;
 		}
 #endif
@@ -2110,11 +2097,7 @@ void t2p_read_tiff_size(T2P* t2p, TIFF* input){
 		t2p->t2p_error = T2P_ERR_ERROR;
 	}
 
-	t2p->tiff_datasize = (tsize_t) k;
-	if ((uint64) t2p->tiff_datasize != k) {
-		TIFFError(TIFF2PDF_MODULE, "Integer overflow");
-		t2p->t2p_error = T2P_ERR_ERROR;
-	}
+	t2p_set_tiff_datasize(t2p, k);
 
 	return;
 }
@@ -2167,11 +2150,7 @@ void t2p_read_tiff_size_tile(T2P* t2p, TIFF* input, ttile_t tile){
 				}
 			}
 #endif
-			t2p->tiff_datasize = (tsize_t) k;
-			if ((uint64) t2p->tiff_datasize != k) {
-				TIFFError(TIFF2PDF_MODULE, "Integer overflow");
-				t2p->t2p_error = T2P_ERR_ERROR;
-			}
+			t2p_set_tiff_datasize(t2p, k);
 			return;
 		}
 	}
@@ -2184,11 +2163,7 @@ void t2p_read_tiff_size_tile(T2P* t2p, TIFF* input, ttile_t tile){
 		t2p->t2p_error = T2P_ERR_ERROR;
 	}
 
-	t2p->tiff_datasize = (tsize_t) k;
-	if ((uint64) t2p->tiff_datasize != k) {
-		TIFFError(TIFF2PDF_MODULE, "Integer overflow");
-		t2p->t2p_error = T2P_ERR_ERROR;
-	}
+	t2p_set_tiff_datasize(t2p, k);
 
 	return;
 }
