@@ -258,6 +258,35 @@ typedef struct {
 #include <stdio.h>
 #include <stdarg.h>
 
+/* SetGetRATIONAL_directly:
+ *    Here, the defines for native rational interface development are combined.
+ *    After development, hey can be located on a more appropriate place in include files,
+ *    depending the final outline of the upgrade.
+ *
+ */
+typedef struct {
+	uint32_t uNum;
+	uint32_t uDenom;
+} TIFFRational_t;
+
+typedef struct {
+	int32_t sNum;
+	int32_t sDenom;
+} TIFFSRational_t;
+
+/* Till now DoubleToRational() is defined in tif_dirwrite.c locally, but need to be used also in tif_dirread.c and others.
+ * Also the user will need DoubleToRational() to calculate numerator and denominator for rationals.
+ * Therefore, also DoubleToRational() has to be added to tiflib.def.
+ * Furthermore, this definitions have to be put after include of stdarg.h.
+*/
+extern void DoubleToRational(double value, uint32_t* num, uint32_t* denom);
+extern void DoubleToSrational(double value, int32_t* num, int32_t* denom);
+extern int TIFFSetFieldRational(TIFF*, uint32_t, ...);
+extern int TIFFVSetFieldRational(TIFF* tif, uint32_t tag, va_list ap);
+extern int TIFFGetFieldRational(TIFF*, uint32_t, ...);
+extern int TIFFVGetFieldRational(TIFF* tif, uint32_t tag, va_list ap);
+
+
 /* share internal LogLuv conversion routines? */
 #ifndef LOGLUV_PUBLIC
 #define LOGLUV_PUBLIC 1
@@ -337,6 +366,9 @@ typedef struct {
     TIFFVSetMethod vsetfield; /* tag set routine */
     TIFFVGetMethod vgetfield; /* tag get routine */
     TIFFPrintMethod printdir; /* directory print routine */
+	/* SetGetRATIONAL_directly: */
+	TIFFVSetMethod vsetfieldrational; /* tag set routine for rationals directly */
+	TIFFVGetMethod vgetfieldrational; /* tag get routine for rationals directly */
 } TIFFTagMethods;
 
 extern  TIFFTagMethods *TIFFAccessTagMethods(TIFF *);

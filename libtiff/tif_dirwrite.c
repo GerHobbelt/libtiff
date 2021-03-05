@@ -92,9 +92,15 @@ static int TIFFWriteDirectoryTagLong8Array(TIFF* tif, uint32_t* ndir, TIFFDirEnt
 static int TIFFWriteDirectoryTagSlong8(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t tag, int64_t value);
 #endif
 static int TIFFWriteDirectoryTagSlong8Array(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t tag, uint32_t count, int64_t* value);
+
+#ifdef SetGetRATIONAL_replaced_and_obsolete /* SetGetRATIONAL_directly: TIFFWriteDirectoryTagCheckedRational() replaced by TIFFWriteDirectoryTagCheckedRational() */
 static int TIFFWriteDirectoryTagRational(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t tag, double value);
 static int TIFFWriteDirectoryTagRationalArray(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t tag, uint32_t count, float* value);
 static int TIFFWriteDirectoryTagSrationalArray(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t tag, uint32_t count, float* value);
+#endif
+/* SetGetRATIONAL_directly: */
+static int TIFFWriteDirectoryTagRationalDirect(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t tag, TIFFRational_t value);
+static int TIFFWriteDirectoryTagRationalArrayDirect(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t tag, uint32_t count, TIFFRational_t* value);
 #ifdef notdef
 static int TIFFWriteDirectoryTagFloat(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t tag, float value);
 #endif
@@ -153,17 +159,24 @@ static int TIFFWriteDirectoryTagCheckedLong8Array(TIFF* tif, uint32_t* ndir, TIF
 static int TIFFWriteDirectoryTagCheckedSlong8(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t tag, int64_t value);
 #endif
 static int TIFFWriteDirectoryTagCheckedSlong8Array(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t tag, uint32_t count, int64_t* value);
+
+#ifdef SetGetRATIONAL_replaced_and_obsolete /* SetGetRATIONAL_directly: TIFFWriteDirectoryTagCheckedRational() replaced by TIFFWriteDirectoryTagCheckedRational() */
 static int TIFFWriteDirectoryTagCheckedRational(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t tag, double value);
 static int TIFFWriteDirectoryTagCheckedRationalArray(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t tag, uint32_t count, float* value);
 static int TIFFWriteDirectoryTagCheckedSrationalArray(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t tag, uint32_t count, float* value);
+#endif
+/* SetGetRATIONAL_directly: */
+static int TIFFWriteDirectoryTagCheckedRationalDirect(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t tag, TIFFRational_t value);
+static int TIFFWriteDirectoryTagCheckedRationalArrayDirect(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t tag, uint32_t count, TIFFRational_t* value);
 
 /*--: Rational2Double: New functions to support true double-precision for custom rational tag types. */
+#ifdef SetGetRATIONAL_replaced_and_obsolete /* SetGetRATIONAL_directly: TIFFWriteDirectoryTagRationalDoubleArray() replaced by TIFFWriteDirectoryTagRationalArrayDirect() */
 static int TIFFWriteDirectoryTagRationalDoubleArray(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t tag, uint32_t count, double* value);
 static int TIFFWriteDirectoryTagSrationalDoubleArray(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t tag, uint32_t count, double* value);
 static int TIFFWriteDirectoryTagCheckedRationalDoubleArray(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t tag, uint32_t count, double* value);
 static int TIFFWriteDirectoryTagCheckedSrationalDoubleArray(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t tag, uint32_t count, double* value);
-static void DoubleToRational(double value, uint32_t *num, uint32_t *denom);
-static void DoubleToSrational(double value, int32_t *num, int32_t *denom);
+#endif
+
 #if 0
 static void DoubleToRational_direct(double value, unsigned long *num, unsigned long *denom);
 static void DoubleToSrational_direct(double value, long *num, long *denom);
@@ -500,17 +513,17 @@ TIFFWriteDirectorySec(TIFF* tif, int isimage, int imagedone, uint64_t* pdiroff)
 					goto bad;
 			}
 			if (TIFFFieldSet(tif,FIELD_RESOLUTION))
-			{
-				if (!TIFFWriteDirectoryTagRational(tif,&ndir,dir,TIFFTAG_XRESOLUTION,tif->tif_dir.td_xresolution))
+			{	/* SetGetRATIONAL_directly: */
+				if (!TIFFWriteDirectoryTagRationalDirect(tif,&ndir,dir,TIFFTAG_XRESOLUTION,tif->tif_dir.td_xresolution))
 					goto bad;
-				if (!TIFFWriteDirectoryTagRational(tif,&ndir,dir,TIFFTAG_YRESOLUTION,tif->tif_dir.td_yresolution))
+				if (!TIFFWriteDirectoryTagRationalDirect(tif,&ndir,dir,TIFFTAG_YRESOLUTION,tif->tif_dir.td_yresolution))
 					goto bad;
 			}
 			if (TIFFFieldSet(tif,FIELD_POSITION))
-			{
-				if (!TIFFWriteDirectoryTagRational(tif,&ndir,dir,TIFFTAG_XPOSITION,tif->tif_dir.td_xposition))
+			{	/* SetGetRATIONAL_directly: */
+				if (!TIFFWriteDirectoryTagRationalDirect(tif,&ndir,dir,TIFFTAG_XPOSITION,tif->tif_dir.td_xposition))
 					goto bad;
-				if (!TIFFWriteDirectoryTagRational(tif,&ndir,dir,TIFFTAG_YPOSITION,tif->tif_dir.td_yposition))
+				if (!TIFFWriteDirectoryTagRationalDirect(tif,&ndir,dir,TIFFTAG_YPOSITION,tif->tif_dir.td_yposition))
 					goto bad;
 			}
 			if (TIFFFieldSet(tif,FIELD_SUBFILETYPE))
@@ -678,8 +691,8 @@ TIFFWriteDirectorySec(TIFF* tif, int isimage, int imagedone, uint64_t* pdiroff)
 					goto bad;
 			}
 			if (TIFFFieldSet(tif,FIELD_REFBLACKWHITE))
-			{
-				if (!TIFFWriteDirectoryTagRationalArray(tif,&ndir,dir,TIFFTAG_REFERENCEBLACKWHITE,6,tif->tif_dir.td_refblackwhite))
+			{	/* SetGetRATIONAL_directly: Return value needs a pointer to a float-array. Get memmory for float-array: */
+				if (!TIFFWriteDirectoryTagRationalArrayDirect(tif,&ndir,dir,TIFFTAG_REFERENCEBLACKWHITE,6,tif->tif_dir.td_refblackwhite))
 					goto bad;
 			}
 			if (TIFFFieldSet(tif,FIELD_TRANSFERFUNCTION))
@@ -811,42 +824,11 @@ TIFFWriteDirectorySec(TIFF* tif, int isimage, int imagedone, uint64_t* pdiroff)
 						goto bad;
 					break;
 				case TIFF_RATIONAL:
-					{
-						/*-- Rational2Double: For Rationals evaluate "set_field_type" to determine internal storage size. */
-						int tv_size;
-						tv_size = _TIFFSetGetFieldSize(tif->tif_dir.td_customValues[m].info->set_field_type);
-						if (tv_size == 8) {
-							if (!TIFFWriteDirectoryTagRationalDoubleArray(tif,&ndir,dir,tag,count,tif->tif_dir.td_customValues[m].value))
-								goto bad;
-						} else {
-							/*-- default should be tv_size == 4 */
-							if (!TIFFWriteDirectoryTagRationalArray(tif,&ndir,dir,tag,count,tif->tif_dir.td_customValues[m].value))
-								goto bad;
-							/*-- ToDo: After Testing, this should be removed and tv_size==4 should be set as default. */
-							if (tv_size != 4) {
-								TIFFErrorExt(0,"TIFFLib: _TIFFWriteDirectorySec()", "Rational2Double: .set_field_type in not 4 but %d", tv_size); 
-							}
-						}
-					}
-					break;
 				case TIFF_SRATIONAL:
-					{
-						/*-- Rational2Double: For Rationals evaluate "set_field_type" to determine internal storage size. */
-						int tv_size;
-						tv_size = _TIFFSetGetFieldSize(tif->tif_dir.td_customValues[m].info->set_field_type);
-						if (tv_size == 8) {
-							if (!TIFFWriteDirectoryTagSrationalDoubleArray(tif,&ndir,dir,tag,count,tif->tif_dir.td_customValues[m].value))
-								goto bad;
-						} else {
-							/*-- default should be tv_size == 4 */
-							if (!TIFFWriteDirectoryTagSrationalArray(tif,&ndir,dir,tag,count,tif->tif_dir.td_customValues[m].value))
-								goto bad;
-							/*-- ToDo: After Testing, this should be removed and tv_size==4 should be set as default. */
-							if (tv_size != 4) {
-								TIFFErrorExt(0,"TIFFLib: _TIFFWriteDirectorySec()", "Rational2Double: .set_field_type in not 4 but %d", tv_size); 
-							}
-						}
-					}
+						/*-- SetGetRATIONAL_directly:_CustomTag: Not necessary to distinguish signed/unsigned here due to "set_field_type",
+						 *                                       which is followes in TIFFWriteDirectoryTagRationalArrayDirect().        */
+					if (!TIFFWriteDirectoryTagRationalArrayDirect(tif, &ndir, dir, tag, count, tif->tif_dir.td_customValues[m].value))
+						goto bad;
 					break;
 				case TIFF_FLOAT:
 					if (!TIFFWriteDirectoryTagFloatArray(tif,&ndir,dir,tag,count,tif->tif_dir.td_customValues[m].value))
@@ -1572,6 +1554,7 @@ TIFFWriteDirectoryTagSlong8Array(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, u
 	return(TIFFWriteDirectoryTagCheckedSlong8Array(tif,ndir,dir,tag,count,value));
 }
 
+#ifdef SetGetRATIONAL_replaced_and_obsolete /* SetGetRATIONAL_directly: TIFFWriteDirectoryTagRational() replaced by TIFFWriteDirectoryTagRationalDirect() */
 static int
 TIFFWriteDirectoryTagRational(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t tag, double value)
 {
@@ -1582,7 +1565,20 @@ TIFFWriteDirectoryTagRational(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint
 	}
 	return(TIFFWriteDirectoryTagCheckedRational(tif,ndir,dir,tag,value));
 }
+#endif
 
+static int
+TIFFWriteDirectoryTagRationalDirect(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t tag, TIFFRational_t value)
+{	/* SetGetRATIONAL_directly: */
+	if (dir == NULL) {
+		(*ndir)++;
+		return(1);
+	}
+	return(TIFFWriteDirectoryTagCheckedRationalDirect(tif, ndir, dir, tag, value));
+} /*-- TIFFWriteDirectoryTagRationalDirect() --*/
+
+
+#ifdef SetGetRATIONAL_replaced_and_obsolete /* SetGetRATIONAL_directly: TIFFWriteDirectoryTagRationalArray() replaced by TIFFWriteDirectoryTagRationalArrayDirect() */
 static int
 TIFFWriteDirectoryTagRationalArray(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t tag, uint32_t count, float* value)
 {
@@ -1604,8 +1600,21 @@ TIFFWriteDirectoryTagSrationalArray(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir
 	}
 	return(TIFFWriteDirectoryTagCheckedSrationalArray(tif,ndir,dir,tag,count,value));
 }
+#endif
 
-/*-- Rational2Double: additional write functions */
+static int
+TIFFWriteDirectoryTagRationalArrayDirect(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t tag, uint32_t count, TIFFRational_t* value)
+{	/* SetGetRATIONAL_directly: */
+	if (dir == NULL) {
+		(*ndir)++;
+		return(1);
+	}
+	return(TIFFWriteDirectoryTagCheckedRationalArrayDirect(tif, ndir, dir, tag, count, value));
+} /*-- TIFFWriteDirectoryTagRationalArrayDirect --*/
+
+
+/*-- Rational2Double: additional write functions --*/
+#ifdef SetGetRATIONAL_replaced_and_obsolete /* SetGetRATIONAL_directly: TIFFWriteDirectoryTagRationalDoubleArray() replaced by TIFFWriteDirectoryTagRationalArrayDirect() */
 static int
 TIFFWriteDirectoryTagRationalDoubleArray(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t tag, uint32_t count, double* value)
 {
@@ -1627,6 +1636,7 @@ TIFFWriteDirectoryTagSrationalDoubleArray(TIFF* tif, uint32_t* ndir, TIFFDirEntr
 	}
 	return(TIFFWriteDirectoryTagCheckedSrationalDoubleArray(tif,ndir,dir,tag,count,value));
 }
+#endif
 
 #ifdef notdef
 static int TIFFWriteDirectoryTagFloat(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t tag, float value)
@@ -2383,6 +2393,7 @@ TIFFWriteDirectoryTagCheckedSlong8Array(TIFF* tif, uint32_t* ndir, TIFFDirEntry*
 	return(TIFFWriteDirectoryTagData(tif,ndir,dir,tag,TIFF_SLONG8,count,count*8,value));
 }
 
+#ifdef SetGetRATIONAL_replaced_and_obsolete /* SetGetRATIONAL_directly: TIFFWriteDirectoryTagCheckedRational() replaced by TIFFWriteDirectoryTagCheckedRationalDirect() */
 static int
 TIFFWriteDirectoryTagCheckedRational(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t tag, double value)
 {
@@ -2555,8 +2566,60 @@ TIFFWriteDirectoryTagCheckedSrationalArray(TIFF* tif, uint32_t* ndir, TIFFDirEnt
 	_TIFFfree(m);
 	return(o);
 }
+#endif
 
-/*-- Rational2Double: additional write functions for double arrays */
+
+/*-- SetGetRATIONAL_directly: additional write functions for direct rational arrays --*/
+static int
+TIFFWriteDirectoryTagCheckedRationalDirect(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t tag, TIFFRational_t value)
+{
+	/* SetGetRATIONAL_directly: */
+	uint32_t m[2];
+	assert(sizeof(uint32_t) == 4);
+	m[0] = value.uNum;
+	m[1] = value.uDenom;
+	if (tif->tif_flags & TIFF_SWAB) {
+		TIFFSwabLong(&m[0]);
+		TIFFSwabLong(&m[1]);
+	}
+	return(TIFFWriteDirectoryTagData(tif, ndir, dir, tag, TIFF_RATIONAL, 1, 8, &m[0]));
+} /*-- TIFFWriteDirectoryTagCheckedRationalDirect() --*/
+
+static int
+TIFFWriteDirectoryTagCheckedRationalArrayDirect(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t tag, uint32_t count, TIFFRational_t* value)
+{	/* SetGetRATIONAL_directly: */
+	static const char module[] = "TIFFWriteDirectoryTagCheckedRationalArrayDirect";
+	uint32_t* m;
+	TIFFRational_t* na;
+	uint32_t* nb;
+	uint32_t nc;
+	int o;
+	const TIFFField* fip;
+	assert(sizeof(uint32_t) == 4);
+	m = _TIFFmalloc(count * 2 * sizeof(uint32_t));
+	if (m == NULL) {
+		TIFFErrorExt(tif->tif_clientdata, module, "Out of memory");
+		return(0);
+	}
+	for (na = value, nb = m, nc = 0; nc < count; na++, nb += 2, nc++) {
+		/* just copy input rational-array to output rational-array */
+		nb[0] = na->uNum;
+		nb[1] = na->uDenom;
+	}
+	if (tif->tif_flags & TIFF_SWAB)
+		TIFFSwabArrayOfLong(m, count * 2);
+	/* determine field_type */
+	fip = TIFFFindField(tif, tag, TIFF_ANY);
+	assert((fip->field_type == TIFF_RATIONAL || fip->field_type == TIFF_SRATIONAL));
+	o = TIFFWriteDirectoryTagData(tif, ndir, dir, tag, fip->field_type, count, count * 8, &m[0]);
+	_TIFFfree(m);
+	return(o);
+} /*-- TIFFWriteDirectoryTagCheckedRationalArrayDirect() --*/
+
+
+
+/*-- Rational2Double: additional write functions for double arrays --*/
+#ifdef SetGetRATIONAL_replaced_and_obsolete /* SetGetRATIONAL_directly: TIFFWriteDirectoryTagRationalDoubleArray() replaced by TIFFWriteDirectoryTagRationalArrayDirect() */
 static int
 TIFFWriteDirectoryTagCheckedRationalDoubleArray(TIFF* tif, uint32_t* ndir, TIFFDirEntry* dir, uint16_t tag, uint32_t count, double* value)
 {
@@ -2610,6 +2673,7 @@ TIFFWriteDirectoryTagCheckedSrationalDoubleArray(TIFF* tif, uint32_t* ndir, TIFF
 	_TIFFfree(m);
 	return(o);
 } /*--- TIFFWriteDirectoryTagCheckedSrationalDoubleArray() -------- */
+#endif
 
 #if 0
 static
@@ -2816,7 +2880,6 @@ void ToRationalEuclideanGCD(double value, int blnUseSignedRange, int blnUseSmall
 * for UN-SIGNED rationals,
 * using the Euclidean algorithm to find the greatest common divisor (GCD)
 ------------------------------------------------------------------------*/
-static
 void DoubleToRational(double value, uint32_t *num, uint32_t *denom)
 {
 	/*---- UN-SIGNED RATIONAL ---- */
@@ -2880,7 +2943,6 @@ void DoubleToRational(double value, uint32_t *num, uint32_t *denom)
 * for SIGNED rationals,
 * using the Euclidean algorithm to find the greatest common divisor (GCD)
 ------------------------------------------------------------------------*/
-static
 void DoubleToSrational(double value, int32_t *num, int32_t *denom)
 {
 	/*---- SIGNED RATIONAL ----*/

@@ -177,3 +177,9 @@ EXPORTS	TIFFAccessTagMethods
 	_TIFFMultiply64
 	_TIFFGetExifFields
 	_TIFFGetGpsFields
+	_TIFFGetFields
+	_TIFFMergeFields
+	DoubleToRational
+	DoubleToSrational
+	TIFFSetFieldRational
+	TIFFGetFieldRational

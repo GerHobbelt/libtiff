@@ -170,27 +170,30 @@ static int
 TIFFDefaultRefBlackWhite(TIFFDirectory* td)
 {
 	int i;
-
-        td->td_refblackwhite = (float *)_TIFFmalloc(6*sizeof (float));
+	/* SetGetRATIONAL_directly: This function needs to be adapted, because of internal change of variable type. */
+	td->td_refblackwhite = (TIFFRational_t*)_TIFFmalloc(6*sizeof (TIFFRational_t));
 	if (td->td_refblackwhite == NULL)
 		return 0;
-        if (td->td_photometric == PHOTOMETRIC_YCBCR) {
+	/* set all denominator to 1 */
+	td->td_refblackwhite[0].uDenom = td->td_refblackwhite[1].uDenom = td->td_refblackwhite[2].uDenom = 
+	td->td_refblackwhite[3].uDenom = td->td_refblackwhite[4].uDenom = td->td_refblackwhite[5].uDenom = 1;
+	if (td->td_photometric == PHOTOMETRIC_YCBCR) {
 		/*
-		 * YCbCr (Class Y) images must have the ReferenceBlackWhite
-		 * tag set. Fix the broken images, which lacks that tag.
-		 */
-		td->td_refblackwhite[0] = 0.0F;
-		td->td_refblackwhite[1] = td->td_refblackwhite[3] =
-			td->td_refblackwhite[5] = 255.0F;
-		td->td_refblackwhite[2] = td->td_refblackwhite[4] = 128.0F;
+		* YCbCr (Class Y) images must have the ReferenceBlackWhite
+		* tag set. Fix the broken images, which lacks that tag.
+		*/
+		td->td_refblackwhite[0].uNum = 0;
+		td->td_refblackwhite[1].uNum = td->td_refblackwhite[3].uNum =
+			td->td_refblackwhite[5].uNum = 255;
+		td->td_refblackwhite[2].uNum = td->td_refblackwhite[4].uNum = 128;
+
 	} else {
 		/*
 		 * Assume RGB (Class R)
 		 */
 		for (i = 0; i < 3; i++) {
-		    td->td_refblackwhite[2*i+0] = 0;
-		    td->td_refblackwhite[2*i+1] =
-			    (float)((1L<<td->td_bitspersample)-1L);
+			td->td_refblackwhite[2 * i + 0].uNum = 0;
+			DoubleToRational((double)((1L << td->td_bitspersample) - 1L), &td->td_refblackwhite[2 * i + 1].uNum, &td->td_refblackwhite[2 * i + 1].uDenom);
 		}
 	}
 	return 1;
@@ -328,10 +331,27 @@ TIFFVGetFieldDefaulted(TIFF* tif, uint32_t tag, va_list ap)
 		}
 		return (1);
 	case TIFFTAG_REFERENCEBLACKWHITE:
-		if (!td->td_refblackwhite && !TIFFDefaultRefBlackWhite(td))
-			return (0);
-		*va_arg(ap, const float **) = td->td_refblackwhite;
-		return (1);
+		{
+			/* SetGetRATIONAL_directly: Return value needs a pointer to a float-array. Get memmory for float-array: */
+			float* pfReturn;
+			float* pf;
+			TIFFRational_t* pR;
+			pfReturn = NULL;
+			if (!td->td_refblackwhite && !TIFFDefaultRefBlackWhite(td))
+				return (0);
+			//*va_arg(ap, const float **) = td->td_refblackwhite;
+			_TIFFsetFloatArray(&pfReturn, (float*)td->td_refblackwhite, 6);
+			/* Now fill array with correct values: */
+			pf = pfReturn;
+			pR = td->td_refblackwhite;
+			for (int i = 0; i < 6; i++) {
+				*pf = (float)((double)pR->uNum / (double)pR->uDenom);
+				pf++;
+				pR++;
+			}
+			*va_arg(ap, const float**) = pfReturn;
+			return (1);
+		}
 	}
 	return 0;
 }
