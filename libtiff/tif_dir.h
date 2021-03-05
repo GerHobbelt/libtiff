@@ -36,6 +36,10 @@ typedef struct {
 	const TIFFField *info;
 	int             count;
 	void           *value;
+	/*-- SetGetRATIONAL_directly:_CustomTag: value2 necessary to free lateron float/double arrays, 
+	 * which were returned in parallel to internal stored rational arrays. 
+	 */
+	void           *value2; 
 } TIFFTagValue;
 
 /*
@@ -84,10 +88,10 @@ typedef struct {
 	uint16_t  td_minsamplevalue, td_maxsamplevalue;
 	double* td_sminsamplevalue;
 	double* td_smaxsamplevalue;
-	float   td_xresolution, td_yresolution;
+	TIFFRational_t td_xresolution, td_yresolution;  /* SetGetRATIONAL_directly: */
 	uint16_t  td_resolutionunit;
 	uint16_t  td_planarconfig;
-	float   td_xposition, td_yposition;
+	TIFFRational_t   td_xposition, td_yposition;  /* SetGetRATIONAL_directly: */
 	uint16_t  td_pagenumber[2];
 	uint16_t* td_colormap[3];
 	uint16_t  td_halftonehints[2];
@@ -113,7 +117,8 @@ typedef struct {
 	uint16_t  td_ycbcrpositioning;
 	/* Colorimetry parameters */
 	uint16_t* td_transferfunction[3];
-	float*	td_refblackwhite;
+	TIFFRational_t   *td_refblackwhite;  /* SetGetRATIONAL_directly: */
+	void* td_refblackwhite2; /* SetGetRATIONAL_directly: Necessary to free lateron float/double arrays, which were returned in parallel to internal stored rational arrays. */
 	/* CMYK parameters */
 	int     td_inknameslen;
 	char*   td_inknames;

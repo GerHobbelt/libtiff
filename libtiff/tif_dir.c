@@ -70,6 +70,11 @@ void _TIFFsetFloatArray(float** fpp, float* fp, uint32_t n)
     { setByteArray((void**) fpp, (void*) fp, n, sizeof (float)); }
 void _TIFFsetDoubleArray(double** dpp, double* dp, uint32_t n)
     { setByteArray((void**) dpp, (void*) dp, n, sizeof (double)); }
+/* SetGetRATIONAL_directly: */
+void _TIFFsetRationalArray(TIFFRational_t** dpp, TIFFRational_t* dp, uint32_t n)
+{
+	setByteArray((void**)dpp, (void*)dp, n, sizeof(TIFFRational_t));
+}
 
 static void
 setDoubleArrayOneValue(double** vpp, double value, size_t nmemb)
@@ -83,6 +88,102 @@ setDoubleArrayOneValue(double** vpp, double value, size_t nmemb)
 			((double*)*vpp)[nmemb] = value;
 	}
 }
+
+static void
+_TIFFsetFloatArrayFromRational(float** vpp, TIFFRational_t* vpR, uint32_t n, char isSigned, char fgAllocMemory)
+{
+	/* SetGetRATIONAL_directly:_CustomTag: 
+	 * Return value needs a pointer to a float-array. Get memmory for float-array, if fgAllocMemory is true 
+	 * 
+	 * ATTENTION: For "SetGetRATIONAL_directly:_CustomTag:"-enhancement: Allocated extra memory for converting rational arrays to float/doble arrays has to be freed by libtiff. This is done by using td->value2.
+	 */
+	float* pf;
+	uint32_t i;
+	TIFFRational_t*  pR;
+	TIFFSRational_t* psR;
+	size_t elem_size = sizeof(float);
+	/* check for input pointer */
+	if (!vpR) {
+		return;
+	}
+	if (fgAllocMemory) {
+		tmsize_t bytes = _TIFFMultiplySSize(NULL, n, elem_size, NULL);
+		if (bytes)
+			*vpp = (void*)_TIFFmalloc(bytes);
+		else
+			*vpp = NULL;
+	}
+	if (*vpp) {
+		pf = *vpp;
+		/* Now fill array with correct values: */
+		if (isSigned) {
+			psR = (TIFFSRational_t*)vpR;
+			for (i = 0; i < n; i++) {
+				*pf = (float)((double)psR->sNum / (double)psR->sDenom);
+				pf++;
+				psR++;
+			}
+		}
+		else {
+			pR = vpR;
+			for (i = 0; i < n; i++) {
+				*pf = (float)((double)pR->uNum / (double)pR->uDenom);
+				pf++;
+				pR++;
+			}
+		}
+	}
+} /*-- _TIFFsetFloatArrayFromRational() --*/
+
+
+static void
+_TIFFsetDoubleArrayFromRational(double** vpp, TIFFRational_t* vpR, uint32_t n, char isSigned, char fgAllocMemory)
+{
+	/* SetGetRATIONAL_directly:_CustomTag:
+	 * Return value needs a pointer to a float-array. Get memmory for float-array, if fgAllocMemory is true
+	 *
+	 * ATTENTION: For "SetGetRATIONAL_directly:_CustomTag:"-enhancement: Allocated extra memory for converting rational arrays to float/doble arrays has to be freed by libtiff. This is done by using td->value2.
+	 */
+	double* pf;
+	uint32_t i;
+	TIFFRational_t* pR;
+	TIFFSRational_t* psR;
+	size_t elem_size = sizeof(double);
+	/* check for input pointer */
+	if (!vpR) {
+		return;
+	}
+	if (fgAllocMemory) {
+		tmsize_t bytes = _TIFFMultiplySSize(NULL, n, elem_size, NULL);
+		if (bytes)
+			*vpp = (void*)_TIFFmalloc(bytes);
+		else
+			*vpp = NULL;
+	}
+	if (*vpp) {
+		pf = *vpp;
+		/* Now fill array with correct values: */
+		if (isSigned) {
+			psR = (TIFFSRational_t*)vpR;
+			for (i = 0; i < n; i++) {
+				*pf = ((double)psR->sNum / (double)psR->sDenom);
+				pf++;
+				psR++;
+			}
+		}
+		else {
+			pR = vpR;
+			for (i = 0; i < n; i++) {
+				*pf = ((double)pR->uNum / (double)pR->uDenom);
+				pf++;
+				pR++;
+			}
+		}
+	}
+} /*-- _TIFFsetDoubleArrayFromRational() --*/
+
+
+
 
 /*
  * Install extra samples information.
@@ -337,13 +438,15 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
         dblval = va_arg(ap, double);
         if( dblval < 0 )
             goto badvaluedouble;
-		td->td_xresolution = _TIFFClampDoubleToFloat( dblval );
+		/* SetGetRATIONAL_directly: */
+		DoubleToRational(dblval, &td->td_xresolution.uNum, &td->td_xresolution.uDenom);
 		break;
 	case TIFFTAG_YRESOLUTION:
         dblval = va_arg(ap, double);
         if( dblval < 0 )
             goto badvaluedouble;
-		td->td_yresolution = _TIFFClampDoubleToFloat( dblval );
+		/* SetGetRATIONAL_directly: */
+		DoubleToRational(dblval, &td->td_yresolution.uNum, &td->td_yresolution.uDenom);
 		break;
 	case TIFFTAG_PLANARCONFIG:
 		v = (uint16_t) va_arg(ap, uint16_vap);
@@ -352,10 +455,12 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 		td->td_planarconfig = (uint16_t) v;
 		break;
 	case TIFFTAG_XPOSITION:
-		td->td_xposition = _TIFFClampDoubleToFloat( va_arg(ap, double) );
+		/* SetGetRATIONAL_directly: */
+		DoubleToRational(va_arg(ap, double), &td->td_xposition.uNum, &td->td_xposition.uDenom);
 		break;
 	case TIFFTAG_YPOSITION:
-		td->td_yposition = _TIFFClampDoubleToFloat( va_arg(ap, double) );
+		/* SetGetRATIONAL_directly: */
+		DoubleToRational(va_arg(ap, double), &td->td_yposition.uNum, &td->td_yposition.uDenom);
 		break;
 	case TIFFTAG_RESOLUTIONUNIT:
 		v = (uint16_t) va_arg(ap, uint16_vap);
@@ -474,7 +579,22 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 		break;
 	case TIFFTAG_REFERENCEBLACKWHITE:
 		/* XXX should check for null range */
-		_TIFFsetFloatArray(&td->td_refblackwhite, va_arg(ap, float*), 6);
+		{
+			/* SetGetRATIONAL_directly: */
+			float* pf;
+			TIFFRational_t* pR;
+			pf = va_arg(ap, float*);
+			_TIFFsetRationalArray(&td->td_refblackwhite, (TIFFRational_t*)&pf, 6);
+			/* Now fill array with correct values: */
+			pR = td->td_refblackwhite;
+			if (pR != NULL) {
+				for (int i = 0; i < 6; i++) {
+					DoubleToRational(*pf, &pR->uNum, &pR->uDenom);
+					pf++;
+					pR++;
+				}
+			}
+		}
 		break;
 	case TIFFTAG_INKNAMES:
 		v = (uint16_t) va_arg(ap, uint16_vap);
@@ -526,6 +646,11 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 					_TIFFfree(tv->value);
 					tv->value = NULL;
 				}
+				/*--: SetGetRATIONAL_directly:_CustomTag: */
+				if (tv->value2 != NULL) {
+					_TIFFfree(tv->value2);
+					tv->value2 = NULL;
+				}
 				break;
 			}
 		}
@@ -553,17 +678,21 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 			tv = td->td_customValues + (td->td_customValueCount - 1);
 			tv->info = fip;
 			tv->value = NULL;
+			tv->value2 = NULL; /*--: SetGetRATIONAL_directly:_CustomTag: */
 			tv->count = 0;
 		}
 
 		/*
 		 * Set custom value ... save a copy of the custom tag value.
 		 */
-		tv_size = _TIFFDataSize(fip->field_type);
 		/*--: Rational2Double: For Rationals evaluate "set_field_type" to determine internal storage size. */
-		if (fip->field_type == TIFF_RATIONAL || fip->field_type == TIFF_SRATIONAL) {
-			tv_size = _TIFFSetGetFieldSize(fip->set_field_type);
-		}
+		//tv_size = _TIFFDataSize(fip->field_type);
+		/*--: SetGetRATIONAL_directly:_CustomTag:
+		*   Because the internal storage size of RATIONAL is now the same size than the size of the tag,
+		*   the size can be retrieved by TIFFDataWidth() and the additional function _TIFFDataSize() can be deleted.
+		*   ATTENTION: tv_size holds the size of the internal storage size but NOT the size of the passed API data parameter!
+		*/
+		tv_size = TIFFDataWidth(fip->field_type);
 		if (tv_size == 0) {
 			status = 0;
 			TIFFErrorExt(tif->tif_clientdata, module,
@@ -643,9 +772,73 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 				  || fip->field_writecount == TIFF_VARIABLE2
 				  || fip->field_writecount == TIFF_SPP
 				  || tv->count > 1) {
-			  /*--: Rational2Double: For Rationals tv_size is set above to 4 or 8 according to fip->set_field_type! */
-				_TIFFmemcpy(tv->value, va_arg(ap, void *),
-				    tv->count * tv_size);
+				/*--: Rational2Double: For Rationals tv_size is set above to 4 or 8 according to fip->set_field_type! */
+				/*--: SetGetRATIONAL_directly:_CustomTag:
+				*   ATTENTION: tv_size holds the size of the internal storage size but NOT the size of the passed API data parameter!
+				*              Therefore, that API parameter size has to be evaluated using fip->set_field_type information.
+				*   For RATIONAL arrays, a special treatment is needed.
+				*/
+				if (fip->field_type != TIFF_RATIONAL && fip->field_type != TIFF_SRATIONAL) {
+					_TIFFmemcpy(tv->value, va_arg(ap, void *), tv->count * tv_size);
+				}
+				else {
+					/* Float or Double Array input for RATIONAL storage */
+					int i;
+					int tv_set_get_size = _TIFFSetGetFieldSize(fip->set_field_type);
+					if (tv_set_get_size == 4) {
+						float* pf;
+						pf = va_arg(ap, float*);
+						if (fip->field_type == TIFF_RATIONAL) {
+							TIFFRational_t* pR;
+							/* Now fill array with correct values: */
+							pR = tv->value;
+							for (i = 0; i < tv->count; i++) {
+								DoubleToRational(*pf, &pR->uNum, &pR->uDenom);
+								pf++;
+								pR++;
+							}
+						}
+						else {
+							TIFFSRational_t* psR;
+							/* Now fill array with correct values: */
+							psR = tv->value;
+							for (i = 0; i < tv->count; i++) {
+								DoubleToSrational(*pf, &psR->sNum, &psR->sDenom);
+								pf++;
+								psR++;
+							}
+						}
+					} /*-- if (tv_set_get_size == 4)  --*/
+					else if (tv_set_get_size == 8) {
+						double* pd;
+						pd = va_arg(ap, double*);
+						if (fip->field_type == TIFF_RATIONAL) {
+							TIFFRational_t* pR;
+							/* Now fill array with correct values: */
+							pR = tv->value;
+							for (i = 0; i < tv->count; i++) {
+								DoubleToRational(*pd, &pR->uNum, &pR->uDenom);
+								pd++;
+								pR++;
+							}
+						}
+						else {
+							TIFFSRational_t* psR;
+							/* Now fill array with correct values: */
+							psR = tv->value;
+							for (i = 0; i < tv->count; i++) {
+								DoubleToSrational(*pd, &psR->sNum, &psR->sDenom);
+								pd++;
+								psR++;
+							}
+						}
+					} /*-- if (tv_set_get_size == 8)  --*/
+					else {
+						TIFFErrorExt(tif->tif_clientdata, module,
+							"%s: Input parameter size %d not expected for RATIONAL",
+							tif->tif_name, tv_set_get_size);
+					}
+				} /*-- if (fip->field_type != TIFF_RATIONAL && fip->field_type != TIFF_SRATIONAL)  --*/
 			} else {
 				char *val = (char *)tv->value;
 				assert( tv->count == 1 );
@@ -703,21 +896,32 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 					}
 					break;
 				case TIFF_RATIONAL:
-				case TIFF_SRATIONAL:
 					/*-- Rational2Double: For Rationals tv_size is set above to 4 or 8 according to fip->set_field_type! */
 					{
-						if (tv_size == 8) {
-							double v2 = va_arg(ap, double);
-							_TIFFmemcpy(val, &v2, tv_size);
-						} else {
-							/*-- default should be tv_size == 4 */
-							float v3 = (float)va_arg(ap, double);
-							_TIFFmemcpy(val, &v3, tv_size);
-							/*-- ToDo: After Testing, this should be removed and tv_size==4 should be set as default. */
-							if (tv_size != 4) {
-								TIFFErrorExt(0,"TIFFLib: _TIFFVSetField()", "Rational2Double: .set_field_type in not 4 but %d", tv_size); 
-							}
-						}
+						/*-- SetGetRATIONAL_directly:_CustomTag:  Here, tv_size should be always =8.
+						*    The interface is allways double and the internal storage is allways 2 * uint32_t;
+						*    However, we have to distinguish between unsigned and signed rationals.
+						--*/
+						TIFFRational_t* r;
+						double v2;
+						assert(tv_size == 8);
+						r = (TIFFRational_t*)val;
+						v2 = va_arg(ap, double);
+						DoubleToRational(v2, &r->uNum, &r->uDenom);
+					}
+					break;
+				case TIFF_SRATIONAL:
+					{
+						/*-- SetGetRATIONAL_directly:_CustomTag:  Here, tv_size should be always =8.
+						*    The interface is allways double and the internal storage is allways 2 * uint32_t;
+						*    However, we have to distinguish between unsigned and signed rationals.
+						--*/
+						TIFFSRational_t* r;
+						double v2;
+						assert(tv_size == 8);
+						r = (TIFFSRational_t*)val;
+						v2 = va_arg(ap, double);
+						DoubleToSrational(v2, &r->sNum, &r->sDenom);
 					}
 					break;
 				case TIFF_FLOAT:
@@ -739,8 +943,8 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 				}
 			}
 		}
-	}
-	}
+	} /* default: of switch(standard_tag) */
+	} /* switch(standard_tag) */
 	if (status) {
 		const TIFFField* fip2=TIFFFieldWithTag(tif,tag);
 		if (fip2)                
@@ -781,7 +985,235 @@ badvaluedouble:
         va_end(ap);
         }
     return (0);
-}
+} /* _TIFFVSetField() */
+
+
+static int
+_TIFFVSetFieldRational(TIFF* tif, uint32_t tag, va_list ap)
+{
+	/* SetGetRATIONAL_directly: 
+	 * _TIFFVSetFieldRational() is necessary to distinguish the va_list parameters for directly setting rational values
+	 * from the standard case, where a float value is provided.
+	 * 
+	 * This routine expects as va_list: Numerator , Denominator as uint_32 (or int_32 for signed rationals).
+	 */
+	static const char module[] = "_TIFFVSetFieldRational";
+
+	TIFFDirectory* td = &tif->tif_dir;
+	int status = 1;
+	TIFFRational_t* uR;
+
+	const TIFFField* fip = TIFFFindField(tif, tag, TIFF_ANY);
+	uint32_t standard_tag = tag;
+	if (fip == NULL) /* cannot happen since OkToChangeTag() already checks it */
+		return 0;
+	
+	/* Check for error if it is not a RATIONAL-tag. */
+	if (fip->field_type != TIFF_RATIONAL && fip->field_type != TIFF_SRATIONAL) {
+		TIFFErrorExt(tif->tif_clientdata, module, "This function accepts only rational tif-tag!");
+		return 0;
+	}
+	
+	/*
+	 * We want to force the custom code to be used for custom
+	 * fields even if the tag happens to match a well known
+	 * one - important for reinterpreted handling of standard
+	 * tag values in custom directories (i.e. EXIF)
+	 */
+	if (fip->field_bit == FIELD_CUSTOM) {
+		standard_tag = 0;
+	}
+
+	switch (standard_tag) {
+	/* hereafter, only rational tags are handled */
+		case TIFFTAG_XRESOLUTION:
+			td->td_xresolution.uNum = va_arg(ap, uint32_t);
+			td->td_xresolution.uDenom = va_arg(ap, uint32_t);
+			break;
+		case TIFFTAG_YRESOLUTION:
+			td->td_yresolution.uNum = va_arg(ap, uint32_t);
+			td->td_yresolution.uDenom = va_arg(ap, uint32_t);
+			break;
+		case TIFFTAG_XPOSITION:
+			td->td_xposition.uNum = va_arg(ap, uint32_t);
+			td->td_xposition.uDenom = va_arg(ap, uint32_t);
+			break;
+		case TIFFTAG_YPOSITION:
+			td->td_yposition.uNum = va_arg(ap, uint32_t);
+			td->td_yposition.uDenom = va_arg(ap, uint32_t);
+			break;
+		case TIFFTAG_REFERENCEBLACKWHITE:
+			/* a rational array with 6 entries is expected */
+			_TIFFsetRationalArray(&td->td_refblackwhite, va_arg(ap,TIFFRational_t*), 6);
+		break;
+
+		default: {
+			TIFFTagValue* tv;
+			int tv_size, iCustom;
+
+			/*
+			 * This can happen if multiple images are open with different
+			 * codecs which have private tags.  The global tag information
+			 * table may then have tags that are valid for one file but not
+			 * the other. If the client tries to set a tag that is not valid
+			 * for the image's codec then we'll arrive here.  This
+			 * happens, for example, when tiffcp is used to convert between
+			 * compression schemes and codec-specific tags are blindly copied.
+			 */
+			if (fip->field_bit != FIELD_CUSTOM) {
+				TIFFErrorExt(tif->tif_clientdata, module,
+					"%s: Invalid %stag \"%s\" (not supported by codec)",
+					tif->tif_name, isPseudoTag(tag) ? "pseudo-" : "",
+					fip->field_name);
+				status = 0;
+				break;
+			}
+
+			/*
+			 * Find the existing entry for this custom value.
+			 */
+			tv = NULL;
+			for (iCustom = 0; iCustom < td->td_customValueCount; iCustom++) {
+				if (td->td_customValues[iCustom].info->field_tag == tag) {
+					tv = td->td_customValues + iCustom;
+					if (tv->value != NULL) {
+						_TIFFfree(tv->value);
+						tv->value = NULL;
+					}
+					/*--: SetGetRATIONAL_directly:_CustomTag: */
+					if (tv->value2 != NULL) {
+						_TIFFfree(tv->value2);
+						tv->value2 = NULL;
+					}
+					break;
+				}
+			}
+
+			/*
+			 * Grow the custom list if the entry was not found.
+			 */
+			if (tv == NULL) {
+				TIFFTagValue* new_customValues;
+
+				td->td_customValueCount++;
+				new_customValues = (TIFFTagValue*)
+					_TIFFrealloc(td->td_customValues,
+						sizeof(TIFFTagValue) * td->td_customValueCount);
+				if (!new_customValues) {
+					TIFFErrorExt(tif->tif_clientdata, module,
+						"%s: Failed to allocate space for list of custom values",
+						tif->tif_name);
+					status = 0;
+					goto end;
+				}
+
+				td->td_customValues = new_customValues;
+
+				tv = td->td_customValues + (td->td_customValueCount - 1);
+				tv->info = fip;
+				tv->value = NULL;
+				tv->value2 = NULL; /*--: SetGetRATIONAL_directly:_CustomTag: */
+				tv->count = 0;
+			}
+
+			/*
+			 * SetGetRATIONAL_directly:_CustomTag: 
+			 * -- Here, only a unsigned or signed rational is expected for a FIELD_CUSTOM --
+			 * Therefore, tv_size is allways =8
+			*/
+			tv_size = 8;
+
+			/*-- Check for rationals and quit if its not. --*/
+			if (fip->field_type != TIFF_RATIONAL && fip->field_type != TIFF_SRATIONAL) {
+				TIFFErrorExt(tif->tif_clientdata, module,
+					"%s: Custom tag field type is not RATIONAL.",
+					tif->tif_name);
+				status = 0;
+				goto end;
+			}
+
+			/*
+			 * Set custom value ... save a copy of the custom tag value.
+			*/
+			if (fip->field_passcount) {
+				if (fip->field_writecount == TIFF_VARIABLE2)
+					tv->count = (uint32_t)va_arg(ap, uint32_t);
+				else
+					tv->count = (int)va_arg(ap, int);
+			}
+			else if (fip->field_writecount == TIFF_VARIABLE	|| fip->field_writecount == TIFF_VARIABLE2) {
+				tv->count = 1;
+			}
+			else if (fip->field_writecount == TIFF_SPP) {
+				tv->count = td->td_samplesperpixel;
+			}
+			else {
+				tv->count = fip->field_writecount;
+			}
+
+			if (tv->count == 0) {
+				status = 0;
+				TIFFErrorExt(tif->tif_clientdata, module,
+					"%s: Null count for \"%s\" (type "
+					"%d, writecount %d, passcount %d)",
+					tif->tif_name,
+					fip->field_name,
+					fip->field_type,
+					fip->field_writecount,
+					fip->field_passcount);
+				goto end;
+			}
+
+			tv->value = _TIFFCheckMalloc(tif, tv->count, tv_size,
+				"custom tag binary object");
+			if (!tv->value) {
+				status = 0;
+				goto end;
+			}
+
+			if (fip->field_passcount
+				|| fip->field_writecount == TIFF_VARIABLE
+				|| fip->field_writecount == TIFF_VARIABLE2
+				|| fip->field_writecount == TIFF_SPP
+				|| tv->count > 1) {
+				/*--: copy rational array back to calling function --*/
+				_TIFFmemcpy(tv->value, va_arg(ap, void*), tv->count * tv_size);
+			}
+			else {
+				char* val = (char*)tv->value;
+				assert(tv->count == 1);
+
+				/* Single rational value. Not necessary here to distinguish between signed and unsigned. */
+				switch (fip->field_type) {
+					case TIFF_RATIONAL:
+					case TIFF_SRATIONAL:
+						uR = (TIFFRational_t*)val;
+						uR->uNum = va_arg(ap, uint32_t);
+						uR->uDenom = va_arg(ap, uint32_t);
+						break;
+					default:
+						_TIFFmemset(val, 0, tv_size);
+						status = 0;
+						break;
+				} /* switch(fip->fieldtype */
+			} /* else for single rational value */
+		} /* default: of switch(standard_tag) */
+	} /*-- switch(standard_tag) --*/
+
+	if (status) {
+		const TIFFField* fip2 = TIFFFieldWithTag(tif, tag);
+		if (fip2)
+			TIFFSetFieldBit(tif, fip2->field_bit);
+		tif->tif_flags |= TIFF_DIRTYDIRECT;
+	}
+
+end:
+	va_end(ap);
+	return (status);
+} /* _TIFFVSetFieldRational() */
+
+
+
 
 /*
  * Return 1/0 according to whether or not
@@ -836,6 +1268,18 @@ TIFFSetField(TIFF* tif, uint32_t tag, ...)
 	return (status);
 }
 
+int
+TIFFSetFieldRational(TIFF* tif, uint32_t tag, ...)
+{   /* SetGetRATIONAL_directly: */
+	va_list ap;
+	int status;
+
+	va_start(ap, tag);
+	status = TIFFVSetFieldRational(tif, tag, ap);
+	va_end(ap);
+	return (status);
+} /* TIFFSetFieldRational() */
+
 /*
  * Clear the contents of the field in the internal structure.
  */
@@ -865,7 +1309,8 @@ TIFFUnsetField(TIFF* tif, uint32_t tag)
         if( i < td->td_customValueCount )
         {
             _TIFFfree(tv->value);
-            for( ; i < td->td_customValueCount-1; i++) {
+			_TIFFfree(tv->value2); /*--: SetGetRATIONAL_directly:_CustomTag: */
+			for( ; i < td->td_customValueCount-1; i++) {
                 td->td_customValues[i] = td->td_customValues[i+1];
             }
             td->td_customValueCount--;
@@ -888,6 +1333,13 @@ TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 {
 	return OkToChangeTag(tif, tag) ?
 	    (*tif->tif_tagmethods.vsetfield)(tif, tag, ap) : 0;
+}
+
+int
+TIFFVSetFieldRational(TIFF* tif, uint32_t tag, va_list ap)
+{   /* SetGetRATIONAL_directly: */
+	return OkToChangeTag(tif, tag) ?
+		(*tif->tif_tagmethods.vsetfieldrational)(tif, tag, ap) : 0;
 }
 
 static int
@@ -1007,19 +1459,19 @@ _TIFFVGetField(TIFF* tif, uint32_t tag, va_list ap)
 			}
 			break;
 		case TIFFTAG_XRESOLUTION:
-			*va_arg(ap, float*) = td->td_xresolution;
+			*va_arg(ap, float*) = (float)((double)td->td_xresolution.uNum / (double)td->td_xresolution.uDenom);  /* SetGetRATIONAL_directly: */
 			break;
 		case TIFFTAG_YRESOLUTION:
-			*va_arg(ap, float*) = td->td_yresolution;
+			*va_arg(ap, float*) = (float)((double)td->td_yresolution.uNum / (double)td->td_yresolution.uDenom);  /* SetGetRATIONAL_directly: */
 			break;
 		case TIFFTAG_PLANARCONFIG:
 			*va_arg(ap, uint16_t*) = td->td_planarconfig;
 			break;
 		case TIFFTAG_XPOSITION:
-			*va_arg(ap, float*) = td->td_xposition;
+			*va_arg(ap, float*) = (float)((double)td->td_xposition.uNum / (double)td->td_xposition.uDenom);  /* SetGetRATIONAL_directly: */
 			break;
 		case TIFFTAG_YPOSITION:
-			*va_arg(ap, float*) = td->td_yposition;
+			*va_arg(ap, float*) = (float)((double)td->td_yposition.uNum / (double)td->td_yposition.uDenom);  /* SetGetRATIONAL_directly: */
 			break;
 		case TIFFTAG_RESOLUTIONUNIT:
 			*va_arg(ap, uint16_t*) = td->td_resolutionunit;
@@ -1109,7 +1561,27 @@ _TIFFVGetField(TIFF* tif, uint32_t tag, va_list ap)
 			}
 			break;
 		case TIFFTAG_REFERENCEBLACKWHITE:
-			*va_arg(ap, const float**) = td->td_refblackwhite;
+			{
+				/* SetGetRATIONAL_directly: Return value needs a pointer to a float-array. Get memmory for float-array: */
+				float* pf;
+				TIFFRational_t* pR;
+				if (td->td_refblackwhite2 != NULL) {
+					_TIFFfree(td->td_refblackwhite2);
+					td->td_refblackwhite2 = NULL;
+				}
+				_TIFFsetFloatArray((float **)&td->td_refblackwhite2, (float*)td->td_refblackwhite, 6);
+				/* Now fill array with correct values: */
+				pf = td->td_refblackwhite2;
+				pR = td->td_refblackwhite;
+				if (pf != NULL && pR != NULL) {
+					for (int i = 0; i < 6; i++) {
+						*pf = (float)((double)pR->uNum / (double)pR->uDenom);
+						pf++;
+						pR++;
+					}
+				}
+				*va_arg(ap, const float**) = td->td_refblackwhite2;
+			}
 			break;
 		case TIFFTAG_INKNAMES:
 			*va_arg(ap, const char**) = td->td_inknames;
@@ -1144,6 +1616,7 @@ _TIFFVGetField(TIFF* tif, uint32_t tag, va_list ap)
 				 */
 				ret_val = 0;
 				for (i = 0; i < td->td_customValueCount; i++) {
+					int tv_set_get_size;
 					TIFFTagValue *tv = td->td_customValues + i;
 
 					if (tv->info->field_tag != tag)
@@ -1154,7 +1627,30 @@ _TIFFVGetField(TIFF* tif, uint32_t tag, va_list ap)
 							*va_arg(ap, uint32_t*) = (uint32_t)tv->count;
 						else  /* Assume TIFF_VARIABLE */
 							*va_arg(ap, uint16_t*) = (uint16_t)tv->count;
-						*va_arg(ap, const void **) = tv->value;
+
+						/* SetGetRATIONAL_directly:_CustomTag:  TIFFVGetField() enhanced for variable RATIONAl arrays ----> */
+						tv_set_get_size = _TIFFSetGetFieldSize(fip->set_field_type);
+						if (fip->field_type == TIFF_RATIONAL) {
+							if (tv_set_get_size == 4) {
+								_TIFFsetFloatArrayFromRational((float **)&tv->value2, (TIFFRational_t*)tv->value, tv->count, FALSE, TRUE);
+							}
+							else {
+								_TIFFsetDoubleArrayFromRational((double**)&tv->value2, (TIFFRational_t*)tv->value, tv->count, FALSE, TRUE);
+							}
+							*va_arg(ap, const void**) = tv->value2;
+						}
+						else if (fip->field_type == TIFF_SRATIONAL) {
+							if (tv_set_get_size == 4) {
+								_TIFFsetFloatArrayFromRational((float**)&tv->value2, (TIFFRational_t*)tv->value, tv->count, TRUE, TRUE);
+							}
+							else {
+								_TIFFsetDoubleArrayFromRational((double**)&tv->value2, (TIFFRational_t*)tv->value, tv->count, TRUE, TRUE);
+							}
+							*va_arg(ap, const void**) = tv->value2;
+						}
+						else {
+							*va_arg(ap, const void**) = tv->value;
+						}
 						ret_val = 1;
 					} else if (fip->field_tag == TIFFTAG_DOTRANGE
 						   && strcmp(fip->field_name,"DotRange") == 0) {
@@ -1171,7 +1667,29 @@ _TIFFVGetField(TIFF* tif, uint32_t tag, va_list ap)
 						    || fip->field_readcount == TIFF_VARIABLE2
 						    || fip->field_readcount == TIFF_SPP
 						    || tv->count > 1) {
-							*va_arg(ap, void **) = tv->value;
+							/* SetGetRATIONAL_directly:_CustomTag:  TIFFVGetField() enhance for fixed RATIONAl arrays ----> */
+							int tv_set_get_size = _TIFFSetGetFieldSize(fip->set_field_type);
+							if (fip->field_type == TIFF_RATIONAL) {
+								if (tv_set_get_size == 4) {
+									_TIFFsetFloatArrayFromRational((float**)&tv->value2, (TIFFRational_t*)tv->value, tv->count, FALSE, TRUE);
+								}
+								else {
+									_TIFFsetDoubleArrayFromRational((double**)&tv->value2, (TIFFRational_t*)tv->value, tv->count, FALSE, TRUE);
+								}
+								*va_arg(ap, const void**) = tv->value2;
+							}
+							else if (fip->field_type == TIFF_SRATIONAL) {
+								if (tv_set_get_size == 4) {
+									_TIFFsetFloatArrayFromRational((float**)&tv->value2, (TIFFRational_t*)tv->value, tv->count, TRUE, TRUE);
+								}
+								else {
+									_TIFFsetDoubleArrayFromRational((double**)&tv->value2, (TIFFRational_t*)tv->value, tv->count, TRUE, TRUE);
+								}
+								*va_arg(ap, const void**) = tv->value2;
+							}
+							else {
+								*va_arg(ap, const void**) = tv->value;
+							}
 							ret_val = 1;
 						} else {
 							char *val = (char *)tv->value;
@@ -1223,14 +1741,28 @@ _TIFFVGetField(TIFF* tif, uint32_t tag, va_list ap)
 							case TIFF_RATIONAL:
 							case TIFF_SRATIONAL:
 								{
-									/*-- Rational2Double: For Rationals evaluate "set_field_type" to determine internal storage size and return value size. */
+									/*-- Rational2Double: For Rationals evaluate "set_field_type" to determine API interface type and return value size. */
 									int tv_size = _TIFFSetGetFieldSize(fip->set_field_type);
-									if (tv_size == 8) {
-										*va_arg(ap, double*) = *(double *)val;
+									/*-- SetGetRATIONAL_directly:_CustomTag: */
+									double v2;
+									TIFFRational_t* uR = (TIFFRational_t*)val;
+									TIFFSRational_t* sR = (TIFFSRational_t*)val;
+									/* distiguish between unsigned / signed rationals here */
+									if (fip->field_type == TIFF_RATIONAL) {
+										v2 = ((double)uR->uNum / (double)uR->uDenom);  
+									}
+									else {
+										/* TIFF_SRATIONAL */
+										v2 = ((double)sR->sNum / (double)sR->sDenom); 
+									}
+									/* return value through fitting API interface */
+									if (fip->set_field_type == TIFF_SETGET_DOUBLE) {
+										//*va_arg(ap, double*) = *(double *)val;
+										*va_arg(ap, double*) = v2;
 										ret_val = 1;
 									} else {
 										/*-- default should be tv_size == 4  */
-										*va_arg(ap, float*) = *(float *)val;
+										*va_arg(ap, float*) = (float)v2;
 										ret_val = 1;
 										/*-- ToDo: After Testing, this should be removed and tv_size==4 should be set as default. */
 										if (tv_size != 4) {
@@ -1260,7 +1792,157 @@ _TIFFVGetField(TIFF* tif, uint32_t tag, va_list ap)
 			}
 	}
 	return(ret_val);
-}
+} /*-- _TIFFVGetField() --*/
+
+
+
+static int
+_TIFFVGetFieldRational(TIFF* tif, uint32_t tag, va_list ap)
+{
+	/* SetGetRATIONAL_directly:
+	 * _TIFFVGetFieldRational() is necessary to distinguish the va_list parameters for directly setting rational values
+	 * from the standard case, where a float value is provided.
+	 *
+	 * This routine expects as va_list: Pointer to Numerator , Denominator as uint_32-pointer (or int_32-pointer for signed rationals),
+	 * or returns the pointer of the internal storage onto the rational array.
+	 */
+	static const char module[] = "_TIFFVGetFieldRational";
+
+	TIFFDirectory* td = &tif->tif_dir;
+	int ret_val = 1;
+	uint32_t standard_tag = tag;
+	const TIFFField* fip = TIFFFindField(tif, tag, TIFF_ANY);
+	if (fip == NULL) /* cannot happen since TIFFGetField() already checks it */
+		return 0;
+
+	/* Check for error if it is not a RATIONAL-tag. */
+	if (fip->field_type != TIFF_RATIONAL && fip->field_type != TIFF_SRATIONAL) {
+		TIFFErrorExt(tif->tif_clientdata, module, "This function accepts only rational tif-tag!");
+		return 0;
+	}
+
+	/*
+	 * We want to force the custom code to be used for custom
+	 * fields even if the tag happens to match a well known
+	 * one - important for reinterpreted handling of standard
+	 * tag values in custom directories (i.e. EXIF)
+	 */
+	if (fip->field_bit == FIELD_CUSTOM) {
+		standard_tag = 0;
+	}
+
+	switch (standard_tag) {
+		/* hereafter, only rational tags are handled */
+		case TIFFTAG_XRESOLUTION:
+			*va_arg(ap, uint32_t*) = td->td_xresolution.uNum;
+			*va_arg(ap, uint32_t*) = td->td_xresolution.uDenom;
+			break;
+		case TIFFTAG_YRESOLUTION:
+			*va_arg(ap, uint32_t*) = td->td_yresolution.uNum;
+			*va_arg(ap, uint32_t*) = td->td_yresolution.uDenom;
+			break;
+		case TIFFTAG_REFERENCEBLACKWHITE:
+			/* a pointer to rational array with 6 entries is expected */
+			*va_arg(ap, TIFFRational_t**) = td->td_refblackwhite;
+			break;
+
+
+		default:
+		{
+			int i;
+
+			/*
+			 * This can happen if multiple images are open
+			 * with different codecs which have private
+			 * tags.  The global tag information table may
+			 * then have tags that are valid for one file
+			 * but not the other. If the client tries to
+			 * get a tag that is not valid for the image's
+			 * codec then we'll arrive here.
+			 */
+			if (fip->field_bit != FIELD_CUSTOM) {
+				TIFFErrorExt(tif->tif_clientdata, module,
+					"%s: Invalid %stag \"%s\" "
+					"(not supported by codec)",
+					tif->tif_name,
+					isPseudoTag(tag) ? "pseudo-" : "",
+					fip->field_name);
+				ret_val = 0;
+				break;
+			}
+
+			/*
+			 * Do we have a custom value?
+			 */
+			ret_val = 0;
+			for (i = 0; i < td->td_customValueCount; i++) {
+				TIFFTagValue* tv = td->td_customValues + i;
+
+				if (tv->info->field_tag != tag)
+					continue;
+
+				if (fip->field_passcount) {
+					if (fip->field_readcount == TIFF_VARIABLE2)
+						*va_arg(ap, uint32_t*) = (uint32_t)tv->count;
+					else  /* Assume TIFF_VARIABLE */
+						*va_arg(ap, uint16_t*) = (uint16_t)tv->count;
+					*va_arg(ap, const void**) = tv->value;
+					ret_val = 1;
+				} else if (fip->field_tag == TIFFTAG_DOTRANGE
+					&& strcmp(fip->field_name, "DotRange") == 0) {
+					/* TODO: This is an evil exception and should not have been
+					   handled this way ... likely best if we move it into
+					   the directory structure with an explicit field in
+					   libtiff 4.1 and assign it a FIELD_ value */
+					*va_arg(ap, uint16_t*) = ((uint16_t*)tv->value)[0];
+					*va_arg(ap, uint16_t*) = ((uint16_t*)tv->value)[1];
+					ret_val = 1;
+				} else {
+					if (fip->field_type == TIFF_ASCII
+						|| fip->field_readcount == TIFF_VARIABLE
+						|| fip->field_readcount == TIFF_VARIABLE2
+						|| fip->field_readcount == TIFF_SPP
+						|| tv->count > 1) {
+						*va_arg(ap, void**) = tv->value;
+						ret_val = 1;
+					} else {
+						char* val = (char*)tv->value;
+						assert(tv->count == 1);
+						switch (fip->field_type) {
+							/*-- SetGetRATIONAL_directly:_CustomTag: */
+							/* distiguish between unsigned / signed rationals here */
+							case TIFF_RATIONAL:
+							{
+								TIFFRational_t* uR = (TIFFRational_t*)val;
+								*va_arg(ap, uint32_t*) = uR->uNum;
+								*va_arg(ap, uint32_t*) = uR->uDenom;
+							}
+							break;
+							case TIFF_SRATIONAL:
+							{
+								TIFFSRational_t* sR = (TIFFSRational_t*)val;
+								*va_arg(ap, int32_t*) = sR->sNum;
+								*va_arg(ap, int32_t*) = sR->sDenom;
+							}
+							break;
+							default:
+								TIFFErrorExt(tif->tif_clientdata, module,
+									"%s: Field type %d \"%s\" ",
+									tif->tif_name,
+									fip->field_type,
+									fip->field_name);
+								ret_val = 0;
+								break;
+						}
+					}
+				} /* else if ...*/
+				break;   /* break for loop */
+			} /*for */
+		} /* default: of switch(standard_tag) */
+	} /*-- switch(standard_tag) --*/
+	return(ret_val);
+} /*-- _TIFFVGetFieldRational() --*/
+
 
 /*
  * Return the value of a field in the
@@ -1278,6 +1960,18 @@ TIFFGetField(TIFF* tif, uint32_t tag, ...)
 	return (status);
 }
 
+int
+TIFFGetFieldRational(TIFF* tif, uint32_t tag, ...)
+{	/* SetGetRATIONAL_directly: */
+	int status;
+	va_list ap;
+
+	va_start(ap, tag);
+	status = TIFFVGetFieldRational(tif, tag, ap);
+	va_end(ap);
+	return (status);
+} /*-- TIFFGetFieldRational() --*/
+
 /*
  * Like TIFFGetField, but taking a varargs
  * parameter list.  This routine is useful
@@ -1290,6 +1984,14 @@ TIFFVGetField(TIFF* tif, uint32_t tag, va_list ap)
 	const TIFFField* fip = TIFFFindField(tif, tag, TIFF_ANY);
 	return (fip && (isPseudoTag(tag) || TIFFFieldSet(tif, fip->field_bit)) ?
 	    (*tif->tif_tagmethods.vgetfield)(tif, tag, ap) : 0);
+}
+
+int
+TIFFVGetFieldRational(TIFF* tif, uint32_t tag, va_list ap)
+{	/* SetGetRATIONAL_directly: */
+	const TIFFField* fip = TIFFFindField(tif, tag, TIFF_ANY);
+	return (fip && (isPseudoTag(tag) || TIFFFieldSet(tif, fip->field_bit)) ?
+		(*tif->tif_tagmethods.vgetfieldrational)(tif, tag, ap) : 0);
 }
 
 #define	CleanupField(member) {		\
@@ -1318,6 +2020,7 @@ TIFFFreeDirectory(TIFF* tif)
 	CleanupField(td_subifd);
 	CleanupField(td_inknames);
 	CleanupField(td_refblackwhite);
+	CleanupField(td_refblackwhite2); /*-- SetGetRATIONAL_directly: --*/
 	CleanupField(td_transferfunction[0]);
 	CleanupField(td_transferfunction[1]);
 	CleanupField(td_transferfunction[2]);
@@ -1331,6 +2034,9 @@ TIFFFreeDirectory(TIFF* tif)
 	for( i = 0; i < td->td_customValueCount; i++ ) {
 		if (td->td_customValues[i].value)
 			_TIFFfree(td->td_customValues[i].value);
+		/*-- SetGetRATIONAL_directly:_CustomTag:  --*/
+		if (td->td_customValues[i].value2)
+			_TIFFfree(td->td_customValues[i].value2);
 	}
 
 	td->td_customValueCount = 0;
@@ -1449,6 +2155,9 @@ TIFFDefaultDirectory(TIFF* tif)
 	tif->tif_foundfield = NULL;
 	tif->tif_tagmethods.vsetfield = _TIFFVSetField;  
 	tif->tif_tagmethods.vgetfield = _TIFFVGetField;
+	/* SetGetRATIONAL_directly: */
+	tif->tif_tagmethods.vsetfieldrational = _TIFFVSetFieldRational;
+	tif->tif_tagmethods.vgetfieldrational = _TIFFVGetFieldRational;
 	tif->tif_tagmethods.printdir = NULL;
 	/*
 	 *  Give client code a chance to install their own

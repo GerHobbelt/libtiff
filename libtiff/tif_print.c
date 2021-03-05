@@ -112,6 +112,7 @@ _TIFFPrintField(FILE* fd, const TIFFField *fip,
 			|| fip->field_type == TIFF_SRATIONAL
 			|| fip->field_type == TIFF_FLOAT)
 			fprintf(fd, "%f", ((float *) raw_data)[j]);
+		/*-- SetGetRATIONAL_directly:_CustomTag: ###ToDo: Handle case for new internal rational storage as 2*uint32_t or 2*int32_t  --*/
 		else if(fip->field_type == TIFF_LONG8)
 			fprintf(fd, "%"PRIu64, ((uint64_t *) raw_data)[j]);
 		else if(fip->field_type == TIFF_SLONG8)
@@ -274,8 +275,10 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 		fprintf(fd, "\n");
 	}
 	if (TIFFFieldSet(tif,FIELD_RESOLUTION)) {
+		/* SetGetRATIONAL_directly: */
 		fprintf(fd, "  Resolution: %g, %g",
-		    td->td_xresolution, td->td_yresolution);
+			(double)td->td_xresolution.uNum/(double)td->td_xresolution.uDenom, 
+			(double)td->td_yresolution.uNum / (double)td->td_yresolution.uDenom);
 		if (TIFFFieldSet(tif,FIELD_RESOLUTIONUNIT)) {
 			switch (td->td_resolutionunit) {
 			case RESUNIT_NONE:
@@ -297,8 +300,10 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 		fprintf(fd, "\n");
 	}
 	if (TIFFFieldSet(tif,FIELD_POSITION))
-		fprintf(fd, "  Position: %g, %g\n",
-		    td->td_xposition, td->td_yposition);
+		/* SetGetRATIONAL_directly: */
+		fprintf(fd, "  Resolution: %g, %g",
+			(double)td->td_xposition.uNum / (double)td->td_xposition.uDenom, 
+			(double)td->td_yposition.uNum / (double)td->td_yposition.uDenom);
 	if (TIFFFieldSet(tif,FIELD_BITSPERSAMPLE))
 		fprintf(fd, "  Bits/Sample: %"PRIu16"\n", td->td_bitspersample);
 	if (TIFFFieldSet(tif,FIELD_SAMPLEFORMAT)) {
@@ -526,9 +531,10 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 		int i;
 		fprintf(fd, "  Reference Black/White:\n");
 		for (i = 0; i < 3; i++)
-		fprintf(fd, "    %2d: %5g %5g\n", i,
-			td->td_refblackwhite[2*i+0],
-			td->td_refblackwhite[2*i+1]);
+		/* SetGetRATIONAL_directly: */
+		fprintf(fd, "  Resolution: %g, %g",
+			(double)td->td_refblackwhite[2 * i + 0].uNum / (double)td->td_refblackwhite[2 * i + 0].uDenom, 
+			(double)td->td_refblackwhite[2 * i + 1].uNum / (double)td->td_refblackwhite[2 * i + 1].uDenom);
 	}
 	if (TIFFFieldSet(tif,FIELD_TRANSFERFUNCTION)) {
 		fprintf(fd, "  Transfer Function: ");
@@ -614,9 +620,10 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 					if(TIFFGetField(tif, tag, &raw_data) != 1)
 						continue;
 				} else {
+					/*-- SetGetRATIONAL_directly:_CustomTag: ###ToDo: Handle case for new internal rational storage as 2*uint32_t or 2*int32_t  --*/
 					raw_data = _TIFFmalloc(
-					    _TIFFDataSize(fip->field_type)
-					    * value_count);
+						TIFFDataWidth(fip->field_type)
+						* value_count);
 					mem_alloc = 1;
 					if(TIFFGetField(tif, tag, raw_data) != 1) {
 						_TIFFfree(raw_data);
