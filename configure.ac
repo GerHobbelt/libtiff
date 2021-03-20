@@ -178,7 +178,6 @@ AC_CHECK_HEADERS([assert.h fcntl.h io.h search.h unistd.h])
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
-AC_C_INLINE
 AC_C_BIGENDIAN
 AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
@@ -243,10 +242,6 @@ AC_CHECK_FUNCS([mmap setmode snprintf])
 dnl Will use local replacements for unavailable functions
 AC_REPLACE_FUNCS(getopt)
 AC_REPLACE_FUNCS(snprintf)
-AC_REPLACE_FUNCS(strtol)
-AC_REPLACE_FUNCS(strtoll)
-AC_REPLACE_FUNCS(strtoul)
-AC_REPLACE_FUNCS(strtoull)
 
 dnl ---------------------------------------------------------------------------
 dnl Check the native cpu bit order.

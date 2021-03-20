@@ -71,25 +71,11 @@
 #  else
 #    define HAVE_SNPRINTF 1
 #  endif
-#  define HAVE_STRTOL 1
-#  define HAVE_STRTOUL 1
-#  if _MSC_VER >= 1900 /* Visual Studio 2015 added strtoll/strtoull */
-#    define HAVE_STRTOLL 1
-#    define HAVE_STRTOULL 1
-#  endif
 #endif
 
 /* Define to 1 if your processor stores words with the most significant byte
    first (like Motorola and SPARC, unlike Intel and VAX). */
 /* #undef WORDS_BIGENDIAN */
-
-/* Define to `__inline__' or `__inline' if that's what the C compiler
-   calls it, or to nothing if 'inline' is not supported under any name.  */
-#ifndef __cplusplus
-# ifndef inline
-#  define inline __inline
-# endif
-#endif
 
 #define lfind _lfind
 
