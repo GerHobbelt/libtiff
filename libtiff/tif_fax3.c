@@ -734,7 +734,8 @@ Fax3PreEncode(TIFF* tif, uint16_t s)
 	if (sp->refline)
 		_TIFFmemset(sp->refline, 0x00, sp->b.rowbytes);
 	if (is2DEncoding(sp)) {
-		float res = tif->tif_dir.td_yresolution;
+		/* SetGetRATIONAL_directly: */
+		float res = (float)((double)tif->tif_dir.td_yresolution.uNum / (double)tif->tif_dir.td_yresolution.uDenom);
 		/*
 		 * The CCITT spec says that when doing 2d encoding, you
 		 * should only do it on K consecutive scanlines, where K

@@ -60,6 +60,13 @@ static const TIFFFieldArray gpsFieldArray;
  *  Rational custom arrays are already defined as _Cxx_FLOAT, thus can stay.
  *
  */
+/*--: Hint for defining arrays:
+ * Arrays with set_field_type = .._Cxx_.. need a special setting for field_readcount(/write-count) and field_passcount:
+ *				field_readcount		field_passcount
+ * .._C0_..		positive number			0				(fixed array)
+ * .._C16_..	-1 = TIFF_VARIABLE		1				(variable array using uint16_t as count value)
+ * .._C32_..	-3 = TIFF_VARIABLE2		1				(variable array using uint32_t as count value)
+ */
 
 static const TIFFField
 tiffFields[] = {
@@ -564,12 +571,14 @@ TIFFDataWidth(TIFFDataType type)
 	}
 }
 
+#ifdef SetGetRATIONAL_replaced_and_obsolete /* SetGetRATIONAL_directly: _TIFFDataSize() replaced by TIFFDataWidth() */
 /*
  * Return size of TIFFDataType in bytes.
  *
  * XXX: We need a separate function to determine the space needed
  * to store the value. For TIFF_RATIONAL values TIFFDataWidth() returns 8,
  * but we use 4-byte float to represent rationals.
+ * --: SetGetRATIONAL_directly:_CustomTag: ###ToDo: This function can be omitted, when RATIONALS are stored internally with 8 byte!! --
  */
 int
 _TIFFDataSize(TIFFDataType type)
@@ -600,6 +609,7 @@ _TIFFDataSize(TIFFDataType type)
 		    return 0;
 	}
 }
+#endif
 
 /*
  * Rational2Double: 
