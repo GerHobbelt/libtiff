@@ -207,8 +207,10 @@ printf("Tag %d: %s, count %d\n", 36867, (char *)data, count);
 .RE
 .PP
 .SH RETURN VALUES
-1 is returned if the tag is defined in the current directory; otherwise a 0 is
-returned.
+The default behaviour is to return 1 if the tag is defined in the current
+irectory, 0 otherwise.
+If the 'n' mode was used when opening, the character or value count is
+returned instead of 1.
 .SH DIAGNOSTICS
 All error messages are directed to the
 .BR TIFFError (3TIFF)
