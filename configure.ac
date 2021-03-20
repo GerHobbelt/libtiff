@@ -237,11 +237,10 @@ AC_MSG_RESULT($SSIZE_T)
 AC_DEFINE_UNQUOTED(TIFF_SSIZE_T,$SSIZE_T,[Signed size type])
 
 dnl Checks for library functions.
-AC_CHECK_FUNCS([mmap setmode snprintf])
+AC_CHECK_FUNCS([mmap setmode])
 
 dnl Will use local replacements for unavailable functions
 AC_REPLACE_FUNCS(getopt)
-AC_REPLACE_FUNCS(snprintf)
 
 dnl ---------------------------------------------------------------------------
 dnl Check the native cpu bit order.
@@ -1022,7 +1021,7 @@ dnl ---------------------------------------------------------------------------
 
 AC_SUBST(LIBDIR)
 
-AC_CONFIG_HEADERS([libtiff/tif_config.h libtiff/tiffconf.h])
+AC_CONFIG_HEADERS([config.h libtiff/tif_config.h libtiff/tiffconf.h])
 
 AC_CONFIG_FILES([Makefile \
 		 build/Makefile \
