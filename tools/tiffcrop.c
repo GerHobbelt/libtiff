@@ -630,6 +630,7 @@ static void* limitMalloc(tmsize_t s)
 
 
 static const char usage_info[] =
+"Copy, crop, convert, extract, and/or process TIFF files\n\n"
 "usage: tiffcrop [options] source1 ... sourceN  destination\n"
 "where options are:\n"
 " -h       Print this syntax listing\n"
@@ -1358,7 +1359,10 @@ static int writeBufferToSeparateTiles (TIFF* out, uint8_t* buf, uint32_t imagele
   if( !TIFFGetField(out, TIFFTAG_TILELENGTH, &tl) ||
       !TIFFGetField(out, TIFFTAG_TILEWIDTH, &tw) ||
       !TIFFGetField(out, TIFFTAG_BITSPERSAMPLE, &bps) )
+  {
+      _TIFFfree(obuf);
       return 1;
+  }
 
   if( imagewidth == 0 ||
       (uint32_t)bps * (uint32_t)spp > UINT32_MAX / imagewidth ||
@@ -1498,7 +1502,7 @@ usage(int code)
 {
         FILE * out = (code == EXIT_SUCCESS) ? stdout : stderr;
 
-        fprintf(out, "\n%s\n", TIFFGetVersion());
+        fprintf(out, "\n%s\n\n", TIFFGetVersion());
         fprintf(out, "%s", usage_info);
         exit(code);
 }
