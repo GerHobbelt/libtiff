@@ -208,7 +208,7 @@ printf("Tag %d: %s, count %d\n", 36867, (char *)data, count);
 .PP
 .SH RETURN VALUES
 The default behaviour is to return 1 if the tag is defined in the current
-irectory, 0 otherwise.
+directory, 0 otherwise.
 If the 'n' mode was used when opening, the character or value count is
 returned instead of 1.
 .SH DIAGNOSTICS
