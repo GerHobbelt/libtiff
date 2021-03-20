@@ -934,7 +934,7 @@ tiffcp(TIFF* in, TIFF* out)
 		int inknameslen = TIFFGetField(in, TIFFTAG_INKNAMES, &inknames);
 		if (TIFFGetField(in, TIFFTAG_NUMBEROFINKS, &ninks) && inknameslen > 0) {
 			const char* cp = inknames;
-			uint16 ink = 0;
+			uint16_t ink = 0;
 			while (ink < ninks && cp < (inknames + inknameslen)) {
 				while (*cp) {
 					if (cp >= (inknames + inknameslen)) {

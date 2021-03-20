@@ -562,9 +562,9 @@ TIFFReadRGBAImage(TIFF* tif,
 static int 
 setorientation(TIFFRGBAImage* img)
 {
-  const uint16 flipbits[8] = {0,2,3,1,6,7,5,4};
-  uint16 flip_orient = flipbits[img->orientation - 1];
-  uint16 flip_req_or = flipbits[img->req_orientation - 1];
+  const uint16_t flipbits[8] = {0,2,3,1,6,7,5,4};
+  uint16_t flip_orient = flipbits[img->orientation - 1];
+  uint16_t flip_req_or = flipbits[img->req_orientation - 1];
   return (flip_orient & ~flip_req_or) | (~flip_orient & flip_req_or);
 
   /*          TL TR BR BL LT RT RB LB <- Source orientation

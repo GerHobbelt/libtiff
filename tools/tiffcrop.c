@@ -7282,11 +7282,11 @@ writeSingleSection(TIFF *in, TIFF *out, struct image_data *image,
    case COMPRESSION_CCITTFAX3:
    case COMPRESSION_CCITTFAX4:
        if (bps != 1)
-              {
-        TIFFError("writeSingleSection",
+       {
+           TIFFError("writeSingleSection",
                 "Group 3/4 compression is not usable with bps > 1");
-              return (-1);
-        }
+           return (-1);
+       }
 	if (compression == COMPRESSION_CCITTFAX3) {
           if (g3opts != (uint32_t) -1)
 	    TIFFSetField(out, TIFFTAG_GROUP3OPTIONS, g3opts);
