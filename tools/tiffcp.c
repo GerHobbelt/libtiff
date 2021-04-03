@@ -154,8 +154,9 @@ static TIFF* openSrcImage (char **imageSpec)
   no images specified, or a pointer to the next image number text
 */
 {
-	/* disable strip shopping when using jbig compression */
-	const char *mode = (defcompression == COMPRESSION_JBIG) ? "rc" : "r";
+	/* disable strip shopping when using jbig compression
+	 * 'n' : enable TIFFGetField() to return character/value count */
+	const char *mode = (defcompression == COMPRESSION_JBIG) ? "rcn" : "rn";
 	TIFF *tif;
 	char *fn = *imageSpec;
 	*imageSpec = strchr (fn, comma);
