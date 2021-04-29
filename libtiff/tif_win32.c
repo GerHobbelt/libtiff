@@ -157,7 +157,7 @@ _tiffSizeProc(thandle_t fd)
 {
 	LARGE_INTEGER m;
 	if (GetFileSizeEx(fd,&m))
-		return(uint64)(m.QuadPart);
+		return(uint64_t)(m.QuadPart);
 	else
 		return(0);
 }

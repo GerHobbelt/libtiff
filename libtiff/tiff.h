@@ -69,6 +69,11 @@
 #endif
 #ifdef _MSC_VER
 #define TIFF_MSC_DEPRECATED __declspec(deprecated("libtiff type deprecated; please use corresponding C99 stdint.h type"))
+#if _MSC_VER >= 1928  // Visual Studio 2019 v16.9.2
+#include <stdint.h>
+#include <inttypes.h>
+#define TIFF_DISABLE_DEPRECATED 1
+#endif
 #else
 #define TIFF_MSC_DEPRECATED
 #endif

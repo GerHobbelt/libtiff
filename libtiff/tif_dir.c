@@ -1431,8 +1431,12 @@ _TIFFVGetField(TIFF* tif, uint32_t tag, va_list ap)
 			*va_arg(ap, uint16_t*) = td->td_maxsamplevalue;
 			break;
 		case TIFFTAG_SMINSAMPLEVALUE:
-			if (tif->tif_flags & TIFF_PERSAMPLE)
+			if (tif->tif_flags & TIFF_PERSAMPLE) {
 				*va_arg(ap, double**) = td->td_sminsamplevalue;
+				if (tif->tif_flags & TIFF_GETFIELDRETCNT) {
+					ret_val = (int)td->td_samplesperpixel;
+				}
+			}
 			else
 			{
 				/* libtiff historically treats this as a single value. */
@@ -1445,8 +1449,12 @@ _TIFFVGetField(TIFF* tif, uint32_t tag, va_list ap)
 			}
 			break;
 		case TIFFTAG_SMAXSAMPLEVALUE:
-			if (tif->tif_flags & TIFF_PERSAMPLE)
+			if (tif->tif_flags & TIFF_PERSAMPLE) {
 				*va_arg(ap, double**) = td->td_smaxsamplevalue;
+				if (tif->tif_flags & TIFF_GETFIELDRETCNT) {
+					ret_val = (int)td->td_samplesperpixel;
+				}
+			}
 			else
 			{
 				/* libtiff historically treats this as a single value. */
@@ -1493,11 +1501,17 @@ _TIFFVGetField(TIFF* tif, uint32_t tag, va_list ap)
 		case TIFFTAG_TILEOFFSETS:
 			_TIFFFillStriles( tif );
 			*va_arg(ap, const uint64_t**) = td->td_stripoffset_p;
+			if (tif->tif_flags & TIFF_GETFIELDRETCNT) {
+				ret_val = (int)td->td_nstrips;
+			}
 			break;
 		case TIFFTAG_STRIPBYTECOUNTS:
 		case TIFFTAG_TILEBYTECOUNTS:
 			_TIFFFillStriles( tif );
 			*va_arg(ap, const uint64_t**) = td->td_stripbytecount_p;
+			if (tif->tif_flags & TIFF_GETFIELDRETCNT) {
+				ret_val = (int)td->td_nstrips;
+			}
 			break;
 		case TIFFTAG_MATTEING:
 			*va_arg(ap, uint16_t*) =
@@ -1581,6 +1595,8 @@ _TIFFVGetField(TIFF* tif, uint32_t tag, va_list ap)
 					}
 				}
 				*va_arg(ap, const float**) = td->td_refblackwhite2;
+			if (tif->tif_flags & TIFF_GETFIELDRETCNT) {
+				ret_val = 6;
 			}
 			break;
 		case TIFFTAG_INKNAMES:
@@ -1689,11 +1705,16 @@ _TIFFVGetField(TIFF* tif, uint32_t tag, va_list ap)
 									_TIFFsetDoubleArrayFromRational((double**)&tv->value2, (TIFFRational_t*)tv->value, tv->count, TRUE, TRUE);
 								}
 								*va_arg(ap, const void**) = tv->value2;
+								ret_val = 1;
 							}
 							else {
 								*va_arg(ap, const void**) = tv->value;
+								if (tif->tif_flags & TIFF_GETFIELDRETCNT) {
+									ret_val = (int)tv->count;
+								} else {
+									ret_val = 1;
+								}
 							}
-							ret_val = 1;
 						} else {
 							char *val = (char *)tv->value;
 							assert( tv->count == 1 );

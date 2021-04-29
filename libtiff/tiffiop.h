@@ -108,13 +108,14 @@ struct tiff {
 	#define TIFF_NOREADRAW   0x20000U /* skip reading of raw uncompressed image data */
 	#define TIFF_INCUSTOMIFD 0x40000U /* currently writing a custom IFD */
 	#define TIFF_BIGTIFF     0x80000U /* read/write bigtiff */
-        #define TIFF_BUF4WRITE  0x100000U /* rawcc bytes are for writing */
-        #define TIFF_DIRTYSTRIP 0x200000U /* stripoffsets/stripbytecount dirty*/
-        #define TIFF_PERSAMPLE  0x400000U /* get/set per sample tags as arrays */
-        #define TIFF_BUFFERMMAP 0x800000U /* read buffer (tif_rawdata) points into mmap() memory */
-        #define TIFF_DEFERSTRILELOAD 0x1000000U /* defer strip/tile offset/bytecount array loading. */
-        #define TIFF_LAZYSTRILELOAD  0x2000000U /* lazy/ondemand loading of strip/tile offset/bytecount values. Only used if TIFF_DEFERSTRILELOAD is set and in read-only mode */
-        #define TIFF_CHOPPEDUPARRAYS 0x4000000U /* set when allocChoppedUpStripArrays() has modified strip array */
+	#define TIFF_BUF4WRITE  0x100000U /* rawcc bytes are for writing */
+	#define TIFF_DIRTYSTRIP 0x200000U /* stripoffsets/stripbytecount dirty*/
+	#define TIFF_PERSAMPLE  0x400000U /* get/set per sample tags as arrays */
+	#define TIFF_BUFFERMMAP 0x800000U /* read buffer (tif_rawdata) points into mmap() memory */
+	#define TIFF_DEFERSTRILELOAD 0x1000000U /* defer strip/tile offset/bytecount array loading. */
+	#define TIFF_LAZYSTRILELOAD  0x2000000U /* lazy/ondemand loading of strip/tile offset/bytecount values. Only used if TIFF_DEFERSTRILELOAD is set and in read-only mode */
+	#define TIFF_CHOPPEDUPARRAYS 0x4000000U /* set when allocChoppedUpStripArrays() has modified strip array */
+	#define TIFF_GETFIELDRETCNT  0x8000000U /* let TIFFGetField return the count of values/characters */
 	uint64_t               tif_diroff;       /* file offset of current directory */
 	uint64_t               tif_nextdiroff;   /* file offset of following directory */
 	uint64_t*              tif_dirlist;      /* list of offsets to already seen directories to prevent IFD looping */

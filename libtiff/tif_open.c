@@ -183,8 +183,9 @@ TIFFClientOpen(
 	 * 'h' read TIFF header only, do not load the first IFD
 	 * '4' ClassicTIFF for creating a file (default)
 	 * '8' BigTIFF for creating a file
-         * 'D' enable use of deferred strip/tile offset/bytecount array loading.
-         * 'O' on-demand loading of values instead of whole array loading (implies D)
+	 * 'D' enable use of deferred strip/tile offset/bytecount array loading.
+	 * 'O' on-demand loading of values instead of whole array loading (implies D)
+	 * 'n' make TIFFGetField() return the count of values or characters instead of 1
 	 *
 	 * The use of the 'l' and 'b' flags is strongly discouraged.
 	 * These flags are provided solely because numerous vendors,
@@ -267,11 +268,14 @@ TIFFClientOpen(
 					tif->tif_flags |= TIFF_BIGTIFF;
 				break;
 			case 'D':
-			        tif->tif_flags |= TIFF_DEFERSTRILELOAD;
+				tif->tif_flags |= TIFF_DEFERSTRILELOAD;
 				break;
 			case 'O':
 				if( m == O_RDONLY )
 					tif->tif_flags |= (TIFF_LAZYSTRILELOAD | TIFF_DEFERSTRILELOAD);
+				break;
+			case 'n':
+				tif->tif_flags |= TIFF_GETFIELDRETCNT;
 				break;
 		}
 
