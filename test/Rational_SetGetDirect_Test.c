@@ -47,10 +47,10 @@
 	b.) goto failure, if any failure is detected, which is not necessary when test is initiated manually for debugging
 	c.) if RETURN_FOR_PROGRAM_END is defined, the debugging output console is kept open till Return is pressed.
 */
-//#define RETURN_FOR_PROGRAM_END
 #define GOTOFAILURE  goto failure;
 #else
 #define GOTOFAILURE
+#define RETURN_FOR_PROGRAM_END
 #endif
 
 #ifdef _MSC_VER
