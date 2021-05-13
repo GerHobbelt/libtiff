@@ -1646,7 +1646,11 @@ _TIFFVGetField(TIFF* tif, uint32_t tag, va_list ap)
 							else {
 								_TIFFsetDoubleArrayFromRational((double**)&tv->value2, (TIFFRational_t*)tv->value, tv->count, TRUE, TRUE);
 							}
-							*va_arg(ap, const void**) = tv->value2;
+							//*va_arg(ap, const void**) = tv->value2
+							//-- there was an issue with the line above --
+							void** vp;
+							vp = va_arg(ap, void**);
+							*vp = tv->value2;
 						}
 						else {
 							*va_arg(ap, const void**) = tv->value;
