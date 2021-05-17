@@ -1,6 +1,6 @@
 /* WARNING: The type of JPEG encapsulation defined by the TIFF Version 6.0
    specification is now totally obsolete and deprecated for new applications and
-   images. This file was was created solely in order to read unconverted images
+   images. This file was created solely in order to read unconverted images
    still present on some users' computer systems. It will never be extended
    to write such files. Writing new-style JPEG compressed TIFFs is implemented
    in tif_jpeg.c.
