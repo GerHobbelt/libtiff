@@ -38,7 +38,7 @@
  * For scanline access, zlib will be sued as a fallback.
  */
 #include "tif_predict.h"
-#include "zlib.h"
+#include "zlib-ng.h"
 
 #if LIBDEFLATE_SUPPORT
 #include "libdeflate.h"
@@ -65,7 +65,7 @@
  */
 typedef struct {
 	TIFFPredictorState predict;
-        z_stream        stream;
+	zng_stream        stream;
 	int             zipquality;            /* compression level */
 	int             state;                 /* state flags */
 	int             subcodec;              /* DEFLATE_SUBCODEC_ZLIB or DEFLATE_SUBCODEC_LIBDEFLATE */
@@ -105,7 +105,7 @@ ZIPSetupDecode(TIFF* tif)
         
         /* if we were last encoding, terminate this mode */
 	if (sp->state & ZSTATE_INIT_ENCODE) {
-	    deflateEnd(&sp->stream);
+		zng_deflateEnd(&sp->stream);
 	    sp->state = 0;
 	}
 
@@ -113,7 +113,7 @@ ZIPSetupDecode(TIFF* tif)
 	/* PredictorSetupDecode() if this function succeeds but */
 	/* PredictorSetup() fails */
 	if ((sp->state & ZSTATE_INIT_DECODE) == 0 &&
-	    inflateInit(&sp->stream) != Z_OK) {
+		zng_inflateInit(&sp->stream) != Z_OK) {
 		TIFFErrorExt(tif->tif_clientdata, module, "%s", SAFE_MSG(sp));
 		return (0);
 	} else {
@@ -145,7 +145,7 @@ ZIPPreDecode(TIFF* tif, uint16_t s)
 	    to deal with 8byte memory sizes, though this code will respond
 	    appropriately even before we simplify it */
 	sp->stream.avail_in = (uint64_t)tif->tif_rawcc < 0xFFFFFFFFU ? (uInt) tif->tif_rawcc : 0xFFFFFFFFU;
-	return (inflateReset(&sp->stream) == Z_OK);
+	return (zng_inflateReset(&sp->stream) == Z_OK);
 }
 
 static int
@@ -242,7 +242,7 @@ ZIPDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
                 uInt avail_out_before = (uint64_t)occ < 0xFFFFFFFFU ? (uInt) occ : 0xFFFFFFFFU;
                 sp->stream.avail_in = avail_in_before;
                 sp->stream.avail_out = avail_out_before;
-		state = inflate(&sp->stream, Z_PARTIAL_FLUSH);
+		state = zng_inflate(&sp->stream, Z_PARTIAL_FLUSH);
 		tif->tif_rawcc -= (avail_in_before - sp->stream.avail_in);
                 occ -= (avail_out_before - sp->stream.avail_out);
 		if (state == Z_STREAM_END)
@@ -280,7 +280,7 @@ ZIPSetupEncode(TIFF* tif)
 
 	assert(sp != NULL);
 	if (sp->state & ZSTATE_INIT_DECODE) {
-		inflateEnd(&sp->stream);
+		zng_inflateEnd(&sp->stream);
 		sp->state = 0;
 	}
 
@@ -288,7 +288,7 @@ ZIPSetupEncode(TIFF* tif)
         if( cappedQuality > Z_BEST_COMPRESSION )
             cappedQuality = Z_BEST_COMPRESSION;
 
-	if (deflateInit(&sp->stream, cappedQuality) != Z_OK) {
+	if (zng_deflateInit(&sp->stream, cappedQuality) != Z_OK) {
 		TIFFErrorExt(tif->tif_clientdata, module, "%s", SAFE_MSG(sp));
 		return (0);
 	} else {
@@ -319,7 +319,7 @@ ZIPPreEncode(TIFF* tif, uint16_t s)
 	    to deal with 8byte memory sizes, though this code will respond
 	    appropriately even before we simplify it */
 	sp->stream.avail_out = (uint64_t)tif->tif_rawdatasize <= 0xFFFFFFFFU ? (uInt)tif->tif_rawdatasize : 0xFFFFFFFFU;
-	return (deflateReset(&sp->stream) == Z_OK);
+	return (zng_deflateReset(&sp->stream) == Z_OK);
 }
 
 /*
@@ -432,7 +432,7 @@ ZIPEncode(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s)
 	do {
                 uInt avail_in_before = (uint64_t)cc <= 0xFFFFFFFFU ? (uInt)cc : 0xFFFFFFFFU;
                 sp->stream.avail_in = avail_in_before;
-		if (deflate(&sp->stream, Z_NO_FLUSH) != Z_OK) {
+		if (zng_deflate(&sp->stream, Z_NO_FLUSH) != Z_OK) {
 			TIFFErrorExt(tif->tif_clientdata, module, 
 				     "Encoder error: %s",
 				     SAFE_MSG(sp));
@@ -468,7 +468,7 @@ ZIPPostEncode(TIFF* tif)
 
 	sp->stream.avail_in = 0;
 	do {
-		state = deflate(&sp->stream, Z_FINISH);
+		state = zng_deflate(&sp->stream, Z_FINISH);
 		switch (state) {
 		case Z_STREAM_END:
 		case Z_OK:
@@ -503,10 +503,10 @@ ZIPCleanup(TIFF* tif)
 	tif->tif_tagmethods.vsetfield = sp->vsetparent;
 
 	if (sp->state & ZSTATE_INIT_ENCODE) {
-		deflateEnd(&sp->stream);
+		zng_deflateEnd(&sp->stream);
 		sp->state = 0;
 	} else if( sp->state & ZSTATE_INIT_DECODE) {
-		inflateEnd(&sp->stream);
+		zng_inflateEnd(&sp->stream);
 		sp->state = 0;
 	}
 
@@ -544,7 +544,7 @@ ZIPVSetField(TIFF* tif, uint32_t tag, va_list ap)
                         int cappedQuality = sp->zipquality;
                         if( cappedQuality > Z_BEST_COMPRESSION )
                             cappedQuality = Z_BEST_COMPRESSION;
-			if (deflateParams(&sp->stream,
+			if (zng_deflateParams(&sp->stream,
 			    cappedQuality, Z_DEFAULT_STRATEGY) != Z_OK) {
 				TIFFErrorExt(tif->tif_clientdata, module, "ZLib error: %s",
 					     SAFE_MSG(sp));
