@@ -3207,7 +3207,7 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryRationalDirectArray(TIFF* tif, T
 			mb = data;
 			for (n = 0; n < count; n++) {
 				if (tif->tif_flags & TIFF_SWAB)
-					TIFFSwabShort(ma);
+					TIFFSwabShort((uint16_t*)ma);
 				err = TIFFReadDirEntryCheckRangeLongSshort(*ma);
 				if (err != TIFFReadDirEntryErrOk)
 					return(err);
@@ -3238,7 +3238,7 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryRationalDirectArray(TIFF* tif, T
 			mb = data;
 			for (n = 0; n < count; n++) {
 				if (tif->tif_flags & TIFF_SWAB)
-					TIFFSwabLong(ma);
+					TIFFSwabLong((uint32_t*)ma);
 				err = TIFFReadDirEntryCheckRangeLongSlong(*ma);
 				if (err != TIFFReadDirEntryErrOk)
 					return(err);
@@ -3272,7 +3272,7 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryRationalDirectArray(TIFF* tif, T
 			mb = data;
 			for (n = 0; n < count; n++) {
 				if (tif->tif_flags & TIFF_SWAB)
-					TIFFSwabLong8(ma);
+					TIFFSwabLong8((uint64_t*)ma);
 				err = TIFFReadDirEntryCheckRangeLongSlong8(*ma);
 				if (err != TIFFReadDirEntryErrOk)
 					return(err);
@@ -3429,7 +3429,7 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntrySrationalDirectArray(TIFF* tif, 
 			mb = data;
 			for (n = 0; n < count; n++) {
 				if (tif->tif_flags & TIFF_SWAB)
-					TIFFSwabShort(ma);
+					TIFFSwabShort((uint16_t*)ma);
 				mb->sNum = (int32_t)*ma;
 				mb->sDenom = 1;
 				ma++; mb++;
@@ -3460,7 +3460,7 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntrySrationalDirectArray(TIFF* tif, 
 			mb = data;
 			for (n = 0; n < count; n++) {
 				if (tif->tif_flags & TIFF_SWAB)
-					TIFFSwabLong(ma);
+					TIFFSwabLong((uint32_t*)ma);
 				mb->sNum = (int32_t)*ma;
 				mb->sDenom = 1;
 				ma++; mb++;
@@ -3491,7 +3491,7 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntrySrationalDirectArray(TIFF* tif, 
 			mb = data;
 			for (n = 0; n < count; n++) {
 				if (tif->tif_flags & TIFF_SWAB)
-					TIFFSwabLong8(ma);
+					TIFFSwabLong8((uint64_t*)ma);
 				err = TIFFReadDirEntryCheckRangeSlongSlong8(*ma);
 				if (err != TIFFReadDirEntryErrOk)
 					return(err);

@@ -149,8 +149,8 @@ int8_t		arrSByte[] = {-4, -127, 40};
 int16_t		arrSShort[] = {-10, 10000, 60000};
 int32_t		arrSLong[] = {20, -20000, INT32_MIN};
 int64_t		arrSLong8[] = {30, -30000, INT32_MAX};
-float		arrFloat[] = {1.5f, -2.5f, (INT_MAX-100.0f)};  /* INT_MAX-100 because of rounding error from float to double; even INT_MAX-10 is up-rounded to (INT_MAX+1)*/
-double		arrDouble[] = {1.6, -2.6, INT_MAX };
+float		arrFloat[] = {1.5f, -2.5f, (INT32_MAX-100.0f)};  /* INT_MAX-100 because of rounding error from float to double; even INT_MAX-10 is up-rounded to (INT_MAX+1)*/
+double		arrDouble[] = {1.6, -2.6, INT32_MAX };
 
 void* arrPtr[]    = {&arrByte, &arrShort, &arrLong, /*&arrLong8, &arrSByte, &arrSShort, &arrSLong, &arrSLong8,*/ &arrFloat, &arrDouble};
 void* arrPtrC16[] = {&arrByte, &arrShort, &arrLong, &arrLong8, /*&arrSByte, &arrSShort, &arrSLong, &arrSLong8,*/ &arrFloat, &arrDouble};
@@ -772,7 +772,7 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags, int b
 				}
 			} else if (i < IDX_START_ARRAYS_C16) {
 				/* WriteLongReadRationalArray: first check for pointer array index for C0 arrays */
-				if ((i - IDX_START_ARRAYS_C0) >= N(arrPtr)) {
+				if ((i - IDX_START_ARRAYS_C0) >= (int)N(arrPtr)) {
 					fprintf(stderr, "ERROR: arrPtr size for C0 is to small.\n");
 						goto failure;
 				}
@@ -1301,7 +1301,7 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags, int b
 			} else if (i < IDX_START_ARRAYS_C16) {
 				/*  WriteLongReadRationalArray: C0 arrays;  Assumption: unsigned types comes first */
 				/* first check for pointer array index */
-				if ((i - IDX_START_ARRAYS_C0) >= N(arrPtr)) {
+				if ((i - IDX_START_ARRAYS_C0) >= (int)N(arrPtr)) {
 					fprintf(stderr, "ERROR: arrPtr size is to small.\n");
 					goto failure;
 				}
@@ -1378,7 +1378,7 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags, int b
 			} else if (i < IDX_START_ARRAYS_C32) {
 				/*  WriteLongReadRationalArray: C16 arrays;  Assumption: unsigned types comes first */
 				/* first check for pointer array index */
-				if ((i - IDX_START_ARRAYS_C16) >= N(arrPtrC16)) {
+				if ((i - IDX_START_ARRAYS_C16) >= (int)N(arrPtrC16)) {
 					fprintf(stderr, "ERROR: arrPtrC16 size is to small.\n");
 					goto failure;
 				}
@@ -1461,7 +1461,7 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags, int b
 			} else if (i < IDX_START_ARRAYS_C32_END) {
 				/*  WriteLongReadRationalArray: C32 arrays;  Assumption: unsigned types comes first */
 				/* first check for pointer array index */
-				if ((i - IDX_START_ARRAYS_C32) >= N(arrPtrC32)) {
+				if ((i - IDX_START_ARRAYS_C32) >= (int)N(arrPtrC32)) {
 					fprintf(stderr, "ERROR: arrPtrC32 size is to small.\n");
 					goto failure;
 				}
