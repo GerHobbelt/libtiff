@@ -835,7 +835,7 @@ _TIFFVSetField(TIFF* tif, uint32_t tag, va_list ap)
 					} /*-- if (tv_set_get_size == 8)  --*/
 					else {
 						TIFFErrorExt(tif->tif_clientdata, module,
-							"%s: Input parameter size %d not expected for RATIONAL",
+							"%s: Input parameter get_field_size %d not expected for RATIONAL",
 							tif->tif_name, tv_set_get_size);
 					}
 				} /*-- if (fip->field_type != TIFF_RATIONAL && fip->field_type != TIFF_SRATIONAL)  --*/
@@ -995,7 +995,8 @@ _TIFFVSetFieldRational(TIFF* tif, uint32_t tag, va_list ap)
 	 * _TIFFVSetFieldRational() is necessary to distinguish the va_list parameters for directly setting rational values
 	 * from the standard case, where a float value is provided.
 	 * 
-	 * This routine expects as va_list: Numerator , Denominator as uint_32 (or int_32 for signed rationals).
+	 * This routine expects as va_list: Numerator , Denominator as uint_32 (or int_32 for signed rationals)
+	 *  or a pointer to a rational (or signed rational) array.
 	 */
 	static const char module[] = "_TIFFVSetFieldRational";
 
@@ -1176,7 +1177,7 @@ _TIFFVSetFieldRational(TIFF* tif, uint32_t tag, va_list ap)
 				|| fip->field_writecount == TIFF_VARIABLE2
 				|| fip->field_writecount == TIFF_SPP
 				|| tv->count > 1) {
-				/*--: copy rational array back to calling function --*/
+				/*--: Copy rational array to internal tif-variable --*/
 				_TIFFmemcpy(tv->value, va_arg(ap, void*), tv->count * tv_size);
 			}
 			else {

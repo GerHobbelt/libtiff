@@ -54,7 +54,7 @@
 #endif
 
 #ifdef _MSC_VER
-#pragma warning( disable : 4101)
+#pragma warning( disable : 4101 4996)
 #endif
 
 #include "tif_config.h"
@@ -90,7 +90,7 @@ const uint16_t	photometric = PHOTOMETRIC_RGB;
 const uint16_t	rows_per_strip = 1;
 const uint16_t	planarconfig = PLANARCONFIG_CONTIG;
 
-/*-- Additional custom TIFF tags for testing of Rational2Double precision --*/
+/*-- Additional custom TIFF tags for testing of Rational2Double precision and SetGetRATIONAL_directly --*/
 #define TIFFTAG_RATIONAL_DOUBLE			60000
 #define TIFFTAG_SRATIONAL_DOUBLE		60001
 #define TIFFTAG_RATIONAL_C0_DOUBLE		60002
@@ -109,6 +109,55 @@ const uint16_t	planarconfig = PLANARCONFIG_CONTIG;
 #define TIFFTAG_FLOAT	60019
 #define TIFFTAG_DOUBLE	60020
 
+#define TIFFTAG_BYTE_ARRAY		60040
+#define TIFFTAG_SHORT_ARRAY		60041
+#define TIFFTAG_LONG_ARRAY		60042
+#define TIFFTAG_LONG8_ARRAY		60043
+#define TIFFTAG_SBYTE_ARRAY		60044
+#define TIFFTAG_SSHORT_ARRAY	60045
+#define TIFFTAG_SLONG_ARRAY		60046
+#define TIFFTAG_SLONG8_ARRAY	60047
+#define TIFFTAG_FLOAT_ARRAY		60048
+#define TIFFTAG_DOUBLE_ARRAY	60049
+
+#define TIFFTAG_BYTE_C16ARRAY		60050
+#define TIFFTAG_SHORT_C16ARRAY		60051
+#define TIFFTAG_LONG_C16ARRAY		60052
+#define TIFFTAG_LONG8_C16ARRAY		60053
+#define TIFFTAG_FLOAT_C16ARRAY		60058
+#define TIFFTAG_DOUBLE_C16ARRAY		60059
+
+#define TIFFTAG_BYTE_C32_ARRAY		60060
+#define TIFFTAG_SHORT_C32_ARRAY		60061
+#define TIFFTAG_LONG_C32_ARRAY		60062
+#define TIFFTAG_LONG8_C32_ARRAY		60063
+#define TIFFTAG_SBYTE_C32_ARRAY		60064
+#define TIFFTAG_SSHORT_C32_ARRAY	60065
+#define TIFFTAG_SLONG_C32_ARRAY		60066
+#define TIFFTAG_SLONG8_C32_ARRAY	60067
+#define TIFFTAG_FLOAT_C32_ARRAY		60068
+#define TIFFTAG_DOUBLE_C32_ARRAY	60069
+
+
+
+/*--  WriteLongReadRationalArray: Setup array --*/
+uint8_t		arrByte[] = {4, 127, 255};
+uint16_t	arrShort[] = {10, 10000, 60000};
+uint32_t	arrLong[] = {20, 20000, UINT32_MAX};
+uint64_t	arrLong8[] = {30, 30000, UINT32_MAX};
+int8_t		arrSByte[] = {-4, -127, 40};
+int16_t		arrSShort[] = {-10, 10000, 60000};
+int32_t		arrSLong[] = {20, -20000, INT32_MIN};
+int64_t		arrSLong8[] = {30, -30000, INT32_MAX};
+float		arrFloat[] = {1.5f, -2.5f, (INT_MAX-100.0f)};  /* INT_MAX-100 because of rounding error from float to double; even INT_MAX-10 is up-rounded to (INT_MAX+1)*/
+double		arrDouble[] = {1.6, -2.6, INT_MAX };
+
+void* arrPtr[]    = {&arrByte, &arrShort, &arrLong, /*&arrLong8, &arrSByte, &arrSShort, &arrSLong, &arrSLong8,*/ &arrFloat, &arrDouble};
+void* arrPtrC16[] = {&arrByte, &arrShort, &arrLong, &arrLong8, /*&arrSByte, &arrSShort, &arrSLong, &arrSLong8,*/ &arrFloat, &arrDouble};
+void* arrPtrC32[] = {&arrByte, &arrShort, &arrLong, &arrLong8, &arrSByte, &arrSShort, &arrSLong, &arrSLong8, &arrFloat, &arrDouble};
+#define N_ARRAYSIZE_C16 3
+
+#define	N(a)	(sizeof (a) / sizeof (a[0]))
 
 
 /*--- TIFFField Definition ---
@@ -126,7 +175,7 @@ const uint16_t	planarconfig = PLANARCONFIG_CONTIG;
 */
 /*--: Hint for defining arrays:
  * Arrays with set_field_type = .._Cxx_.. need a special setting for field_readcount(/write-count) and field_passcount:
- *				field_readcount		field_passcount
+ *				field_readcount		field_passcount (before field_name)
  * .._C0_..		positive number			0				(fixed array)
  * .._C16_..	-1 = TIFF_VARIABLE		1				(variable array using uint16_t as count value)
  * .._C32_..	-3 = TIFF_VARIABLE2		1				(variable array using uint32_t as count value)
@@ -141,7 +190,7 @@ tifFieldInfoInitial[] = {
 	{ TIFFTAG_SRATIONAL_C0_FLOAT, 4, 4, TIFF_SRATIONAL, 0, TIFF_SETGET_C0_FLOAT, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "Rational2Double_S_C0_Float", NULL },
 	{ TIFFTAG_SRATIONAL_C32_FLOAT, TIFF_VARIABLE2, TIFF_VARIABLE2, TIFF_SRATIONAL, 0, TIFF_SETGET_C32_FLOAT, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "Rational2Double_S_C32_Float", NULL },
 	{ TIFFTAG_SRATIONAL_C32_DOUBLE, TIFF_VARIABLE2, TIFF_VARIABLE2, TIFF_SRATIONAL, 0, TIFF_SETGET_C32_DOUBLE, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "Rational2Double_S_C32_Dbl", NULL },
-	/*--  WriteLongReadRational: Write different field_types and read them lateron as rational. --*/
+	/*--  SetGetRATIONAL_directly: WriteLongReadRational: Write different field_types and read them lateron as rational. Reading back values with different type, as defined in this library, is also a requirement. --*/
 	{ TIFFTAG_BYTE, 1, 1, TIFF_BYTE, 0, TIFF_SETGET_UINT8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "Write_Byte", NULL },
 	{ TIFFTAG_SHORT, 1, 1, TIFF_SHORT, 0, TIFF_SETGET_UINT16, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "Write_Short", NULL },
 	{ TIFFTAG_LONG, 1, 1, TIFF_LONG, 0, TIFF_SETGET_UINT32, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "Write_Long", NULL },
@@ -152,15 +201,48 @@ tifFieldInfoInitial[] = {
 	{ TIFFTAG_SLONG8, 1, 1, TIFF_SLONG, 0, TIFF_SETGET_SINT64, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "Write_SLong8", NULL },
 	{ TIFFTAG_FLOAT, 1, 1, TIFF_FLOAT, 0, TIFF_SETGET_FLOAT, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "Write_Float", NULL },
 	{ TIFFTAG_DOUBLE, 1, 1, TIFF_DOUBLE, 0, TIFF_SETGET_DOUBLE, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "Write_Double", NULL },
+	/*--  WriteLongReadRationalArray: Write all type of arrays and read them back. This is to test TIFFFetchNormalTag() when opening a TIFF-file and reading rational arrays  --*/
+	/* ATTENTION: TIFF_SETGET_C0_SINT8 / C0_SINT16 / C0_SINT32 / C0_UINT64 / C0_SINT64  do not exist in TIFFFetchNormalTag() !!!   But they are written correctly   */
+	{ TIFFTAG_BYTE_ARRAY, N(arrByte), N(arrByte), TIFF_BYTE, 0, TIFF_SETGET_C0_UINT8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "Write_Byte_C0Array", NULL },
+	{ TIFFTAG_SHORT_ARRAY, N(arrShort), N(arrShort), TIFF_SHORT, 0, TIFF_SETGET_C0_UINT16, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "Write_Short_C0Array", NULL },
+	{ TIFFTAG_LONG_ARRAY, N(arrLong), N(arrLong), TIFF_LONG, 0, TIFF_SETGET_C0_UINT32, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "Write_Long_C0Array", NULL },
+	//{ TIFFTAG_LONG8_ARRAY, N(arrLong8), N(arrLong8), TIFF_LONG, 0, TIFF_SETGET_C0_UINT64, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "Write_Long8_Array", NULL },
+	//{ TIFFTAG_SBYTE_ARRAY, N(arrSByte), N(arrSByte), TIFF_SBYTE, 0, TIFF_SETGET_C0_SINT8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "Write_SByte_Array", NULL },
+	//{ TIFFTAG_SSHORT_ARRAY, N(arrSShort), N(arrSShort), TIFF_SSHORT, 0, TIFF_SETGET_C0_SINT16, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "Write_SShort_Array", NULL },
+	//{ TIFFTAG_SLONG_ARRAY, N(arrSLong), N(arrSLong), TIFF_SLONG, 0, TIFF_SETGET_C0_SINT32, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "Write_SLong_Array", NULL },
+	//{ TIFFTAG_SLONG8_ARRAY, N(arrSLong8), N(arrSLong8), TIFF_SLONG, 0, TIFF_SETGET_C0_SINT64, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "Write_SLong8_Array", NULL },
+	{ TIFFTAG_FLOAT_ARRAY, N(arrFloat), N(arrFloat), TIFF_FLOAT, 0, TIFF_SETGET_C0_FLOAT, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "Write_Float_C0Array", NULL },
+	{ TIFFTAG_DOUBLE_ARRAY, N(arrDouble), N(arrDouble), TIFF_DOUBLE, 0, TIFF_SETGET_C0_DOUBLE, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "Write_Double_C0Array", NULL },
+	{ TIFFTAG_BYTE_C16ARRAY, TIFF_VARIABLE, TIFF_VARIABLE, TIFF_BYTE, 0, TIFF_SETGET_C16_UINT8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "TIFFTAG_BYTE_C16ARRAY", NULL },
+	{ TIFFTAG_SHORT_C16ARRAY, TIFF_VARIABLE, TIFF_VARIABLE, TIFF_SHORT, 0, TIFF_SETGET_C16_UINT16, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "TIFFTAG_SHORT_C16ARRAY", NULL },
+	{ TIFFTAG_LONG_C16ARRAY, TIFF_VARIABLE, TIFF_VARIABLE, TIFF_LONG, 0, TIFF_SETGET_C16_UINT32, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "TIFFTAG_LONG_C16ARRAY", NULL },
+	{ TIFFTAG_LONG8_C16ARRAY, TIFF_VARIABLE, TIFF_VARIABLE, TIFF_LONG8, 0, TIFF_SETGET_C16_UINT64, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "TIFFTAG_LONG8_C16ARRAY", NULL },
+	{ TIFFTAG_FLOAT_C16ARRAY, TIFF_VARIABLE, TIFF_VARIABLE, TIFF_FLOAT, 0, TIFF_SETGET_C16_FLOAT, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "TIFFTAG_FLOAT_C16ARRAY", NULL },
+	{ TIFFTAG_DOUBLE_C16ARRAY, TIFF_VARIABLE, TIFF_VARIABLE, TIFF_DOUBLE, 0, TIFF_SETGET_C16_DOUBLE, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "TIFFTAG_DOUBLE_C16ARRAY", NULL },
+	{ TIFFTAG_BYTE_C32_ARRAY, TIFF_VARIABLE2, TIFF_VARIABLE2, TIFF_BYTE, 0, TIFF_SETGET_C32_UINT8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "TIFFTAG_BYTE_C32_ARRAY", NULL },
+	{ TIFFTAG_SHORT_C32_ARRAY, TIFF_VARIABLE2, TIFF_VARIABLE2, TIFF_SHORT, 0, TIFF_SETGET_C32_UINT16, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "TIFFTAG_SHORT_C32_ARRAY", NULL },
+	{ TIFFTAG_LONG_C32_ARRAY, TIFF_VARIABLE2, TIFF_VARIABLE2, TIFF_LONG, 0, TIFF_SETGET_C32_UINT32, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "TIFFTAG_LONG_C32_ARRAY", NULL },
+	{ TIFFTAG_LONG8_C32_ARRAY, TIFF_VARIABLE2, TIFF_VARIABLE2, TIFF_LONG8, 0, TIFF_SETGET_C32_UINT64, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "TIFFTAG_LONG8_C32_ARRAY", NULL },
+	{ TIFFTAG_SBYTE_C32_ARRAY, TIFF_VARIABLE2, TIFF_VARIABLE2, TIFF_SBYTE, 0, TIFF_SETGET_C32_SINT8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "TIFFTAG_SBYTE_C32_ARRAY", NULL },
+	{ TIFFTAG_SSHORT_C32_ARRAY, TIFF_VARIABLE2, TIFF_VARIABLE2, TIFF_SSHORT, 0, TIFF_SETGET_C32_SINT16, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "TIFFTAG_SSHORT_C32_ARRAY", NULL },
+	{ TIFFTAG_SLONG_C32_ARRAY, TIFF_VARIABLE2, TIFF_VARIABLE2, TIFF_SLONG, 0, TIFF_SETGET_C32_SINT32, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "TIFFTAG_SLONG_C32_ARRAY", NULL },
+	{ TIFFTAG_SLONG8_C32_ARRAY, TIFF_VARIABLE2, TIFF_VARIABLE2, TIFF_SLONG8, 0, TIFF_SETGET_C32_SINT64, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "TIFFTAG_SLONG8_C32_ARRAY", NULL },
+	{ TIFFTAG_FLOAT_C32_ARRAY, TIFF_VARIABLE2, TIFF_VARIABLE2, TIFF_FLOAT, 0, TIFF_SETGET_C32_FLOAT, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "TIFFTAG_FLOAT_C32_ARRAY", NULL },
+	{ TIFFTAG_DOUBLE_C32_ARRAY, TIFF_VARIABLE2, TIFF_VARIABLE2, TIFF_DOUBLE, 0, TIFF_SETGET_C32_DOUBLE, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "TIFFTAG_DOUBLE_C32_ARRAY", NULL },
 };
 
-#define IDX_START	7
+
+#define IDX_START	7 /* for WriteLongReadRational: */
 #define IDX_START_SIGNED	11
 #define IDX_START_FLOAT		15
 #define IDX_LONG8			10
 #define IDX_SLONG8			14
+/* for WriteLongReadRationalArray: */
+#define IDX_START_ARRAYS_C0	17
+#define IDX_START_ARRAYS_C16	22
+#define IDX_START_ARRAYS_C32	28
+#define IDX_START_ARRAYS_C32_END	38
 
-#define	N(a)	(sizeof (a) / sizeof (a[0]))
 static TIFFField tifFieldInfo[N(tifFieldInfoInitial)];
 
 /*--- Add aditional Rational-Double Tags to TIFF 
@@ -227,6 +309,7 @@ main()
 	static const char filenameClassicTiff3[] = "Rational_SetGetDirect_Test3.tif";
 	static const char filenameBigTiff1[] = "Rational_SetGetDirect_Test_Big1.tif";
 	static const char filenameBigTiff2[] = "Rational_SetGetDirect_Test_Big2.tif";
+	static const char filenameBigTiffBE[] = "Rational_SetGetDirect_Test_Big_BE.tif";
 
 	TIFF			*tif;
 	int				ret;
@@ -239,6 +322,7 @@ main()
 	fprintf(stderr, "==== Test if Set()/Get() interface for some custom rational tags behave as before change. ====\n");
 	/* --- Test with Classic-TIFF ---*/
 	/* delete file, if exists */
+	fprintf(stderr, "-------- Test with ClassicTIFF started  ----------\n");
 	ret = unlink(filenameClassicTiff1);
 	errorNo = errno;
 	if (ret != 0 && errorNo != ENOENT) {
@@ -252,12 +336,12 @@ main()
 		fprintf(stderr, "Can't create test TIFF file %s.\n", filenameClassicTiff1);
 		return 1;
 	}
-	fprintf(stderr, "-------- Test with ClassicTIFF started  ----------\n");
 	ret = write_test_tiff(tif, filenameClassicTiff1, FALSE, FALSE);
 	if (ret > 0) return(ret);
 
 	/* We write the main directory as a simple image with --- Rational directly.--- */
 	/* delete file, if exists */
+	fprintf(stderr, "\n-------- Test with ClassicTIFF started  ---- Rational Directly ------\n");
 	ret = unlink(filenameClassicTiff3);
 	errorNo = errno;
 	if (ret != 0 && errorNo != ENOENT) {
@@ -270,19 +354,19 @@ main()
 		fprintf(stderr, "Can't create test TIFF file %s.\n", filenameClassicTiff3);
 		return 1;
 	}
-	fprintf(stderr, "\n-------- Test with ClassicTIFF started  ---- Rational Dierctly ------\n");
 	ret = write_test_tiff(tif, filenameClassicTiff3, FALSE, TRUE);
 	if (ret > 0) return(ret);
 
 
 	/*====== Test with BIG-TIFF ======*/
 	/* delete file, if exists */
+	fprintf(stderr, "\n-------- Test with BigTIFF started  ----------\n");
 	ret = unlink(filenameBigTiff1);
 	if (ret != 0 && errorNo != ENOENT) {
 		fprintf(stderr, "Can't delete test TIFF file %s.\n", filenameBigTiff1);
 	}
 
-	/* Re-Initialize extra tags field and open file. */
+	/*-- WriteLongReadRational: Re-Initialize extra tags field and set them to LONG8 for BigTIFF. */
 	memcpy(tifFieldInfo, tifFieldInfoInitial, sizeof(tifFieldInfo));
 	tifFieldInfo[IDX_LONG8].field_type = TIFF_LONG8;
 	tifFieldInfo[IDX_SLONG8].field_type = TIFF_SLONG8;
@@ -291,8 +375,24 @@ main()
 		fprintf(stderr, "Can't create test TIFF file %s.\n", filenameBigTiff1);
 		return 1;
 	}
-	fprintf(stderr, "\n-------- Test with BigTIFF started  ----------\n");
 	ret = write_test_tiff(tif, filenameBigTiff1, FALSE, FALSE);
+	if (ret > 0) return(ret);
+
+	/* delete file, if exists */
+	fprintf(stderr, "\n-------- Test with Big-Endian and BigTIFF started  ----------\n");
+	ret = unlink(filenameBigTiffBE);
+	if (ret != 0 && errorNo != ENOENT) {
+		fprintf(stderr, "Can't delete test TIFF file %s.\n", filenameBigTiffBE);
+	}
+
+	/*-- WriteLongReadRational: Re-Initialize extra tags field and set them to LONG8 for BigTIFF. */
+	memcpy(tifFieldInfo, tifFieldInfoInitial, sizeof(tifFieldInfo));
+	tif = TIFFOpen(filenameBigTiffBE, "w8b");
+	if (!tif) {
+		fprintf(stderr, "Can't create test TIFF file %s.\n", filenameBigTiffBE);
+		return 1;
+	}
+	ret = write_test_tiff(tif, filenameBigTiffBE, FALSE, FALSE);
 	if (ret > 0) return(ret);
 
 
@@ -300,6 +400,7 @@ main()
 	fprintf(stderr, "\n\n==== Test automatically, if all custom rational tags are written/read correctly. ====\n");
 	/* --- Test with Classic-TIFF ---*/
 	/* delete file, if exists */
+	fprintf(stderr, "-------- Test with ClassicTIFF started  with all Custom Tags ----------\n");
 	ret = unlink(filenameClassicTiff2);
 	errorNo = errno;
 	if (ret != 0 && errorNo != ENOENT) {
@@ -313,12 +414,12 @@ main()
 		fprintf(stderr, "Can't create test TIFF file %s.\n", filenameClassicTiff2);
 		return 1;
 	}
-	fprintf(stderr, "-------- Test with ClassicTIFF started  with all Custom Tags ----------\n");
 	ret = write_test_tiff(tif, filenameClassicTiff2, TRUE, FALSE);
 	if (ret > 0) return(ret);
 
 	/*--- Test with BIG-TIFF ---*/
 	/* delete file, if exists */
+	fprintf(stderr, "\n-------- Test with BigTIFF started  with all Custom Tags ----------\n");
 	ret = unlink(filenameBigTiff2);
 	if (ret != 0 && errno != ENOENT) {
 		fprintf(stderr, "Can't delete test TIFF file %s.\n", filenameBigTiff2);
@@ -331,7 +432,6 @@ main()
 		fprintf(stderr, "Can't create test TIFF file %s.\n", filenameBigTiff2);
 		return 1;
 	}
-	fprintf(stderr, "\n-------- Test with BigTIFF started  with all Custom Tags ----------\n");
 	ret = write_test_tiff(tif, filenameBigTiff2, TRUE, FALSE);
 
 #ifndef FOR_AUTO_TESTING
@@ -353,6 +453,7 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags, int b
 	int				retCode;
 	float			auxFloat = 0.0f;
 	double			auxDouble = 0.0;
+	double			auxDouble2 = 0.0;
 	uint16_t			auxUint16 = 0;
 	uint32_t			auxUint32 = 0;
 	long			auxLong = 0;
@@ -413,6 +514,9 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags, int b
 	TIFFRational_t	auxRationalArray[2 * N_SIZE];
 	TIFFSRational_t	auxSRationalArray[2 * N_SIZE];
 #define RATIONAL_EPS (1.0/30000.0) /* reduced difference of rational values, approx 3.3e-5 */
+
+	/*--  WriteLongReadRationalArray: Setup array for reading --*/
+	uint8_t		arrArrayIn[4 * N_SIZE];
 
 
 	/*-- Fill test data arrays for writing ----------- */
@@ -563,6 +667,9 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags, int b
 			  of by invoking the class’s copy constructor (if one exists).
 			So, if your argument types are of float type, you should expect the argument retrieved to be of type double
 			and it is char or short, you should expect it to be signed or unsigned int. Otherwise, the code will give you wrong results.
+			BigTiff-Specific:
+			  Only for x64-compiler, the integer va_args() are promoted to (u)int64_t. 
+			  Therfore, Long8, SLong8 and IFD8 Tags must be passed as (u)int64_t to work also for Win32-compiler.
 		*/
 
 	if (!blnAllCustomTags) {
@@ -639,22 +746,70 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags, int b
 
 
 		/*--  WriteLongReadRational: Write tag as BYTE and read lateron as rational. --*/
+		/*-- BigTiff - Specific (for LONG8 and SLONG8)
+		        Only for x64-compiler, the integer va_args() are promoted to(u)int64_t.
+			    Therfore, Long8, SLong8and IFD8 Tags must be passed as (u)int64_t to work also for Win32-compiler.
+		*/
 		nTags = N(tifFieldInfo);
+		int64_t		six64;
 		for (i = IDX_START; i < nTags; i++) {
 			if (i < IDX_START_SIGNED) {
-				if (!TIFFSetField(tif, tifFieldInfo[i].field_tag, i)) {
-					fprintf(stderr, "Can't set TIFFTAG_xxx tag %d.\n", tifFieldInfo[i].field_tag);
+				if (!TIFFSetField(tif, tifFieldInfo[i].field_tag, (uint64_t)i)) {
+					fprintf(stderr, "Can't set TIFFTAG_xxx tag %d (%s).\n", tifFieldInfo[i].field_tag, tifFieldInfo[i].field_name);
 					goto failure;
 				}
 			} else if (i < IDX_START_FLOAT) {
-				if (!TIFFSetField(tif, tifFieldInfo[i].field_tag, (-1*i))) {
-					fprintf(stderr, "Can't set TIFFTAG_xxx tag %d.\n", tifFieldInfo[i].field_tag);
+				six64 = -1 * i;
+				//if (!TIFFSetField(tif, tifFieldInfo[i].field_tag, (-1*i))) {
+				if (!TIFFSetField(tif, tifFieldInfo[i].field_tag, six64)) {
+					fprintf(stderr, "Can't set TIFFTAG_xxx tag %d (%s).\n", tifFieldInfo[i].field_tag, tifFieldInfo[i].field_name);
 					goto failure;
 				}
-			} else {
+			} else if (i < IDX_START_ARRAYS_C0) {
 				if (!TIFFSetField(tif, tifFieldInfo[i].field_tag, (-2.3 * i))) {
-					fprintf(stderr, "Can't set TIFFTAG_xxx tag %d.\n", tifFieldInfo[i].field_tag);
+					fprintf(stderr, "Can't set TIFFTAG_xxx tag %d (%s).\n", tifFieldInfo[i].field_tag, tifFieldInfo[i].field_name);
 					goto failure;
+				}
+			} else if (i < IDX_START_ARRAYS_C16) {
+				/* WriteLongReadRationalArray: first check for pointer array index for C0 arrays */
+				if ((i - IDX_START_ARRAYS_C0) >= N(arrPtr)) {
+					fprintf(stderr, "ERROR: arrPtr size for C0 is to small.\n");
+						goto failure;
+				}
+				/* Dont write Long8 for Classic Tiff */
+				if (!((tifFieldInfo[i].field_type == TIFF_LONG8 || tifFieldInfo[i].field_type == TIFF_SLONG8) && !(tif->tif_flags & TIFF_BIGTIFF))) {
+					if (!TIFFSetField(tif, tifFieldInfo[i].field_tag, arrPtr[i - IDX_START_ARRAYS_C0])) {
+						fprintf(stderr, "Can't set TIFFTAG_xxx tag %d (%s).\n", tifFieldInfo[i].field_tag, tifFieldInfo[i].field_name);
+						goto failure;
+					}
+				}
+			} else if (i < IDX_START_ARRAYS_C32) {
+				/* WriteLongReadRationalArray: first check for pointer array index for C16 arrays */
+				count16 = (i - IDX_START_ARRAYS_C16);
+				if (count16 >= N(arrPtrC16)) {
+					fprintf(stderr, "ERROR: arrPtr size for C16 is to small.\n");
+					goto failure;
+				}
+				/* Dont write Long8 for Classic Tiff */
+				if (!((tifFieldInfo[i].field_type == TIFF_LONG8 || tifFieldInfo[i].field_type == TIFF_SLONG8) && !(tif->tif_flags & TIFF_BIGTIFF))) {
+					if (!TIFFSetField(tif, tifFieldInfo[i].field_tag, N_ARRAYSIZE_C16, arrPtrC16[count16])) {
+						fprintf(stderr, "Can't set TIFFTAG_xxx tag %d (%s).\n", tifFieldInfo[i].field_tag, tifFieldInfo[i].field_name);
+						goto failure;
+					}
+				}
+			} else  {
+				/* WriteLongReadRationalArray: first check for pointer array index for C32 arrays */
+				count16 = (i - IDX_START_ARRAYS_C32);
+				if (count16 >= N(arrPtrC32)) {
+					fprintf(stderr, "ERROR: arrPtr size for C32 is to small.\n");
+					goto failure;
+				}
+				/* Dont write Long8 for Classic Tiff */
+				if (!((tifFieldInfo[i].field_type == TIFF_LONG8 || tifFieldInfo[i].field_type == TIFF_SLONG8) && !(tif->tif_flags & TIFF_BIGTIFF))) {
+					if (!TIFFSetField(tif, tifFieldInfo[i].field_tag, N_ARRAYSIZE_C16, arrPtrC32[count16])) {
+						fprintf(stderr, "Can't set TIFFTAG_xxx tag %d (%s).\n", tifFieldInfo[i].field_tag, tifFieldInfo[i].field_name);
+						goto failure;
+					}
 				}
 			}
 		}
@@ -675,7 +830,9 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags, int b
 		/*--- However, this additional tags are only written as Double correctly,
 			  if blnIsRational2Double  is defined!
 		 ------------------------------------------------------*/
+		//fprintf(stderr, "-------- blnIsRational2Double = %d.\n", blnIsRational2Double);
 		if (blnIsRational2Double) {
+			fprintf(stderr, "-------- Writing tags for Rational2Double test.\n");
 			if (!blnWriteRationalDirectly) {
 				if (!TIFFSetField(tif, TIFFTAG_RATIONAL_DOUBLE, auxDoubleArrayW[100])) {
 					fprintf(stderr, "Can't set TIFFTAG_RATIONAL_DOUBLE tag.\n");
@@ -759,7 +916,7 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags, int b
 					goto failure;
 				}
 			}
-		}
+		} /*-- if (blnIsRational2Double) --*/
 
 	} else { /* blnAllCustomTags */
 		/*==== Automatically check all custom rational tags == WRITING ===*/
@@ -856,9 +1013,35 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags, int b
 		} else if (i < IDX_START_FLOAT) {
 			tifFieldInfo[i].field_type = TIFF_SRATIONAL;
 			tifFieldInfo[i].set_field_type = TIFF_SETGET_FLOAT;
-		} else {
+		} else if (i < IDX_START_ARRAYS_C0) {
 			tifFieldInfo[i].field_type = TIFF_SRATIONAL;
 			tifFieldInfo[i].set_field_type = TIFF_SETGET_DOUBLE;
+		} else if (i < IDX_START_ARRAYS_C16) {
+			/* WriteLongReadRationalArray: C0 arrays;  Assumption: unsigned types comes first */
+			if (tifFieldInfo[i].field_type < TIFF_SBYTE || tifFieldInfo[i].field_type == TIFF_LONG8) {
+				tifFieldInfo[i].field_type = TIFF_RATIONAL;
+			} else {
+				tifFieldInfo[i].field_type = TIFF_SRATIONAL;
+			}
+			tifFieldInfo[i].set_field_type = TIFF_SETGET_C0_DOUBLE;
+		} else if (i < IDX_START_ARRAYS_C32) {
+			/* WriteLongReadRationalArray: C16 arrays;  Assumption: unsigned types comes first */
+			if (tifFieldInfo[i].field_type < TIFF_SBYTE || tifFieldInfo[i].field_type == TIFF_LONG8) {
+				tifFieldInfo[i].field_type = TIFF_RATIONAL;
+			} else {
+				tifFieldInfo[i].field_type = TIFF_SRATIONAL;
+			}
+			tifFieldInfo[i].set_field_type = TIFF_SETGET_C16_DOUBLE;
+			//tifFieldInfo[i].set_field_type = TIFF_SETGET_C16_FLOAT;
+		} else {
+			/* WriteLongReadRationalArray: C32 arrays;  Assumption: unsigned types comes first */
+			if (tifFieldInfo[i].field_type < TIFF_SBYTE || tifFieldInfo[i].field_type == TIFF_LONG8) {
+				tifFieldInfo[i].field_type = TIFF_RATIONAL;
+			} else {
+				tifFieldInfo[i].field_type = TIFF_SRATIONAL;
+			}
+			tifFieldInfo[i].set_field_type = TIFF_SETGET_C32_DOUBLE;
+			//tifFieldInfo[i].set_field_type = TIFF_SETGET_C32_FLOAT;
 		}
 	}
 
@@ -867,6 +1050,10 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags, int b
 /*=========================  READING  =============  READING  ========================================*/
 	/* Ok, now test whether we can read written values in the EXIF directory. */
 	tif = TIFFOpen(filenameRead, "r");
+	if (!tif) {
+		fprintf(stderr, "Can't open test TIFF file %s for reading.\n", filenameRead);
+		return 1;
+	}
 
 	/*-- Read some parameters out of the main directory --*/
 
@@ -1092,24 +1279,284 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags, int b
 			fip = TIFFFindField(tif, tifFieldInfo[i].field_tag, TIFF_ANY); /* debugging */
 			if (i < IDX_START_SIGNED) {
 				retCode = TIFFGetField(tif, tifFieldInfo[i].field_tag, &auxFloat);
-				if (auxFloat != i) {
+				if (!retCode) { fprintf(stderr, "Error TiffGetField for TIFFTAG_xxx(%d)(%s) \n", tifFieldInfo[i].field_tag, tifFieldInfo[i].field_name); GOTOFAILURE }
+				else if (auxFloat != i) {
 					fprintf(stderr, "Read value of TIFFTAG_xxx(%d): %f differs from set value %d\n", tifFieldInfo[i].field_tag, auxFloat, i);
 					GOTOFAILURE
 				}
 			} else if (i < IDX_START_FLOAT) {
 				retCode = TIFFGetField(tif, tifFieldInfo[i].field_tag, &auxFloat);
-				if (auxFloat != -i) {
+				if (!retCode) { fprintf(stderr, "Error TiffGetField for TIFFTAG_xxx(%d)(%s) \n", tifFieldInfo[i].field_tag, tifFieldInfo[i].field_name); GOTOFAILURE }
+				else if (auxFloat != -i) {
 					fprintf(stderr, "Read value of TIFFTAG_xxx(%d): %f differs from set value %d\n", tifFieldInfo[i].field_tag, auxFloat, -i);
 					GOTOFAILURE
 				}
-			} else {
+			} else if (i < IDX_START_ARRAYS_C0) {
 				retCode = TIFFGetField(tif, tifFieldInfo[i].field_tag, &auxDouble);
-				if (auxDouble != (-2.3 * i)) {
+				if (!retCode) { fprintf(stderr, "Error TiffGetField for TIFFTAG_xxx(%d)(%s) \n", tifFieldInfo[i].field_tag, tifFieldInfo[i].field_name); GOTOFAILURE } 
+				else if (auxDouble != (-2.3 * i)) {
 					fprintf(stderr, "Read value of TIFFTAG_xxx(%d): %f differs from set value %f\n", tifFieldInfo[i].field_tag, auxDouble, (-2.3 * i));
 					GOTOFAILURE
 				}
-			}
-		}
+			} else if (i < IDX_START_ARRAYS_C16) {
+				/*  WriteLongReadRationalArray: C0 arrays;  Assumption: unsigned types comes first */
+				/* first check for pointer array index */
+				if ((i - IDX_START_ARRAYS_C0) >= N(arrPtr)) {
+					fprintf(stderr, "ERROR: arrPtr size is to small.\n");
+					goto failure;
+				}
+				count16 = (i - IDX_START_ARRAYS_C0);
+				count32 = tifFieldInfo[i].field_readcount;
+				int tv_set_get_size = _TIFFSetGetFieldSize(tifFieldInfo[i].set_field_type);
+				retCode = TIFFGetField(tif, tifFieldInfo[i].field_tag, &pVoidArray);
+				if (!retCode) { fprintf(stderr, "Error TiffGetField for TIFFTAG_xxx(%d)(%s) \n", tifFieldInfo[i].field_tag, tifFieldInfo[i].field_name); GOTOFAILURE }
+				else {
+					memcpy(arrArrayIn, pVoidArray, (count32 * tv_set_get_size));
+					for (j = 0; j < (int)count32; j++) {
+						auxDouble = -9999; auxDouble2 = -9998; /*initialize just if somthing wents wrong*/
+						switch (tifFieldInfo[i].field_tag) {
+							case TIFFTAG_BYTE_ARRAY:
+								auxDoubleArray[j] = ((uint8_t*)arrPtr[count16])[j];
+								auxDouble2 = ((uint8_t*)arrArrayIn)[j];
+								break;
+							case TIFFTAG_SHORT_ARRAY:
+								auxDoubleArray[j] = ((uint16_t*)arrPtr[count16])[j];
+								auxDouble2 = ((uint16_t*)arrArrayIn)[j];
+								break;
+							case TIFFTAG_LONG_ARRAY:
+								auxDoubleArray[j] = ((uint32_t*)arrPtr[count16])[j];
+								auxDouble2 = ((uint32_t*)arrArrayIn)[j];
+								break;
+							case TIFFTAG_FLOAT_ARRAY:
+								auxDoubleArray[j] = ((float*)arrPtr[count16])[j];
+								auxDouble2 = ((float*)arrArrayIn)[j];
+								break;
+							case TIFFTAG_DOUBLE_ARRAY:
+								auxDoubleArray[j] = ((double*)arrPtr[count16])[j];
+								auxDouble2 = ((double*)arrArrayIn)[j];
+								break;
+							default:
+								fprintf(stderr, "Read value of TIFFTAG_xxx(%d)(%s): set_field_type %d not defined in switch.\n", tifFieldInfo[i].field_tag, tifFieldInfo[i].field_name, tifFieldInfo[i].set_field_type);
+						} /* switch */
+						/* When field_type is set to RATIONAL for reading, then adapt input array value. */
+						if (tifFieldInfo[i].field_type == TIFF_RATIONAL || tifFieldInfo[i].field_type == TIFF_SRATIONAL) {
+							if (tifFieldInfo[i].set_field_type == TIFF_SETGET_C0_DOUBLE) {
+								auxDouble2 = ((double*)arrArrayIn)[j];
+							} else {
+								auxDouble2 = ((float*)arrArrayIn)[j];
+							}
+						}
+						dblDiffLimit = RATIONAL_EPS * auxDoubleArray[j];
+						dblDiff = auxDoubleArray[j] - auxDouble2;
+						if (fabs(dblDiff) > fabs(dblDiffLimit)) {
+							fprintf(stderr, "Read value %d of TIFFTAG_xxx(%d)(%s): %f differs from set value %f\n", j, tifFieldInfo[i].field_tag, tifFieldInfo[i].field_name, auxDouble2, auxDouble);
+							GOTOFAILURE
+						}
+					}
+				}
+				/*-- Now read as Rational_direct --*/
+				if (tifFieldInfo[i].field_type == TIFF_RATIONAL || tifFieldInfo[i].field_type == TIFF_SRATIONAL) {
+					TIFFSRational_t* srt = (TIFFSRational_t*)auxRationalArray;
+					retCode = TIFFGetFieldRational(tif, tifFieldInfo[i].field_tag, &pVoidArray);
+					if (!retCode) { fprintf(stderr, "Error TiffGetFieldRational for TIFFTAG_xxx(%d)(%s) \n", tifFieldInfo[i].field_tag, tifFieldInfo[i].field_name); GOTOFAILURE }
+					else {
+						memcpy(&auxRationalArray, pVoidArray, (count32 * sizeof(TIFFRational_t)));
+						for (j = 0; j < (int)count32; j++) {
+							dblDiffLimit = RATIONAL_EPS * auxDoubleArray[j];
+							if (tifFieldInfo[i].field_type == TIFF_RATIONAL)
+								auxDouble = ((double)auxRationalArray[j].uNum / (double)auxRationalArray[j].uDenom);
+							else
+								auxDouble = ((double)srt[j].sNum / (double)srt[j].sDenom);
+							dblDiff = auxDouble - auxDoubleArray[j];
+							if (fabs(dblDiff) > fabs(dblDiffLimit)) {
+								fprintf(stderr, "Direct Rational Read value %d of TIFFTAG_xxx(%d)(%s) Array %f differs from set value %f\n", j, tifFieldInfo[i].field_tag, tifFieldInfo[i].field_name, auxDouble, auxDoubleArray[j]);
+								GOTOFAILURE
+							}
+						}
+					}
+				}
+			} else if (i < IDX_START_ARRAYS_C32) {
+				/*  WriteLongReadRationalArray: C16 arrays;  Assumption: unsigned types comes first */
+				/* first check for pointer array index */
+				if ((i - IDX_START_ARRAYS_C16) >= N(arrPtrC16)) {
+					fprintf(stderr, "ERROR: arrPtrC16 size is to small.\n");
+					goto failure;
+				}
+				auxUint16 = (i - IDX_START_ARRAYS_C16);
+				int tv_set_get_size = _TIFFSetGetFieldSize(tifFieldInfo[i].set_field_type);
+				/* Dont write/read Long8 for Classic Tiff */
+				if ((tifFieldInfo[i].field_tag == TIFFTAG_LONG8_C16ARRAY && !(tif->tif_flags & TIFF_BIGTIFF)))
+					continue;
+				retCode = TIFFGetField(tif, tifFieldInfo[i].field_tag, &count16, &pVoidArray);
+				if (!retCode) { fprintf(stderr, "Error TiffGetField for TIFFTAG_xxx(%d)(%s) \n", tifFieldInfo[i].field_tag, tifFieldInfo[i].field_name); GOTOFAILURE }
+				else {
+					memcpy(arrArrayIn, pVoidArray, (count16 * tv_set_get_size));
+					for (j = 0; j < (int)count16; j++) {
+						auxDouble = -9999; auxDouble2 = -9998; /*initialize just if somthing wents wrong*/
+						switch (tifFieldInfo[i].field_tag) {
+							case TIFFTAG_BYTE_C16ARRAY:
+								auxDoubleArray[j] = ((uint8_t*)arrPtrC16[auxUint16])[j];
+								auxDouble2 = ((uint8_t*)arrArrayIn)[j];
+								break;
+							case TIFFTAG_SHORT_C16ARRAY:
+								auxDoubleArray[j] = ((uint16_t*)arrPtrC16[auxUint16])[j];
+								auxDouble2 = ((uint16_t*)arrArrayIn)[j];
+								break;
+							case TIFFTAG_LONG_C16ARRAY:
+								auxDoubleArray[j] = ((uint32_t*)arrPtrC16[auxUint16])[j];
+								auxDouble2 = ((uint32_t*)arrArrayIn)[j];
+								break;
+							case TIFFTAG_LONG8_C16ARRAY:
+								auxDoubleArray[j] = (double)((uint64_t*)arrPtrC16[auxUint16])[j];
+								auxDouble2 = (double)((uint64_t*)arrArrayIn)[j];
+								break;
+							case TIFFTAG_FLOAT_C16ARRAY:
+								auxDoubleArray[j] = ((float*)arrPtrC16[auxUint16])[j];
+								auxDouble2 = ((float*)arrArrayIn)[j];
+								break;
+							case TIFFTAG_DOUBLE_C16ARRAY:
+								auxDoubleArray[j] = ((double*)arrPtrC16[auxUint16])[j];
+								auxDouble2 = ((double*)arrArrayIn)[j];
+								break;
+							default:
+								fprintf(stderr, "Read value of TIFFTAG_xxx(%d)(%s): set_field_type %d not defined in switch.\n", tifFieldInfo[i].field_tag, tifFieldInfo[i].field_name, tifFieldInfo[i].set_field_type);
+						} /* switch */
+						/* When field_type is set to RATIONAL for reading, then adapt input array value. */
+						if (tifFieldInfo[i].field_type == TIFF_RATIONAL || tifFieldInfo[i].field_type == TIFF_SRATIONAL) {
+							if (tifFieldInfo[i].set_field_type == TIFF_SETGET_C16_DOUBLE) {
+								auxDouble2 = ((double*)arrArrayIn)[j];
+							} else {
+								auxDouble2 = ((float*)arrArrayIn)[j];
+							}
+						}
+						dblDiffLimit = RATIONAL_EPS * auxDoubleArray[j];
+						dblDiff = auxDoubleArray[j] - auxDouble2;
+						if (fabs(dblDiff) > fabs(dblDiffLimit)) {
+							fprintf(stderr, "Read value %d of TIFFTAG_xxx(%d)(%s): %f differs from set value %f\n", j, tifFieldInfo[i].field_tag, tifFieldInfo[i].field_name, auxDouble2, auxDouble);
+							GOTOFAILURE
+						}
+					}
+				}
+				/*-- Now read as Rational_direct -- C16 --*/
+				if (tifFieldInfo[i].field_type == TIFF_RATIONAL || tifFieldInfo[i].field_type == TIFF_SRATIONAL) {
+					TIFFSRational_t* srt = (TIFFSRational_t*)auxRationalArray;
+					retCode = TIFFGetFieldRational(tif, tifFieldInfo[i].field_tag, &count16, &pVoidArray);
+					if (!retCode) { fprintf(stderr, "Error TiffGetFieldRational for TIFFTAG_xxx(%d)(%s) \n", tifFieldInfo[i].field_tag, tifFieldInfo[i].field_name); GOTOFAILURE }
+					else {
+						memcpy(&auxRationalArray, pVoidArray, (count16 * sizeof(TIFFRational_t)));
+						for (j = 0; j < (int)count16; j++) {
+							dblDiffLimit = RATIONAL_EPS * auxDoubleArray[j];
+							if (tifFieldInfo[i].field_type == TIFF_RATIONAL)
+								auxDouble = ((double)auxRationalArray[j].uNum / (double)auxRationalArray[j].uDenom);
+							else
+								auxDouble = ((double)srt[j].sNum / (double)srt[j].sDenom);
+							dblDiff = auxDouble - auxDoubleArray[j];
+							if (fabs(dblDiff) > fabs(dblDiffLimit)) {
+								fprintf(stderr, "Direct Rational Read value %d of TIFFTAG_xxx(%d)(%s) Array %f differs from set value %f\n", j, tifFieldInfo[i].field_tag, tifFieldInfo[i].field_name, auxDouble, auxDoubleArray[j]);
+								GOTOFAILURE
+							}
+						}
+					}
+				}
+			} else if (i < IDX_START_ARRAYS_C32_END) {
+				/*  WriteLongReadRationalArray: C32 arrays;  Assumption: unsigned types comes first */
+				/* first check for pointer array index */
+				if ((i - IDX_START_ARRAYS_C32) >= N(arrPtrC32)) {
+					fprintf(stderr, "ERROR: arrPtrC32 size is to small.\n");
+					goto failure;
+				}
+				auxUint16 = (i - IDX_START_ARRAYS_C32);
+				int tv_set_get_size = _TIFFSetGetFieldSize(tifFieldInfo[i].set_field_type);
+				/* Dont write/read Long8 for Classic Tiff */
+				if ((tifFieldInfo[i].field_tag == TIFFTAG_LONG8_C32_ARRAY || tifFieldInfo[i].field_tag == TIFFTAG_SLONG8_C32_ARRAY) && !(tif->tif_flags & TIFF_BIGTIFF))
+					continue;
+				retCode = TIFFGetField(tif, tifFieldInfo[i].field_tag, &count32, &pVoidArray);
+				if (!retCode) { fprintf(stderr, "Error TiffGetField for TIFFTAG_xxx(%d)(%s) \n", tifFieldInfo[i].field_tag, tifFieldInfo[i].field_name); GOTOFAILURE } 				else {
+					memcpy(arrArrayIn, pVoidArray, (count32 * tv_set_get_size));
+					for (j = 0; j < (int)count32; j++) {
+						auxDouble = -9999; auxDouble2 = -9998; /*initialize just if somthing wents wrong*/
+						switch (tifFieldInfo[i].field_tag) {
+							case TIFFTAG_BYTE_C32_ARRAY:
+								auxDoubleArray[j] = ((uint8_t*)arrPtrC32[auxUint16])[j];
+								auxDouble2 = ((uint8_t*)arrArrayIn)[j];
+								break;
+							case TIFFTAG_SHORT_C32_ARRAY:
+								auxDoubleArray[j] = ((uint16_t*)arrPtrC32[auxUint16])[j];
+								auxDouble2 = ((uint16_t*)arrArrayIn)[j];
+								break;
+							case TIFFTAG_LONG_C32_ARRAY:
+								auxDoubleArray[j] = ((uint32_t*)arrPtrC32[auxUint16])[j];
+								auxDouble2 = ((uint32_t*)arrArrayIn)[j];
+								break;
+							case TIFFTAG_LONG8_C32_ARRAY:
+								auxDoubleArray[j] = (double)((uint64_t*)arrPtrC32[auxUint16])[j];
+								auxDouble2 = (double)((uint64_t*)arrArrayIn)[j];
+								break;
+							case TIFFTAG_SBYTE_C32_ARRAY:
+								auxDoubleArray[j] = ((int8_t*)arrPtrC32[auxUint16])[j];
+								auxDouble2 = ((int8_t*)arrArrayIn)[j];
+								break;
+							case TIFFTAG_SSHORT_C32_ARRAY:
+								auxDoubleArray[j] = ((int16_t*)arrPtrC32[auxUint16])[j];
+								auxDouble2 = ((int16_t*)arrArrayIn)[j];
+								break;
+							case TIFFTAG_SLONG_C32_ARRAY:
+								auxDoubleArray[j] = ((int32_t*)arrPtrC32[auxUint16])[j];
+								auxDouble2 = ((int32_t*)arrArrayIn)[j];
+								break;
+							case TIFFTAG_SLONG8_C32_ARRAY:
+								auxDoubleArray[j] = (double)((int64_t*)arrPtrC32[auxUint16])[j];
+								auxDouble2 = (double)((int64_t*)arrArrayIn)[j];
+								break;
+							case TIFFTAG_FLOAT_C32_ARRAY:
+								auxDoubleArray[j] = ((float*)arrPtrC32[auxUint16])[j];
+								auxDouble2 = ((float*)arrArrayIn)[j];
+								break;
+							case TIFFTAG_DOUBLE_C32_ARRAY:
+								auxDoubleArray[j] = ((double*)arrPtrC32[auxUint16])[j];
+								auxDouble2 = ((double*)arrArrayIn)[j];
+								break;
+							default:
+								fprintf(stderr, "Read value of TIFFTAG_xxx(%d)(%s): set_field_type %d not defined in switch.\n", tifFieldInfo[i].field_tag, tifFieldInfo[i].field_name, tifFieldInfo[i].set_field_type);
+						} /* switch */
+						/* When field_type is set to RATIONAL for reading, then adapt input array value. */
+						if (tifFieldInfo[i].field_type == TIFF_RATIONAL || tifFieldInfo[i].field_type == TIFF_SRATIONAL) {
+							if (tifFieldInfo[i].set_field_type == TIFF_SETGET_C32_DOUBLE) {
+								auxDouble2 = ((double*)arrArrayIn)[j];
+							} else {
+								auxDouble2 = ((float*)arrArrayIn)[j];
+							}
+						}
+						dblDiffLimit = RATIONAL_EPS * auxDoubleArray[j];
+						dblDiff = auxDoubleArray[j] - auxDouble2;
+						if (fabs(dblDiff) > fabs(dblDiffLimit)) {
+							fprintf(stderr, "Read value %d of TIFFTAG_xxx(%d)(%s): %f differs from set value %f\n", j, tifFieldInfo[i].field_tag, tifFieldInfo[i].field_name, auxDouble2, auxDouble);
+							GOTOFAILURE
+						}
+					}
+				}
+				/*-- Now read as Rational_direct -- C32 --*/
+				if (tifFieldInfo[i].field_type == TIFF_RATIONAL || tifFieldInfo[i].field_type == TIFF_SRATIONAL) {
+					TIFFSRational_t* srt = (TIFFSRational_t*)auxRationalArray;
+					retCode = TIFFGetFieldRational(tif, tifFieldInfo[i].field_tag, &count32, &pVoidArray);
+					if (!retCode) { fprintf(stderr, "Error TiffGetFieldRational for TIFFTAG_xxx(%d)(%s) \n", tifFieldInfo[i].field_tag, tifFieldInfo[i].field_name); GOTOFAILURE } 					else {
+						memcpy(&auxRationalArray, pVoidArray, (count32 * sizeof(TIFFRational_t)));
+						for (j = 0; j < (int)count32; j++) {
+							dblDiffLimit = RATIONAL_EPS * auxDoubleArray[j];
+							if (tifFieldInfo[i].field_type == TIFF_RATIONAL)
+								auxDouble = ((double)auxRationalArray[j].uNum / (double)auxRationalArray[j].uDenom);
+							else
+								auxDouble = ((double)srt[j].sNum / (double)srt[j].sDenom);
+							dblDiff = auxDouble - auxDoubleArray[j];
+							if (fabs(dblDiff) > fabs(dblDiffLimit)) {
+								fprintf(stderr, "Direct Rational Read value %d of TIFFTAG_xxx(%d)(%s) Array %f differs from set value %f\n", j, tifFieldInfo[i].field_tag, tifFieldInfo[i].field_name, auxDouble, auxDoubleArray[j]);
+								GOTOFAILURE
+							}
+						}
+					}
+				}
+			} /* C32 reading*/
+		} /* for i reading of WriteLongReadRational */
 
 
 
