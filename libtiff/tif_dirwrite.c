@@ -3737,7 +3737,16 @@ _TIFFRewriteField(TIFF* tif, uint16_t tag, TIFFDataType in_datatype,
     }
     else
     {
-        memcpy( &entry_offset, buf_to_write, count*TIFFDataWidth(datatype));
+        if( count*TIFFDataWidth(datatype) == 4 )
+        {
+            uint32_t value;
+            memcpy( &value, buf_to_write, count*TIFFDataWidth(datatype));
+            entry_offset = value;
+        }
+        else
+        {
+            memcpy( &entry_offset, buf_to_write, count*TIFFDataWidth(datatype));
+        }
     }
 
     _TIFFfree( buf_to_write );

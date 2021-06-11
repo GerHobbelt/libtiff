@@ -88,7 +88,7 @@
  */
 
 #include "tif_predict.h"
-#include "zlib.h"
+#include "zlib-ng.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -453,7 +453,7 @@ horizontalAccumulate8abgr(uint16_t *wp, int n, int stride, unsigned char *op,
  */
 typedef	struct {
 	TIFFPredictorState	predict;
-	z_stream		stream;
+	zng_stream		stream;
 	tmsize_t		tbuf_size; /* only set/used on reading for now */
 	uint16_t			*tbuf;
 	uint16_t			stride;
@@ -711,7 +711,7 @@ PixarLogSetupDecode(TIFF* tif)
 		return (0);
 	}
 
-	if (inflateInit(&sp->stream) != Z_OK) {
+	if (zng_inflateInit(&sp->stream) != Z_OK) {
                 _TIFFfree(sp->tbuf);
                 sp->tbuf = NULL;
                 sp->tbuf_size = 0;
@@ -745,7 +745,7 @@ PixarLogPreDecode(TIFF* tif, uint16_t s)
 		TIFFErrorExt(tif->tif_clientdata, module, "ZLib cannot deal with buffers this size");
 		return (0);
 	}
-	return (inflateReset(&sp->stream) == Z_OK);
+	return (zng_inflateReset(&sp->stream) == Z_OK);
 }
 
 static int
@@ -805,7 +805,7 @@ PixarLogDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
 		return (0);
 	}
 	do {
-		int state = inflate(&sp->stream, Z_PARTIAL_FLUSH);
+		int state = zng_inflate(&sp->stream, Z_PARTIAL_FLUSH);
 		if (state == Z_STREAM_END) {
 			break;			/* XXX */
 		}
@@ -921,7 +921,7 @@ PixarLogSetupEncode(TIFF* tif)
 		return (0);
 	}
 
-	if (deflateInit(&sp->stream, sp->quality) != Z_OK) {
+	if (zng_deflateInit(&sp->stream, sp->quality) != Z_OK) {
 		TIFFErrorExt(tif->tif_clientdata, module, "%s", sp->stream.msg ? sp->stream.msg : "(null)");
 		return (0);
 	} else {
@@ -952,7 +952,7 @@ PixarLogPreEncode(TIFF* tif, uint16_t s)
 		TIFFErrorExt(tif->tif_clientdata, module, "ZLib cannot deal with buffers this size");
 		return (0);
 	}
-	return (deflateReset(&sp->stream) == Z_OK);
+	return (zng_deflateReset(&sp->stream) == Z_OK);
 }
 
 static void
@@ -1193,7 +1193,7 @@ PixarLogEncode(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s)
 	}
 
 	do {
-		if (deflate(&sp->stream, Z_NO_FLUSH) != Z_OK) {
+		if (zng_deflate(&sp->stream, Z_NO_FLUSH) != Z_OK) {
 			TIFFErrorExt(tif->tif_clientdata, module, "Encoder error: %s",
 			    sp->stream.msg ? sp->stream.msg : "(null)");
 			return (0);
@@ -1224,7 +1224,7 @@ PixarLogPostEncode(TIFF* tif)
 	sp->stream.avail_in = 0;
 
 	do {
-		state = deflate(&sp->stream, Z_FINISH);
+		state = zng_deflate(&sp->stream, Z_FINISH);
 		switch (state) {
 		case Z_STREAM_END:
 		case Z_OK:
@@ -1296,9 +1296,9 @@ PixarLogCleanup(TIFF* tif)
 	if (sp->ToLinear8) _TIFFfree(sp->ToLinear8);
 	if (sp->state&PLSTATE_INIT) {
 		if (tif->tif_mode == O_RDONLY)
-			inflateEnd(&sp->stream);
+			zng_inflateEnd(&sp->stream);
 		else
-			deflateEnd(&sp->stream);
+			zng_deflateEnd(&sp->stream);
 	}
 	if (sp->tbuf)
 		_TIFFfree(sp->tbuf);
@@ -1319,7 +1319,7 @@ PixarLogVSetField(TIFF* tif, uint32_t tag, va_list ap)
      case TIFFTAG_PIXARLOGQUALITY:
 		sp->quality = (int) va_arg(ap, int);
 		if (tif->tif_mode != O_RDONLY && (sp->state&PLSTATE_INIT)) {
-			if (deflateParams(&sp->stream,
+			if (zng_deflateParams(&sp->stream,
 			    sp->quality, Z_DEFAULT_STRATEGY) != Z_OK) {
 				TIFFErrorExt(tif->tif_clientdata, module, "ZLib error: %s",
 					sp->stream.msg ? sp->stream.msg : "(null)");
