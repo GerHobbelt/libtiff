@@ -863,7 +863,7 @@ JPEGFixupTagsSubsamplingSec(struct JPEGFixupTagsSubsamplingData *data) {
               data->tif->tif_clientdata, module,
               "Auto-corrected former TIFF subsampling values [%" PRIu16
               ",%" PRIu16 "] to match subsampling values inside JPEG "
-                          "compressed data [%" PRIu8 ",%" PRIu8 "]",
+              "compressed data [%" PRIu8 ",%" PRIu8 "]",
               data->tif->tif_dir.td_ycbcrsubsampling[0],
               data->tif->tif_dir.td_ycbcrsubsampling[1], ph, pv);
           data->tif->tif_dir.td_ycbcrsubsampling[0] = ph;
@@ -1447,6 +1447,10 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
   if ((uint32_t)nrows > td->td_imagelength - tif->tif_row && !isTiled(tif))
     nrows = td->td_imagelength - tif->tif_row;
 
+#if defined(JPEG_LIB_MK1_OR_12BIT)
+  unsigned short *tmpbuf = NULL;
+#endif
+
   /* data is expected to be read in multiples of a scanline */
   if (nrows != 0) {
 
@@ -1455,9 +1459,8 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
     int samples_per_clump = sp->samplesperclump;
 
 #if defined(JPEG_LIB_MK1_OR_12BIT)
-    unsigned short *tmpbuf =
-        _TIFFmalloc(sizeof(unsigned short) * sp->cinfo.d.output_width *
-                    sp->cinfo.d.num_components);
+    tmpbuf = _TIFFmalloc(sizeof(unsigned short) * sp->cinfo.d.output_width *
+                         sp->cinfo.d.num_components);
     if (tmpbuf == NULL) {
       TIFFErrorExt(tif->tif_clientdata, "JPEGDecodeRaw", "Out of memory");
       return 0;
@@ -1471,14 +1474,14 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
       if (cc < sp->bytesperline) {
         TIFFErrorExt(tif->tif_clientdata, "JPEGDecodeRaw",
                      "application buffer not large enough for all data.");
-        return 0;
+        goto error;
       }
 
       /* Reload downsampled-data buffer if needed */
       if (sp->scancount >= DCTSIZE) {
         int n = sp->cinfo.d.max_v_samp_factor * DCTSIZE;
         if (TIFFjpeg_read_raw_data(sp, sp->ds_buffer, n) != n)
-          return (0);
+          goto error;
         sp->scancount = 0;
       }
       /*
@@ -1506,7 +1509,7 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
             TIFFErrorExt(tif->tif_clientdata, "JPEGDecodeRaw",
                          "application buffer not large enough for all data, "
                          "possible subsampling issue");
-            return 0;
+            goto error;
           }
 #endif
 
@@ -1571,6 +1574,12 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
   /* Close down the decompressor if done. */
   return sp->cinfo.d.output_scanline < sp->cinfo.d.output_height ||
          TIFFjpeg_finish_decompress(sp);
+
+error:
+#if defined(JPEG_LIB_MK1_OR_12BIT)
+  _TIFFfree(tmpbuf);
+#endif
+  return 0;
 }
 
 /*
