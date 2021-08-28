@@ -211,7 +211,7 @@ add_test(NAME "custom_dir_EXIF_231"
          COMMAND "custom_dir_EXIF_231")
 endif()
 
-add_executable(Rational_SetGetDirect_Test ../placeholder.h)
+add_executable(Rational_SetGetDirect_Test)
 target_sources(Rational_SetGetDirect_Test PRIVATE Rational_SetGetDirect_Test.c)
 target_link_libraries(Rational_SetGetDirect_Test PRIVATE tiff port)
 add_test(NAME "Rational_SetGetDirect_Test"
