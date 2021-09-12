@@ -86,7 +86,7 @@
 #endif
 
 /* Pointer difference type */
-#define TIFF_PTRDIFF_T long
+#define TIFF_PTRDIFF_T ptrdiff_t
 
 /* Compatibility stuff. */
 
@@ -107,6 +107,9 @@
 /* Support JPEG compression (requires IJG JPEG library) */
 #define JPEG_SUPPORT 1
 
+/* Support JBIG compression (requires JBIG-KIT library) */
+/* #undef JBIG_SUPPORT */
+
 /* Support LogLuv high dynamic range encoding */
 #define LOGLUV_SUPPORT 1
 
@@ -124,13 +127,16 @@
 #define PACKBITS_SUPPORT 1
 
 /* Support Pixar log-format algorithm (requires Zlib) */
-#define PIXARLOG_SUPPORT 1
+/* #undef PIXARLOG_SUPPORT */
 
 /* Support ThunderScan 4-bit RLE algorithm */
 #define THUNDER_SUPPORT 1
 
 /* Support Deflate compression */
 #define ZIP_SUPPORT 1
+
+/* Support libdeflate enhanced compression */
+/* #undef LIBDEFLATE_SUPPORT */
 
 /* Support strip chopping (whether or not to convert single-strip uncompressed
    images to mutiple strips of ~8Kb to reduce memory usage) */
