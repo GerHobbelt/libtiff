@@ -350,6 +350,8 @@ TIFFRewriteDirectory( TIFF *tif )
 						return (0);
 					}
 					tif->tif_diroff=0;
+					/* Force a full-traversal to reach the zeroed pointer */
+					tif->tif_lastdiroff=0;
 					break;
 				}
 				nextdir=nextnextdir;
@@ -416,6 +418,8 @@ TIFFRewriteDirectory( TIFF *tif )
 						return (0);
 					}
 					tif->tif_diroff=0;
+					/* Force a full-traversal to reach the zeroed pointer */
+					tif->tif_lastdiroff=0;
 					break;
 				}
 				nextdir=nextnextdir;
