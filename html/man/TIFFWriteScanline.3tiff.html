@@ -42,7 +42,7 @@
 <p><b>#include &lt;tiffio.h&gt;</b></p>
 <!-- INDENTATION -->
 <p><b>int TIFFWriteScanline(TIFF *</b><i>tif</i><b>,
-tdata_t</b> <i>buf</i><b>, uint32</b> <i>row</i><b>,
+tdata_t</b> <i>buf</i><b>, uint32_t</b> <i>row</i><b>,
 tsample_t</b> <i>sample</i><b>)</b></p>
 </td>
 </table>
@@ -86,6 +86,7 @@ correctly process image data with BitsPerSample greater than
 8. The library attempts to hide bit-ordering differences
 between the image and the native machine by converting data
 from the native machine order.</p>
+<p><i>TIFFWriteScanline()</i> allocates a buffer for the WHOLE strip!</p>
 <!-- INDENTATION -->
 <p>In C++ the <i>sample</i> parameter defaults to 0.</p>
 <!-- INDENTATION -->

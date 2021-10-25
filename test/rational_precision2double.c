@@ -70,14 +70,15 @@
 
 
 int write_test_tiff(TIFF *tif, const char *filenameRead, int blnAllCustomTags);
+int addTags(TIFF *tif);
 
 #define	SPP	3		/* Samples per pixel */
-const uint16	width = 1;
-const uint16	length = 1;
-const uint16	bps = 8;
-const uint16	photometric = PHOTOMETRIC_RGB;
-const uint16	rows_per_strip = 1;
-const uint16	planarconfig = PLANARCONFIG_CONTIG;
+const uint16_t	width = 1;
+const uint16_t	length = 1;
+const uint16_t	bps = 8;
+const uint16_t	photometric = PHOTOMETRIC_RGB;
+const uint16_t	rows_per_strip = 1;
+const uint16_t	planarconfig = PLANARCONFIG_CONTIG;
 
 /*-- Additional custom TIFF tags for testing of Rational2Double precision --*/
 #define TIFFTAG_RATIONAL_DOUBLE		60000
@@ -148,11 +149,11 @@ It merges in our new fields and then calls the next extender if there is one in 
 static void
 _XTIFFDefaultDirectory(TIFF *tif)
 {
-	uint32 n, nadded;
+	uint32_t n, nadded;
 
 	/* Install the extended Tag field info */
 	n = N(tifFieldInfo);
-	//_TIFFMergeFields(tif, const TIFFField info[], uint32 n);
+	//_TIFFMergeFields(tif, const TIFFField info[], uint32_t n);
 	nadded = _TIFFMergeFields(tif, tifFieldInfo, n);
         (void)nadded;
 
@@ -201,6 +202,7 @@ main()
 	/*--- Test with BIG-TIFF ---*/
 	/* delete file, if exists */
 	ret = unlink(filenameBigTiff);
+	errorNo = errno;
 	if (ret != 0 && errorNo != ENOENT) {
 		fprintf(stderr, "Can't delete test TIFF file %s.\n", filenameBigTiff);
 	}
@@ -258,11 +260,13 @@ int
 write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 	unsigned char	buf[SPP] = {0, 127, 255};
 	/*-- Additional variables --*/
-	int				retCode;
+	int				retCode, retCode2;
+	unsigned char* pGpsVersion;
+	char			auxStr[200];
 	float			auxFloat = 0.0f;
 	double			auxDouble = 0.0;
-	uint16			auxUint16 = 0;
-	uint32			auxUint32 = 0;
+	uint16_t			auxUint16 = 0;
+	uint32_t			auxUint32 = 0;
 	long			auxLong = 0;
 	void* pVoid;
 	int				blnIsRational2Double;
@@ -271,6 +275,7 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 	long	nTags;
 
 	const TIFFFieldArray* tFieldArray;
+	const TIFFField** tifFields;          /* actual field info */
 	unsigned long			tTag;
 	TIFFDataType			tType;
 	short					tWriteCount;
@@ -285,6 +290,9 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 #define VARIABLE_ARRAY_SIZE 6
 
 	/* -- Test data for writing -- */
+	char			auxCharArrayW[N_SIZE];
+	short			auxShortArrayW[N_SIZE];
+	long			auxLongArrayW[N_SIZE];
 	float			auxFloatArrayW[N_SIZE];
 	double			auxDoubleArrayW[N_SIZE];
 	char			auxTextArrayW[N_SIZE][STRSIZE];
@@ -292,7 +300,7 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 	float			auxFloatArrayResolutions[4] = {5.456789f, 6.666666f, 0.0033f, 5.0f / 213.0f};
 
 	/* -- Variables for reading -- */
-	uint16      count16 = 0;
+	uint16_t      count16 = 0;
 	union {
 		long		Long;
 		short		Short1;
@@ -305,18 +313,33 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 		float	flt2;
 	} auxDblUnion;
 
+	float* pFloat;
 	void* pVoidArray;
 	float* pFloatArray;
+	double* pDoubleArray;
+	char* pAscii;
+	char		auxCharArray[2 * STRSIZE];
+	short		auxShortArray[2 * N_SIZE];
+	long		auxLongArray[2 * N_SIZE];
 	float		auxFloatArray[2 * N_SIZE];
 	double		auxDoubleArray[2 * N_SIZE];
 	double		dblDiff, dblDiffLimit;
-	float		fltDiff;
+	float		fltDiff, fltDiffLimit;
 #define RATIONAL_EPS (1.0/30000.0) /* reduced difference of rational values, approx 3.3e-5 */
 
 
 	/*-- Fill test data arrays for writing ----------- */
 	for (i = 0; i < N_SIZE; i++) {
 		sprintf(auxTextArrayW[i], "N%d-String-%d_tttttttttttttttttttttttttttttx", i, i);
+	}
+	for (i = 0; i < N_SIZE; i++) {
+		auxCharArrayW[i] = (char)(i + 1);
+	}
+	for (i = 0; i < N_SIZE; i++) {
+		auxShortArrayW[i] = (short)(i + 1) * 7;
+	}
+	for (i = 0; i < N_SIZE; i++) {
+		auxLongArrayW[i] = (i + 1) * 133;
 	}
 	for (i = 0; i < N_SIZE; i++) {
 		auxFloatArrayW[i] = (float)((i + 1) * 133) / 3.3f;
@@ -872,9 +895,10 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 						dblDiff = auxDouble - auxDoubleArrayW[i];
 						if (fabs(dblDiff) > fabs(dblDiffLimit)) {
 							/*--: EXIFTAG_SUBJECTDISTANCE: LibTiff returns value of "-1.0" if numerator equals 4294967295 (0xFFFFFFFF) to indicate infinite distance! */
-							if (!(tTag == EXIFTAG_SUBJECTDISTANCE && auxDouble == -1.0))
+							if (!(tTag == EXIFTAG_SUBJECTDISTANCE && auxDouble == -1.0)) {
 								fprintf(stderr, "%d:Read value of %s %f differs from set value %f\n", i, tFieldName, auxDouble, auxDoubleArrayW[i]);
 								GOTOFAILURE
+							}
 						}
 						break;
 

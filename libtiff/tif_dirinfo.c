@@ -149,7 +149,7 @@ tiffFields[] = {
 	{ TIFFTAG_COPYRIGHT, -1, -1, TIFF_ASCII, 0, TIFF_SETGET_ASCII, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 0, "Copyright", NULL },
 	/* end Pixar tags */
 	{ TIFFTAG_RICHTIFFIPTC, -3, -3, TIFF_UNDEFINED, 0, TIFF_SETGET_C32_UINT8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "RichTIFFIPTC", NULL },
-	{ TIFFTAG_PHOTOSHOP, -3, -3, TIFF_BYTE, 0, TIFF_SETGET_C32_UINT8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "Photoshop", NULL },
+	{ TIFFTAG_PHOTOSHOP, -3, -3, TIFF_BYTE, 0, TIFF_SETGET_C32_UINT8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 1, "Photoshop", NULL },
 	/*--: EXIFIFD and GPSIFD specified as TIFF_LONG by Aware-Systems and not TIFF_IFD8 as in original LibTiff.
 	 *    However, for IFD-like tags, libtiff uses the data type TIFF_IFD8 in tiffFields[]-tag definition combined with
 	 *    a special handling procedure in order to write either a 32-bit value and the TIFF_IFD type-id into ClassicTIFF files 
@@ -162,6 +162,7 @@ tiffFields[] = {
 	{ TIFFTAG_FAXRECVTIME, 1, 1, TIFF_LONG, 0, TIFF_SETGET_UINT32, TIFF_SETGET_UINT32, FIELD_CUSTOM, TRUE, FALSE, "FaxRecvTime", NULL },
 	{ TIFFTAG_FAXDCS, -1, -1, TIFF_ASCII, 0, TIFF_SETGET_ASCII, TIFF_SETGET_ASCII, FIELD_CUSTOM, TRUE, FALSE, "FaxDcs", NULL },
 	{ TIFFTAG_STONITS, 1, 1, TIFF_DOUBLE, 0, TIFF_SETGET_DOUBLE, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "StoNits", NULL },
+	{ TIFFTAG_IMAGESOURCEDATA, -3, -3, TIFF_UNDEFINED, 0, TIFF_SETGET_C32_UINT8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 1, "Adobe Photoshop Document Data Block", NULL },
 	{ TIFFTAG_INTEROPERABILITYIFD, 1, 1, TIFF_IFD8, 0, TIFF_SETGET_UNDEFINED, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "InteroperabilityIFDOffset", NULL },
 	/* begin DNG tags */
 	{ TIFFTAG_DNGVERSION, 4, 4, TIFF_BYTE, 0, TIFF_SETGET_C0_UINT8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "DNGVersion", NULL },
@@ -325,7 +326,7 @@ exifFields[] = {
  * EXIF-GPS tags  (Version 2.31, July 2016; nothing changed for version 2.32 May 2019)
  */
 
-static TIFFField
+static const TIFFField
 gpsFields[] = {
 	/*  For the GPS tag definitions in gpsFields[] the standard definition for Rationals is TIFF_SETGET_DOUBLE and TIFF_SETGET_C0_FLOAT.
 	 *-- ATTENTION: After the upgrade with Rational2Double, the GPSTAG values can now be written and also read in double precision!
@@ -415,7 +416,7 @@ void
 _TIFFSetupFields(TIFF* tif, const TIFFFieldArray* fieldarray)
 {
 	if (tif->tif_fields && tif->tif_nfields > 0) {
-		uint32 i;
+		uint32_t i;
 
 		for (i = 0; i < tif->tif_nfields; i++) {
 			TIFFField *fld = tif->tif_fields[i];
@@ -464,12 +465,12 @@ tagNameCompare(const void* a, const void* b)
 }
 
 int
-_TIFFMergeFields(TIFF* tif, const TIFFField info[], uint32 n)
+_TIFFMergeFields(TIFF* tif, const TIFFField info[], uint32_t n)
 {
 	static const char module[] = "_TIFFMergeFields";
 	static const char reason[] = "for fields array";
 	/* TIFFField** tp; */
-	uint32 i;
+	uint32_t i;
 
         tif->tif_foundfield = NULL;
 
@@ -504,14 +505,15 @@ _TIFFMergeFields(TIFF* tif, const TIFFField info[], uint32 n)
         /* Sort the field info by tag number */
 	qsort(tif->tif_fields, tif->tif_nfields,
 	      sizeof(TIFFField *), tagCompare);
-
-	return n;
+	/*-- _TIFFMergeFields should return number of really added fields and not always the given "n" */
+	/*return n;*/
+	return i;
 }
 
 void
 _TIFFPrintFieldInfo(TIFF* tif, FILE* fd)
 {
-	uint32 i;
+	uint32_t i;
 
 	fprintf(fd, "%s: \n", tif->tif_name);
 	for (i = 0; i < tif->tif_nfields; i++) {
@@ -677,7 +679,7 @@ _TIFFSetGetFieldSize(TIFFSetGetFieldType setgettype)
 
 
 const TIFFField*
-TIFFFindField(TIFF* tif, uint32 tag, TIFFDataType dt)
+TIFFFindField(TIFF* tif, uint32_t tag, TIFFDataType dt)
 {
 	TIFFField key = {0, 0, 0, TIFF_NOTYPE, 0, 0, 0, 0, 0, 0, NULL, NULL};
 	TIFFField* pkey = &key;
@@ -729,7 +731,7 @@ _TIFFFindFieldByName(TIFF* tif, const char *field_name, TIFFDataType dt)
 }
 
 const TIFFField*
-TIFFFieldWithTag(TIFF* tif, uint32 tag)
+TIFFFieldWithTag(TIFF* tif, uint32_t tag)
 {
 	const TIFFField* fip = TIFFFindField(tif, tag, TIFF_ANY);
 	if (!fip) {
@@ -752,7 +754,7 @@ TIFFFieldWithName(TIFF* tif, const char *field_name)
 	return (fip);
 }
 
-uint32
+uint32_t
 TIFFFieldTag(const TIFFField* fip)
 {
 	return fip->field_tag;
@@ -789,7 +791,7 @@ TIFFFieldWriteCount(const TIFFField* fip)
 }
 
 const TIFFField*
-_TIFFFindOrRegisterField(TIFF *tif, uint32 tag, TIFFDataType dt)
+_TIFFFindOrRegisterField(TIFF *tif, uint32_t tag, TIFFDataType dt)
 
 {
 	const TIFFField *fld;
@@ -805,7 +807,7 @@ _TIFFFindOrRegisterField(TIFF *tif, uint32 tag, TIFFDataType dt)
 }
 
 TIFFField*
-_TIFFCreateAnonField(TIFF *tif, uint32 tag, TIFFDataType field_type)
+_TIFFCreateAnonField(TIFF *tif, uint32_t tag, TIFFDataType field_type)
 {
 	TIFFField *fld;
 	(void) tif;
@@ -1059,13 +1061,13 @@ _TIFFSetGetType(TIFFDataType type, short count, unsigned char passcount)
 }
 
 int
-TIFFMergeFieldInfo(TIFF* tif, const TIFFFieldInfo info[], uint32 n)
+TIFFMergeFieldInfo(TIFF* tif, const TIFFFieldInfo info[], uint32_t n)
 {
 	static const char module[] = "TIFFMergeFieldInfo";
 	static const char reason[] = "for fields array";
 	TIFFField *tp;
 	size_t nfields;
-	uint32 i;
+	uint32_t i;
 
 	if (tif->tif_nfieldscompat > 0) {
 		tif->tif_fieldscompat = (TIFFFieldArray *)

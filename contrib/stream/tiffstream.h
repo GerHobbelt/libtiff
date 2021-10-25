@@ -3,10 +3,11 @@
 #ifndef _TIFF_STREAM_H_
 #define _TIFF_STREAM_H_
 
-#include <iostream.h>
+#include <iostream>
 
 #include "tiffio.h"
 
+using namespace std;
 class TiffStream {
 
 public:

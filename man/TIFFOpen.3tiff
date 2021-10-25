@@ -222,6 +222,9 @@ its entirety unless the O flag is also specified.
 .B O
 On-demand loading of values of the strip/tile offset/bytecount arrays, limited
 to the requested strip/tile, instead of whole array loading (implies D)
+.TP
+.B n
+Enables TIFFGetField to return the character or value count instead of 1.
 .SH "BYTE ORDER"
 The 
 .SM TIFF

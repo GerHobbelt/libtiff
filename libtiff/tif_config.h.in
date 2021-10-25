@@ -1,4 +1,6 @@
-/* libtiff/tif_config.h.in.  Generated from configure.ac by autoheader.  */
+/* libtiff/tif_config.h.in.  Not generated, but originated from autoheader.  */
+
+#include "tiffconf.h"
 
 /* Define if building universal (internal helper macro) */
 #undef AC_APPLE_UNIVERSAL_BUILD
@@ -149,6 +151,9 @@
 
 /* 8/12 bit libjpeg dual mode enabled */
 #undef JPEG_DUAL_MODE_8_12
+
+/* Support LERC compression */
+#undef LERC_SUPPORT
 
 /* Support JPEG compression (requires IJG JPEG library) */
 #undef JPEG_SUPPORT
@@ -369,3 +374,21 @@
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */
 #undef size_t
+
+
+#if !defined(__MINGW32__)
+#  define TIFF_SIZE_FORMAT "zu"
+#endif
+#if SIZEOF_SIZE_T == 8
+#  define TIFF_SSIZE_FORMAT PRId64
+#  if defined(__MINGW32__)
+#    define TIFF_SIZE_FORMAT PRIu64
+#  endif
+#elif SIZEOF_SIZE_T == 4
+#  define TIFF_SSIZE_FORMAT PRId32
+#  if defined(__MINGW32__)
+#    define TIFF_SIZE_FORMAT PRIu32
+#  endif
+#else
+#  error "Unsupported size_t size; please submit a bug report"
+#endif

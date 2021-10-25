@@ -2,23 +2,23 @@
  * Copyright (c) 1988-1997 Sam Leffler
  * Copyright (c) 1991-1997 Silicon Graphics, Inc.
  *
- * Permission to use, copy, modify, distribute, and sell this software and 
+ * Permission to use, copy, modify, distribute, and sell this software and
  * its documentation for any purpose is hereby granted without fee, provided
  * that (i) the above copyright notices and this permission notice appear in
  * all copies of the software and related documentation, and (ii) the names of
  * Sam Leffler and Silicon Graphics may not be used in any advertising or
  * publicity relating to the software without the specific, prior written
  * permission of Sam Leffler and Silicon Graphics.
- * 
- * THE SOFTWARE IS PROVIDED "AS-IS" AND WITHOUT WARRANTY OF ANY KIND, 
- * EXPRESS, IMPLIED OR OTHERWISE, INCLUDING WITHOUT LIMITATION, ANY 
- * WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.  
- * 
+ *
+ * THE SOFTWARE IS PROVIDED "AS-IS" AND WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS, IMPLIED OR OTHERWISE, INCLUDING WITHOUT LIMITATION, ANY
+ * WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+ *
  * IN NO EVENT SHALL SAM LEFFLER OR SILICON GRAPHICS BE LIABLE FOR
  * ANY SPECIAL, INCIDENTAL, INDIRECT OR CONSEQUENTIAL DAMAGES OF ANY KIND,
  * OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
- * WHETHER OR NOT ADVISED OF THE POSSIBILITY OF DAMAGE, AND ON ANY THEORY OF 
- * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE 
+ * WHETHER OR NOT ADVISED OF THE POSSIBILITY OF DAMAGE, AND ON ANY THEORY OF
+ * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
  * OF THIS SOFTWARE.
  */
 
@@ -65,18 +65,18 @@ _tiffReadProc(thandle_t fd, void* buf, tmsize_t size)
 	/* tmsize_t is 64bit on 64bit systems, but the WinAPI ReadFile takes
 	 * 32bit sizes, so we loop through the data in suitable 32bit sized
 	 * chunks */
-	uint8* ma;
-	uint64 mb;
+	uint8_t* ma;
+	uint64_t mb;
 	DWORD n;
 	DWORD o;
 	tmsize_t p;
-	ma=(uint8*)buf;
+	ma=(uint8_t*)buf;
 	mb=size;
 	p=0;
 	while (mb>0)
 	{
 		n=0x80000000UL;
-		if ((uint64)n>mb)
+		if ((uint64_t)n>mb)
 			n=(DWORD)mb;
 		if (!ReadFile(fd,(LPVOID)ma,n,&o,NULL))
 			return(0);
@@ -95,18 +95,18 @@ _tiffWriteProc(thandle_t fd, void* buf, tmsize_t size)
 	/* tmsize_t is 64bit on 64bit systems, but the WinAPI WriteFile takes
 	 * 32bit sizes, so we loop through the data in suitable 32bit sized
 	 * chunks */
-	uint8* ma;
-	uint64 mb;
+	uint8_t* ma;
+	uint64_t mb;
 	DWORD n;
 	DWORD o;
 	tmsize_t p;
-	ma=(uint8*)buf;
+	ma=(uint8_t*)buf;
 	mb=size;
 	p=0;
 	while (mb>0)
 	{
 		n=0x80000000UL;
-		if ((uint64)n>mb)
+		if ((uint64_t)n>mb)
 			n=(DWORD)mb;
 		if (!WriteFile(fd,(LPVOID)ma,n,&o,NULL))
 			return(0);
@@ -119,8 +119,8 @@ _tiffWriteProc(thandle_t fd, void* buf, tmsize_t size)
 	return(p);
 }
 
-static uint64
-_tiffSeekProc(thandle_t fd, uint64 off, int whence)
+static uint64_t
+_tiffSeekProc(thandle_t fd, uint64_t off, int whence)
 {
 	LARGE_INTEGER offli;
 	DWORD dwMoveMethod;
@@ -152,12 +152,12 @@ _tiffCloseProc(thandle_t fd)
 	return (CloseHandle(fd) ? 0 : -1);
 }
 
-static uint64
+static uint64_t
 _tiffSizeProc(thandle_t fd)
 {
 	LARGE_INTEGER m;
 	if (GetFileSizeEx(fd,&m))
-		return(m.QuadPart);
+		return(uint64_t)(m.QuadPart);
 	else
 		return(0);
 }
@@ -185,13 +185,13 @@ _tiffDummyMapProc(thandle_t fd, void** pbase, toff_t* psize)
 static int
 _tiffMapProc(thandle_t fd, void** pbase, toff_t* psize)
 {
-	uint64 size;
+	uint64_t size;
 	tmsize_t sizem;
 	HANDLE hMapFile;
 
 	size = _tiffSizeProc(fd);
 	sizem = (tmsize_t)size;
-	if (!size || (uint64)sizem!=size)
+	if (!size || (uint64_t)sizem!=size)
 		return (0);
 
 	/* By passing in 0 for the maximum file size, it specifies that we
@@ -277,7 +277,7 @@ TIFFOpen(const char* name, const char* mode)
 		case O_RDWR|O_CREAT|O_TRUNC:	dwMode = CREATE_ALWAYS; break;
 		default:			return ((TIFF*)0);
 	}
-        
+
 	fd = (thandle_t)CreateFileA(name,
 		(m == O_RDONLY)?GENERIC_READ:(GENERIC_READ | GENERIC_WRITE),
 		FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, dwMode,
@@ -403,10 +403,6 @@ _TIFFmemcmp(const void* p1, const void* p2, tmsize_t c)
 }
 
 #ifndef _WIN32_WCE
-
-#if defined(_MSC_VER) && (_MSC_VER < 1500)
-#  define vsnprintf _vsnprintf
-#endif
 
 static void
 Win32WarningHandler(const char* module, const char* fmt, va_list ap)
