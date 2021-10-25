@@ -103,9 +103,6 @@
 
 #define CODE_MASK 0x7ff         /* 11 bits. */
 
-static float  Fltsize;
-static float  LogK1, LogK2;
-
 #define REPEAT(n, op)   { int i; i=n; do { i--; op; } while (i>0); }
 
 static void
@@ -474,7 +471,10 @@ typedef	struct {
 	uint16  *FromLT2;
 	uint16  *From14; /* Really for 16-bit data, but we shift down 2 */
 	uint16  *From8;
-	
+
+	float  Fltsize;
+	float  LogK1, LogK2;
+
 } PixarLogState;
 
 static int
@@ -508,8 +508,8 @@ PixarLogMakeTables(PixarLogState *sp)
     b = exp(-c*ONE);	/* multiplicative scale factor [b*exp(c*ONE) = 1] */
     linstep = b*c*exp(1.);
 
-    LogK1 = (float)(1./c);	/* if (v >= 2)  token = k1*log(v*k2) */
-    LogK2 = (float)(1./b);
+    sp->LogK1 = (float)(1./c);	/* if (v >= 2)  token = k1*log(v*k2) */
+    sp->LogK2 = (float)(1./b);
     lt2size = (int)(2./linstep) + 1;
     FromLT2 = (uint16 *)_TIFFmalloc(lt2size*sizeof(uint16));
     From14 = (uint16 *)_TIFFmalloc(16384*sizeof(uint16));
@@ -579,7 +579,7 @@ PixarLogMakeTables(PixarLogState *sp)
 	From8[i] = (uint16)j;
     }
 
-    Fltsize = (float)(lt2size/2);
+    sp->Fltsize = (float)(lt2size/2);
 
     sp->ToLinearF = ToLinearF;
     sp->ToLinear16 = ToLinear16;
@@ -956,15 +956,15 @@ PixarLogPreEncode(TIFF* tif, uint16 s)
 }
 
 static void
-horizontalDifferenceF(float *ip, int n, int stride, uint16 *wp, uint16 *FromLT2)
+horizontalDifferenceF(PixarLogState *sp, float *ip, int n, int stride, uint16 *wp, uint16 *FromLT2)
 {
     int32 r1, g1, b1, a1, r2, g2, b2, a2, mask;
-    float fltsize = Fltsize;
 
+#define  fltsize  (sp->Fltsize)
 #define  CLAMP(v) ( (v<(float)0.)   ? 0				\
 		  : (v<(float)2.)   ? FromLT2[(int)(v*fltsize)]	\
 		  : (v>(float)24.2) ? 2047			\
-		  : LogK1*log(v*LogK2) + 0.5 )
+		  : (sp->LogK1)*log(v*(sp->LogK2)) + 0.5 )
 
     mask = CODE_MASK;
     if (n >= stride) {
@@ -1157,7 +1157,7 @@ PixarLogEncode(TIFF* tif, uint8* bp, tmsize_t cc, uint16 s)
 	for (i = 0, up = sp->tbuf; i < n; i += llen, up += llen) {
 		switch (sp->user_datafmt)  {
 		case PIXARLOGDATAFMT_FLOAT:
-			horizontalDifferenceF((float *)bp, llen, 
+			horizontalDifferenceF(sp, (float *)bp, llen,
 				sp->stride, up, sp->FromLT2);
 			bp += llen * sizeof(float);
 			break;

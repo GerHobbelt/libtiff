@@ -504,8 +504,9 @@ _TIFFMergeFields(TIFF* tif, const TIFFField info[], uint32 n)
         /* Sort the field info by tag number */
 	qsort(tif->tif_fields, tif->tif_nfields,
 	      sizeof(TIFFField *), tagCompare);
-
-	return n;
+	/*-- _TIFFMergeFields should return number of really added fields and not always the given "n" */
+	/*return n;*/
+	return i;
 }
 
 void

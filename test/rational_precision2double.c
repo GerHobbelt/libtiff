@@ -70,6 +70,7 @@
 
 
 int write_test_tiff(TIFF *tif, const char *filenameRead, int blnAllCustomTags);
+int addTags(TIFF *tif);
 
 #define	SPP	3		/* Samples per pixel */
 const uint16	width = 1;
@@ -201,6 +202,7 @@ main()
 	/*--- Test with BIG-TIFF ---*/
 	/* delete file, if exists */
 	ret = unlink(filenameBigTiff);
+	errorNo = errno;
 	if (ret != 0 && errorNo != ENOENT) {
 		fprintf(stderr, "Can't delete test TIFF file %s.\n", filenameBigTiff);
 	}
@@ -258,7 +260,9 @@ int
 write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 	unsigned char	buf[SPP] = {0, 127, 255};
 	/*-- Additional variables --*/
-	int				retCode;
+	int				retCode, retCode2;
+	unsigned char* pGpsVersion;
+	char			auxStr[200];
 	float			auxFloat = 0.0f;
 	double			auxDouble = 0.0;
 	uint16			auxUint16 = 0;
@@ -271,6 +275,7 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 	long	nTags;
 
 	const TIFFFieldArray* tFieldArray;
+	const TIFFField** tifFields;          /* actual field info */
 	unsigned long			tTag;
 	TIFFDataType			tType;
 	short					tWriteCount;
@@ -285,6 +290,9 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 #define VARIABLE_ARRAY_SIZE 6
 
 	/* -- Test data for writing -- */
+	char			auxCharArrayW[N_SIZE];
+	short			auxShortArrayW[N_SIZE];
+	long			auxLongArrayW[N_SIZE];
 	float			auxFloatArrayW[N_SIZE];
 	double			auxDoubleArrayW[N_SIZE];
 	char			auxTextArrayW[N_SIZE][STRSIZE];
@@ -305,18 +313,33 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 		float	flt2;
 	} auxDblUnion;
 
+	float* pFloat;
 	void* pVoidArray;
 	float* pFloatArray;
+	double* pDoubleArray;
+	char* pAscii;
+	char		auxCharArray[2 * STRSIZE];
+	short		auxShortArray[2 * N_SIZE];
+	long		auxLongArray[2 * N_SIZE];
 	float		auxFloatArray[2 * N_SIZE];
 	double		auxDoubleArray[2 * N_SIZE];
 	double		dblDiff, dblDiffLimit;
-	float		fltDiff;
+	float		fltDiff, fltDiffLimit;
 #define RATIONAL_EPS (1.0/30000.0) /* reduced difference of rational values, approx 3.3e-5 */
 
 
 	/*-- Fill test data arrays for writing ----------- */
 	for (i = 0; i < N_SIZE; i++) {
 		sprintf(auxTextArrayW[i], "N%d-String-%d_tttttttttttttttttttttttttttttx", i, i);
+	}
+	for (i = 0; i < N_SIZE; i++) {
+		auxCharArrayW[i] = (char)(i + 1);
+	}
+	for (i = 0; i < N_SIZE; i++) {
+		auxShortArrayW[i] = (short)(i + 1) * 7;
+	}
+	for (i = 0; i < N_SIZE; i++) {
+		auxLongArrayW[i] = (i + 1) * 133;
 	}
 	for (i = 0; i < N_SIZE; i++) {
 		auxFloatArrayW[i] = (float)((i + 1) * 133) / 3.3f;

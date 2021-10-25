@@ -45,6 +45,7 @@ tools/tiffdither
 tools/tiffdump
 tools/tiffgt
 tools/tiffinfo
+tools/tiffjoin
 tools/tiffmedian
 tools/tiffset
 tools/tiffsplit
@@ -64,3 +65,4 @@ test/*.log
 test/*.trs
 test/o-*
 *~
+autoconf-build/

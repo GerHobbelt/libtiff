@@ -1,0 +1,250 @@
+<!--  -->
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta name="Content-Style" content="text/css">
+<title>TIFFCreateCustomDirectory</title>
+</head>
+<body>
+
+<h1 align=center>TIFFCreateCustomDirectory</h1>
+<a href="#NAME">NAME</a><br>
+<a href="#SYNOPSIS">SYNOPSIS</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#NOTES">NOTES</a><br>
+<a href="#RETURN VALUES">RETURN VALUES</a><br>
+<a href="#DIAGNOSTICS">DIAGNOSTICS</a><br>
+<a href="#SEE ALSO">SEE ALSO</a><br>
+
+<hr>
+<a name="NAME"></a>
+<h2>NAME</h2>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="8%"></td>
+<td width="91%">
+<p>TIFFCreateCustomDirectory(), TIFFCreateEXIFDirectory(), TIFFCreateGPSDirectory()<br> - creates a custom directory within a TIFF tag, like the EXIF or GPS tags.</p>
+</td>
+</table>
+<a name="SYNOPSIS"></a>
+<h2>SYNOPSIS</h2>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="8%"></td>
+<td width="91%">
+<p><big><b>#include &lt;tiffio.h&gt;</b></big></p>
+<!-- INDENTATION -->
+<p><big>
+<b>TIFFCreateCustomDirectory(TIFF* </b><i>tif</i><b>, const TIFFFieldArray* </b><i>infoarray</i>)</b> <br>
+<b>TIFFCreateEXIFDirectory(TIFF *</b><i>tif</i><b>)</b><br>
+<b>TIFFCreateGPSDirectory(TIFF *</b><i>tif</i><b>)</b><br><br>
+<b>TIFFWriteCustomDirectory(TIFF *</b><i>tif</i><b>, uint64 *</b><i>pdiroff</i><b>)<br><br>
+<b>TIFFReadCustomDirectory(TIFF* </b> <i>tif</i><b>)</b>, toff_t </b><i>diroff</i><b>, const TIFFFieldArray* </b><i>infoarray</i><b>)<br>
+<b>TIFFReadEXIFDirectory(TIFF* </b> <i>tif</i><b>)</b>, toff_t </b><i>diroff</i><b>)<br>
+<b>TIFFReadGPSDirectory(TIFF* </b> <i>tif</i><b>)</b>, toff_t </b><i>diroff</i><b>)<br>
+</big></p>
+</td>
+</table>
+<a name="DESCRIPTION"></a>
+<h2>DESCRIPTION</h2>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="8%"></td>
+<td width="91%">
+<p>The following routines create a Custom Directory, write it into an open <small>TIFF</small> file and read Custom Directories back from file. <br>
+The EXIF and GPS custom directories are already predefined in the library (<i>exifFieldArray</i> and <i>gpsFieldArray</i>).</p>
+<p><ul><b>Be aware,</b>
+<li>that until a directory is not written to file AND read back, the query functions won't retrieve the correct information!
+<li>that the newly created directory will not exist on the file till <i>TIFFWriteCustomDirectory()</i>, <i>TIFFWriteDirectory()</i>, 
+<i>TIFFCheckpointDirectory()</i>, <i>TIFFFlush()</i> or <i>TIFFClose()</i> is called.</li>
+<li>that <i>TIFFCreateCustomDirectory()</i>, <i>TIFFCreateDirectory()</i>and <i>TIFFWriteCustomDirectory()</i>, 
+<i>TIFFWriteDirectory()</i> create a new directory, <b>frees the *tif-handle structure</b> and sets up a new one.</li>
+<br></ul></p>
+<!-- INDENTATION -->
+<p><i>TIFFCreateCustomDirectory()</i>, <i>TIFFCreateEXIFDirectory()</i> and <i>TIFFCreateGPSDirectory()</i>
+<br>will setup a custom directory, defined within <i>infoarray</i>, or one of the predefined EXIF or GPS directories
+and sets the context of the TIFF-handle <i>tif</i> to that custom directory for functions like <i>TIFFSetField()</i> or <i>TIFFGetField()</i>.  .
+</p>
+<!-- INDENTATION -->
+<p><i>TIFFWriteCustomDirectory()</i> <br>will write the contents of the current custom directory to the file and return the offset to that directory in <i>pdiroff</i>.<br>
+That offset has to be written to the main-IFD. As example for the EXIF directory:
+<ul>/* Go back to the first directory, and add the offset pdiroff into the tag that contains the pointer to the subdirectory. */
+TIFFSetDirectory(tif, 0);
+<br>TIFFSetField(tif, TIFFTAG_EXIFIFD, pdiroff);</ul>
+</p>
+<!-- INDENTATION -->
+<p><i>TIFFReadCustomDirectory()</i> <br>will read the custom directory from the arbitrary offset into the
+<i>infoarray</i> and sets the context of the TIFF-handle <i>tif</i> to that custom directory for functions
+like <i>TIFFReadField()</i>.
+The TIFFFieldArray <i>infoarray</i> has to be according the layout of the custom directory.
+
+</p>
+<!-- INDENTATION -->
+<i>TIFFReadEXIFDirectory()</i> and <i>TIFFReadGPSDirectory()</i>
+<br>For the predefined EXIF and GPS directories, the relevant TIFFFieldArray definitions are hidden
+within the functions <i>TIFFReadEXIFDirectory()</i> and <i>TIFFReadGPSDirectory()</i>.
+The code is very similar to <i>TIFFReadDirectory()</i>.
+The offset to the custom directory <i>diroff</i> has to be read from the relative TIFF tag first.<p>
+</p>
+<!-- INDENTATION -->
+<p></p>
+<!-- INDENTATION -->
+<p>
+</p>
+</td>
+</table>
+<a name="NOTES"></a>
+<h2>NOTES</h2>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="8%"></td>
+<td width="91%">
+<p><big>
+Unfortunately, to create or read custom directories
+with predefined fields it is necessary to include the private tif_dir.h.
+<br>However, this is not needed for EXIF and GPS directories which have predefined schema.
+<br>There is a test program which briefly demonstrates creating and reading EXIF and GPS directories.
+See <u>custom_dir_EXIF_231.c</u> in the test folder.
+<h3>Hints and detailed instructions</h3>
+Writing TIFF files with more than one IFD isn’t easy,
+because the TIFF Library and its documentation isn’t clearly and some side effects have to be known.
+Firstly, a basic example can be found in  test/custom_dir_EXIF_231.c, where an EXIF IFD is filled and saved.
+<br>Furthermore, read the article in the LibTiff archive: “2012.06.06 05:05 "Custom and EXIF directory read/write", by Frank Warmerdam”.
+Nevertheless, it is very cumbersome to figure out, how to deal with additional custom directories (i.e. IFDs or Sub-IFDs).
+The main issue is, that the TIFF-handle <i>tiff</i> is reused.
+Thus, a strict sequence for writing to the file and changing directories has to be followed.
+Furthermore, some of the functions put the TIFF-handle "dirty" so that the IFD is written unnecessarily often to file.
+A sequence to handle a second IFD - in this case the EXIF IFD - is as follows:
+<ol start="1" type="1">
+<li>Create TIFF file and set the 'normal' metadata.
+<br></li>
+<li> Set the tag for the sub-IFD with a “dummy” value in order to get the tag reserved.
+The final value will be inserted later on:
+<ul><font size="3" color="#000000" face="Courier">TIFFSetField(tiffOut, TIFFTAG_EXIFIFD, dir_offset);<br></font></ul>
+<br></li>
+<li>Save current TIFF-directory to file. Otherwise, it will be lost. Use <i>TIFFWriteDirectory()</i>.
+<br>Using here <i>TIFFCheckpointDirectory()</i> leads to an additional Main-IFD written to file.
+<br>Furthermore, unlike <i>TIFFWriteDirectory()</i>, <i>TIFFCheckpointDirectory()</i> does not free up the tiff-handle directory data structures in memory, so they could interfere with the second TIFF-directory created in the next step.
+<br>Remember also the number of the current directory:
+<ul><font size="3" color="#000000" face="Courier">TIFFWriteDirectory(tiffOut);
+<br>dirNum = TIFFCurrentDirectory(tiffOut);</font></ul>
+<br></li>
+<li>Create the second TIFF-directory (e.g. custom directory) and set its fields.
+The TIFFFieldArray <i>infoarray</i> has to be specified beforehand somewhere in your private include files.
+An example is given for the EXIF directory in tif_dirinfo.c (look for <i>exifFieldArray</i>)
+<br>Be aware that every CreateDirectory() or WriteDirectory()  apparently frees the tif-handle structure and sets up a new one!<ul><font size="3" color="#000000" face="Courier">TIFFCreateCustomDirectory(tiffOut, infoarray);</font></ul>
+<br></li>
+<li>Set the tags in the custom directory. E.g.:
+<ul><font size="3" color="#000000" face="Courier">TIFFSetField( tiffOut, EXIFTAG_EXIFVERSION, exifVersion);</font></ul>
+<br></li>
+<li>Write custom directory to file. The IFD offset is returned in <i>dir_offset</i>.
+<ul><font size="3" color="#000000" face="Courier">TIFFWriteCustomDirectory( tiffOut, &dir_offset);</font></ul>
+<br></li>
+<li>Reload the first directory (i.e. the original TIFF directory).
+Apparently, this reads the data back from file into the tiff-handle structure.
+<ul><font size="3" color="#000000" face="Courier">TIFFSetDirectory(tiffOut, dirNum);</font></ul>
+<br></li>
+<li>Set the correct offset value of the Sub-IFD tag and save that changes to file.
+<ul><font size="3" color="#000000" face="Courier">TIFFSetField(tiffOut, TIFFTAG_EXIFIFD, dir_offset);
+<br>TIFFWriteDirectory(tiffOut);</font></ul>
+<br></li>
+</ol>
+It is useless to work with two different tiffOut1, tiffOut2 pointers, because there is only ONE TIFF object (TIFF-handle structure) within the LibTiff. So, when you create a second one, or switch from one to another directory without having saved the modified tags to file, they are lost.
+
+<h3>Double Precision for GPS-IFD Parameters</h3>
+<p>In contrast to the other rational TIFF tags, the rational tags within the predefined GPS custom directory (<i>gpsFieldArray</i>) have to be written AND read with double precision parameters. For example:
+<ul><font size="3" color="#000000" face="Courier">double dblInput; double* dblReturn;
+<br>TIFFSetField(tiffOut, GPSTAG_ALTITUDE, dblInput);
+<br>TIFFGetField(tiffOut, GPSTAG_ALTITUDE, &dblReturn);</font></ul>
+</p>
+
+</td>
+</table>
+<a name="RETURN VALUES"></a>
+<h2>RETURN VALUES</h2>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="8%"></td>
+<td width="10%"><p><big>TIFFCreate<xxx>Directory()</big></p></td>
+<td width="71%">
+<p><big>
+: Allways returns 0 if successful or not.
+</big></p>
+</td></tr>
+<tr valign="top" align="left">
+<td width="8%"></td>
+<td width="10%"><p><big>TIFFWriteCustomDirectory()</big></p></td>
+<td width="71%">
+<p><big>
+: Returns 1 when the directory contents are  written successfully to the file. Otherwise, 0 is returned.
+</big></p>
+</td></tr>
+<tr valign="top" align="left">
+<td width="8%"></td>
+<td width="10%"><p><big>TIFFRead<xxx>Directory()</big></p></td>
+<td width="71%">
+<p><big>
+: Returns 1 when the directory contents are read successfully from file. Otherwise, 0 is returned.
+</big></p>
+</td></tr>
+</table>
+<br>
+<a name="DIAGNOSTICS"></a>
+<h2>DIAGNOSTICS</h2>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="8%"></td>
+<td width="91%">
+<p><big>All error messages are directed to the
+<i>TIFFError</i>(3TIFF) routine. All warning messages are
+directed to the <i>TIFFWarning</i>(3TIFF) routine.</big></p>
+<p><b>Error post-encoding before directory write</b>. Before writing the contents of the current directory, any pending data are flushed. This message indicates that an error occurred while doing this.
+<p><b>Error flushing data before directory write.</b> Before writing the contents of the current directory, any pending data are flushed. This message indicates that an error occurred while doing this.
+<p><b>Cannot write directory, out of space.</b> There was not enough space to allocate a temporary area for the directory that was to be written.
+<p><b>Error writing directory count.</b> A write error occurred when writing the count of fields in the directory.
+<p><b>Error writing directory contents.</b> A write error occurred when writing the directory fields.
+<p><b>Error writing directory link.</b> A write error occurred when writing the link to the next directory.
+<p><b>Error writing data for field "%s".</b> A write error occurred when writing indirect data for the specified field.
+<p><b>Error writing TIFF header.</b> A write error occurred when re-writing header at the front of the file.
+<p><b>Error fetching directory count.</b> A read error occurred when fetching the directory count field for a previous directory. This can occur when setting up a link to the directory that is being written.
+<p><b>Error fetching directory link.</b> A read error occurred when fetching the directory link field for a previous directory. This can occur when setting up a link to the directory that is being written.
+</p>
+<!-- INDENTATION -->
+</td>
+</table>
+<a name="SEE ALSO"></a>
+<h2>SEE ALSO</h2>
+<!-- INDENTATION -->
+<table width="100%" border=0 rules="none" frame="void"
+       cols="2" cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="8%"></td>
+<td width="91%">
+<p><big>
+<a href=TIFFOpen.3tiff.html><b>TIFFOpen</b>(3TIFF), </a><br>
+<a href=TIFFCustomDirectory.4tiff.html><b>TIFFCreateCustomDirectory</b>(4TIFF)<b>, (-Write() and -Read(), EXIF and GPS)</b>, </a><br>
+<a href=TIFFPrintDirectory.3tiff.html><b>TIFFPrintDirectory</b>(3TIFF), </a><br>
+<a href=TIFFReadDirectory.3tiff.html><b>TIFFReadDirectory</b>(3TIFF), </a><br>
+<a href=TIFFSetDirectory.3tiff.html><b>TIFFSetDirectory</b>(3TIFF), <b>TIFFSetSubDirectory</b>(3TIFF)</a><br>
+<a href=TIFFWriteDirectory.3tiff.html><b>TIFFWriteDirectory</b>(3TIFF), <b>TIFFRewriteDirectory</b>(3TIFF), <b>TIFFCheckpointDirectory</b>(3TIFF), <b>TIFFWriteCheck</b>(4TIFF),  </a><br>
+</big></p>
+<!-- INDENTATION -->
+<p><big>Libtiff library home page:
+<b>http://www.remotesensing.org/libtiff/</b></big></p>
+</td>
+</table>
+<hr>
+</body>
+</html>

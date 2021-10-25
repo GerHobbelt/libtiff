@@ -28,6 +28,7 @@
  * -- Module copied from custom_dir.c --
  *===========  Purpose ===================================================================================
  * Extended and amended version for testing of EXIF 2.32, GPS and handling of custom fields.
+ *
  * EXIF 2.32 and GPS are defined in amended files tif_dirinfo.c, tif_dirread.c, tiff.h, tiffio.h, tif_dir.h, tif_dir.c
  *
  *-- ATTENTION: After the upgrade with Rational2Double, the GPSTAG values are defined as double precision
@@ -213,6 +214,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 		float	flt2;
 	} auxDblUnion;
 	void		*pVoidArray;
+	float		*pFloatArray;
 	char        *pAscii;
 	char		auxCharArray[2*STRSIZE];
 	short		auxShortArray[2*N_SIZE];
@@ -817,6 +819,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 
 	/*- Variable Array: TIFFTAG_DECODE is a SRATIONAL parameter TIFF_SETGET_C16_FLOAT type FIELD_CUSTOM with passcount=1 and variable length of array. */
 	retCode = TIFFGetField(tif, TIFFTAG_DECODE, &count16, &pVoidArray );
+	retCode = TIFFGetField(tif, TIFFTAG_DECODE, &count16, &pFloatArray );
 	if (!retCode) { fprintf(stderr, "Can't read %s\n", "TIFFTAG_DECODE"); }
 	/*- pVoidArray points to a Tiff-internal temporary memorypart. Thus, contents needs to be saved. */
 	memcpy(&auxFloatArray, pVoidArray,(count16 * sizeof(auxFloatArray[0])));

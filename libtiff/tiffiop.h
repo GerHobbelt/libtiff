@@ -222,6 +222,11 @@ struct tiff {
 	 * setting up an old tag extension scheme. */
 	TIFFFieldArray*      tif_fieldscompat;
 	size_t               tif_nfieldscompat;
+	/* buffer space to allow keeping API compatibility and
+	 * remove static variable from TIFFGetField(TIFFTAG_WHITEPOINT)
+	 * and TIFFGetField(TIFFTAG_YCBCRCOEFFICIENTS) */
+	float                tif_ycbcrcoeffs[3];
+	float                tif_whitepoint[2];
 };
 
 #define isPseudoTag(t) (t > 0xffff)            /* is tag value normal or pseudo */

@@ -263,7 +263,7 @@ typedef struct {
 
 /* These functions are called by main. */
 
-static void tiff2pdf_usage(int);
+static void usage_info(int);
 int tiff2pdf_match_paper_size(float*, float*, char*);
 
 /* These functions are used to generate a PDF from a TIFF. */ 
@@ -557,8 +557,12 @@ checkMultiply64(uint64 first, uint64 second, T2P* t2p)
     options:
     -o: output to file name
 
+#ifdef JPEG_SUPPORT
     -j: compress with JPEG (requires libjpeg configured with libtiff)
-    -z: compress with Zip/Deflate (requires zlib configured with libtiff)
+#endif
+#ifdef ZIP_SUPPORT
+printf	(-z: compress with Zip/Deflate (requires zlib configured with libtiff));
+#endif
     -q: compression quality
     -n: no compressed data passthrough
     -d: do not compress (decompress)
@@ -755,10 +759,10 @@ int main(int argc, char** argv){
 				t2p->pdf_image_interpolate = 1;
 				break;
 			case 'h':
-				tiff2pdf_usage(EXIT_SUCCESS);
+				usage_info(EXIT_SUCCESS);
 				goto success;
 			case '?':
-				tiff2pdf_usage(EXIT_FAILURE);
+				usage_info(EXIT_FAILURE);
 				goto fail;
 		}
 	}
@@ -776,14 +780,14 @@ int main(int argc, char** argv){
 		}
 	} else {
 		TIFFError(TIFF2PDF_MODULE, "No input file specified"); 
-		tiff2pdf_usage(EXIT_FAILURE);
+		usage_info(EXIT_FAILURE);
 		goto fail;
 	}
 
 	if(argc > optind) {
 		TIFFError(TIFF2PDF_MODULE, 
 			  "No support for multiple input files"); 
-		tiff2pdf_usage(EXIT_FAILURE);
+		usage_info(EXIT_FAILURE);
 		goto fail;
 	}
 
@@ -845,10 +849,10 @@ success:
   
 }
 
-static void tiff2pdf_usage(int code) {
+static void usage_info(int code) {
 	static const char* lines[]={
 	"usage:  tiff2pdf [options] input.tiff",
-	"options:",
+	"where options are:",
 	" -o: output to file name",
 #ifdef JPEG_SUPPORT
 	" -j: compress with JPEG", 
@@ -856,9 +860,11 @@ static void tiff2pdf_usage(int code) {
 #ifdef ZIP_SUPPORT
 	" -z: compress with Zip/Deflate",
 #endif
+#if defined(JPEG_SUPPORT) || defined(ZIP_SUPPORT)
 	" -q: compression quality",
 	" -n: no compressed data passthrough",
 	" -d: do not compress (decompress)",
+#endif
 	" -i: invert colors",
 	" -u: set distance unit, 'i' for inch, 'm' for centimeter",
 	" -x: set x resolution default in dots per unit",
@@ -1968,7 +1974,7 @@ void t2p_read_tiff_data(T2P* t2p, TIFF* input){
 void t2p_read_tiff_size(T2P* t2p, TIFF* input){
 
 	uint64* sbc=NULL;
-#if defined(JPEG_SUPPORT) || defined (OJPEG_SUPPORT)
+#if defined(JPEG_SUPPORT) || defined(OJPEG_SUPPORT)
 	unsigned char* jpt=NULL;
 	tstrip_t i=0;
 	tstrip_t stripcount=0;
@@ -4655,68 +4661,45 @@ void t2p_compose_pdf_page(T2P* t2p){
 		(t2p->tiff_tiles[t2p->pdf_page]).tiles_edgetilelength=
 			t2p->tiff_length % tilelength;
 		tiles=(t2p->tiff_tiles[t2p->pdf_page]).tiles_tiles;
+		/* All tiles except the bottom row */
 		for(i2=0;i2<tilecounty-1;i2++){
-			for(i=0;i<tilecountx-1;i++){
+			for(i = 0; i < tilecountx; i++){
 				boxp=&(tiles[i2*tilecountx+i].tile_box);
-				boxp->x1 = 
-					t2p->pdf_imagebox.x1 
+				boxp->x1 =
+					t2p->pdf_imagebox.x1
 					+ ((float)(t2p->pdf_imagewidth * i * tilewidth)
 					/ (float)t2p->tiff_width);
-				boxp->x2 = 
-					t2p->pdf_imagebox.x1 
+				boxp->x2 =
+					t2p->pdf_imagebox.x1
 					+ ((float)(t2p->pdf_imagewidth * (i+1) * tilewidth)
 					/ (float)t2p->tiff_width);
-				boxp->y1 = 
-					t2p->pdf_imagebox.y2 
+				boxp->y1 =
+					t2p->pdf_imagebox.y2
 					- ((float)(t2p->pdf_imagelength * (i2+1) * tilelength)
 					/ (float)t2p->tiff_length);
-				boxp->y2 = 
-					t2p->pdf_imagebox.y2 
+				boxp->y2 =
+					t2p->pdf_imagebox.y2
 					- ((float)(t2p->pdf_imagelength * i2 * tilelength)
 					/ (float)t2p->tiff_length);
 			}
-			boxp=&(tiles[i2*tilecountx+i].tile_box);
-			boxp->x1 = 
-				t2p->pdf_imagebox.x1 
-				+ ((float)(t2p->pdf_imagewidth * i * tilewidth)
-				/ (float)t2p->tiff_width);
-			boxp->x2 = t2p->pdf_imagebox.x2;
-			boxp->y1 = 
-				t2p->pdf_imagebox.y2 
-				- ((float)(t2p->pdf_imagelength * (i2+1) * tilelength)
-				/ (float)t2p->tiff_length);
-			boxp->y2 = 
-				t2p->pdf_imagebox.y2 
-				- ((float)(t2p->pdf_imagelength * i2 * tilelength)
-				/ (float)t2p->tiff_length);
 		}
-		for(i=0;i<tilecountx-1;i++){
+		/* bottom row of tiles */
+		for(i = 0; i < tilecountx; i++){
 			boxp=&(tiles[i2*tilecountx+i].tile_box);
-			boxp->x1 = 
-				t2p->pdf_imagebox.x1 
+			boxp->x1 =
+				t2p->pdf_imagebox.x1
 				+ ((float)(t2p->pdf_imagewidth * i * tilewidth)
 				/ (float)t2p->tiff_width);
-			boxp->x2 = 
-				t2p->pdf_imagebox.x1 
+			boxp->x2 =
+				t2p->pdf_imagebox.x1
 				+ ((float)(t2p->pdf_imagewidth * (i+1) * tilewidth)
 				/ (float)t2p->tiff_width);
 			boxp->y1 = t2p->pdf_imagebox.y1;
-			boxp->y2 = 
-				t2p->pdf_imagebox.y2 
+			boxp->y2 =
+				t2p->pdf_imagebox.y2
 				- ((float)(t2p->pdf_imagelength * i2 * tilelength)
 				/ (float)t2p->tiff_length);
 		}
-		boxp=&(tiles[i2*tilecountx+i].tile_box);
-		boxp->x1 = 
-			t2p->pdf_imagebox.x1 
-			+ ((float)(t2p->pdf_imagewidth * i * tilewidth)
-			/ (float)t2p->tiff_width);
-		boxp->x2 = t2p->pdf_imagebox.x2;
-		boxp->y1 = t2p->pdf_imagebox.y1;
-		boxp->y2 = 
-			t2p->pdf_imagebox.y2 
-			- ((float)(t2p->pdf_imagelength * i2 * tilelength)
-			/ (float)t2p->tiff_length);
 	}
 	if(t2p->tiff_orientation==0 || t2p->tiff_orientation==1){
 		for(i=0;i<(t2p->tiff_tiles[t2p->pdf_page]).tiles_tilecount;i++){
@@ -4912,7 +4895,7 @@ tsize_t t2p_write_pdf_page_content_stream(T2P* t2p, TIFF* output){
 		for(i=0;i<t2p->tiff_tiles[t2p->pdf_page].tiles_tilecount; i++){
 			box=t2p->tiff_tiles[t2p->pdf_page].tiles_tiles[i].tile_box;
 			buflen=snprintf(buffer, sizeof(buffer), 
-				"q %s %.4f %.4f %.4f %.4f %.4f %.4f cm /Im%d_%ld Do Q\n", 
+				"q %s%.4f %.4f %.4f %.4f %.4f %.4f cm /Im%d_%ld Do Q\n",
 				t2p->tiff_transferfunctioncount?"/GS1 gs ":"",
 				box.mat[0],
 				box.mat[1],
@@ -4973,13 +4956,8 @@ tsize_t t2p_write_pdf_xobject_stream_dict(ttile_t tile,
 	if(tile==0){
 		buflen=snprintf(buffer, sizeof(buffer), "%lu", (unsigned long)t2p->tiff_width);
 	} else {
-		if(t2p_tile_is_right_edge(t2p->tiff_tiles[t2p->pdf_page], tile-1)!=0){
-			buflen=snprintf(buffer, sizeof(buffer), "%lu",
-				(unsigned long)t2p->tiff_tiles[t2p->pdf_page].tiles_edgetilewidth);
-		} else {
-			buflen=snprintf(buffer, sizeof(buffer), "%lu",
+		buflen=snprintf(buffer, sizeof(buffer), "%lu",
 				(unsigned long)t2p->tiff_tiles[t2p->pdf_page].tiles_tilewidth);
-		}
 	}
 	check_snprintf_ret(t2p, buflen, buffer);
 	written += t2pWriteFile(output, (tdata_t) buffer, buflen);
