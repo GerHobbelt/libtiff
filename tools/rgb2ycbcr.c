@@ -23,6 +23,7 @@
  */
 
 #include "tif_config.h"
+#include "libport.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -30,10 +31,6 @@
 
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
-#endif
-
-#ifdef NEED_LIBPORT
-# include "libport.h"
 #endif
 
 #include "tiffiop.h"
@@ -46,10 +43,6 @@
 #define EXIT_FAILURE 1
 #endif
 
-#ifndef HAVE_GETOPT
-extern int getopt(int argc, char * const argv[], const char *optstring);
-#endif
-
 #define	streq(a,b)	(strcmp(a,b) == 0)
 #define	CopyField(tag, v) \
     if (TIFFGetField(in, tag, &v)) TIFFSetField(out, tag, v)
@@ -57,17 +50,17 @@ extern int getopt(int argc, char * const argv[], const char *optstring);
 #ifndef howmany
 #define	howmany(x, y)	(((x)+((y)-1))/(y))
 #endif
-#define	roundup(x, y)	(howmany(x,y)*((uint32)(y)))
+#define	roundup(x, y)	(howmany(x,y)*((uint32_t)(y)))
 
 #define	LumaRed		ycbcrCoeffs[0]
 #define	LumaGreen	ycbcrCoeffs[1]
 #define	LumaBlue	ycbcrCoeffs[2]
 
-uint16	compression = COMPRESSION_PACKBITS;
-uint32	rowsperstrip = (uint32) -1;
+uint16_t	compression = COMPRESSION_PACKBITS;
+uint32_t	rowsperstrip = (uint32_t) -1;
 
-uint16	horizSubSampling = 2;		/* YCbCr horizontal subsampling */
-uint16	vertSubSampling = 2;		/* YCbCr vertical subsampling */
+uint16_t	horizSubSampling = 2;		/* YCbCr horizontal subsampling */
+uint16_t	vertSubSampling = 2;		/* YCbCr vertical subsampling */
 float	ycbcrCoeffs[3] = { .299F, .587F, .114F };
 /* default coding range is CCIR Rec 601-1 with no headroom/footroom */
 float	refBlackWhite[6] = { 0.F, 255.F, 128.F, 255.F, 128.F, 255.F };
@@ -186,17 +179,17 @@ setupLumaTables(void)
 }
 
 static void
-cvtClump(unsigned char* op, uint32* raster, uint32 ch, uint32 cw, uint32 w)
+cvtClump(unsigned char* op, uint32_t* raster, uint32_t ch, uint32_t cw, uint32_t w)
 {
 	float Y, Cb = 0, Cr = 0;
-	uint32 j, k;
+	uint32_t j, k;
 	/*
 	 * Convert ch-by-cw block of RGB
 	 * to YCbCr and sample accordingly.
 	 */
 	for (k = 0; k < ch; k++) {
 		for (j = 0; j < cw; j++) {
-			uint32 RGB = (raster - k*w)[j];
+			uint32_t RGB = (raster - k * w)[j];
 			Y = lumaRed[TIFFGetR(RGB)] +
 			    lumaGreen[TIFFGetG(RGB)] +
 			    lumaBlue[TIFFGetB(RGB)];
@@ -228,11 +221,11 @@ cvtClump(unsigned char* op, uint32* raster, uint32 ch, uint32 cw, uint32 w)
  * sample to generate the output data.
  */
 static void
-cvtStrip(unsigned char* op, uint32* raster, uint32 nrows, uint32 width)
+cvtStrip(unsigned char* op, uint32_t* raster, uint32_t nrows, uint32_t width)
 {
-	uint32 x;
+	uint32_t x;
 	int clumpSize = vertSubSampling * horizSubSampling + 2;
-	uint32 *tp;
+	uint32_t *tp;
 
 	for (; nrows >= vertSubSampling; nrows -= vertSubSampling) {
 		tp = raster;
@@ -261,23 +254,23 @@ cvtStrip(unsigned char* op, uint32* raster, uint32 nrows, uint32 width)
 }
 
 static int
-cvtRaster(TIFF* tif, uint32* raster, uint32 width, uint32 height)
+cvtRaster(TIFF* tif, uint32_t* raster, uint32_t width, uint32_t height)
 {
-	uint32 y;
+	uint32_t y;
 	tstrip_t strip = 0;
 	tsize_t cc, acc;
 	unsigned char* buf;
-	uint32 rwidth = roundup(width, horizSubSampling);
-	uint32 rheight = roundup(height, vertSubSampling);
-	uint32 nrows = (rowsperstrip > rheight ? rheight : rowsperstrip);
-        uint32 rnrows = roundup(nrows,vertSubSampling);
+	uint32_t rwidth = roundup(width, horizSubSampling);
+	uint32_t rheight = roundup(height, vertSubSampling);
+	uint32_t nrows = (rowsperstrip > rheight ? rheight : rowsperstrip);
+        uint32_t rnrows = roundup(nrows, vertSubSampling);
 
 	cc = rnrows*rwidth +
 	    2*((rnrows*rwidth) / (horizSubSampling*vertSubSampling));
 	buf = (unsigned char*)_TIFFmalloc(cc);
 	// FIXME unchecked malloc
-	for (y = height; (int32) y > 0; y -= nrows) {
-		uint32 nr = (y > nrows ? nrows : y);
+	for (y = height; (int32_t) y > 0; y -= nrows) {
+		uint32_t nr = (y > nrows ? nrows : y);
 		cvtStrip(buf, raster + (y-1)*width, nr, width);
 		nr = roundup(nr, vertSubSampling);
 		acc = nr*rwidth +
@@ -294,12 +287,12 @@ cvtRaster(TIFF* tif, uint32* raster, uint32 width, uint32 height)
 static int
 tiffcvt(TIFF* in, TIFF* out)
 {
-	uint32 width, height;		/* image width & height */
-	uint32* raster;			/* retrieve RGBA image */
-	uint16 shortv;
+	uint32_t width, height;		/* image width & height */
+	uint32_t* raster;			/* retrieve RGBA image */
+	uint16_t shortv;
 	float floatv;
 	char *stringv;
-	uint32 longv;
+	uint32_t longv;
 	int result;
 	size_t pixel_count;
 
@@ -311,18 +304,18 @@ tiffcvt(TIFF* in, TIFF* out)
  	if (!width || !height || pixel_count / width != height) {
  		TIFFError(TIFFFileName(in),
  			  "Malformed input file; "
- 			  "can't allocate buffer for raster of %lux%lu size",
- 			  (unsigned long)width, (unsigned long)height);
+ 			  "can't allocate buffer for raster of %"PRIu32"x%"PRIu32" size",
+ 			  width, height);
  		return 0;
  	}
  
- 	raster = (uint32*)_TIFFCheckMalloc(in, pixel_count, sizeof(uint32),
- 					   "raster buffer");
+ 	raster = (uint32_t*)_TIFFCheckMalloc(in, pixel_count, sizeof(uint32_t),
+                                         "raster buffer");
   	if (raster == 0) {
  		TIFFError(TIFFFileName(in),
- 			  "Failed to allocate buffer (%lu elements of %lu each)",
- 			  (unsigned long)pixel_count,
- 			  (unsigned long)sizeof(uint32));
+ 			  "Failed to allocate buffer (%"TIFF_SIZE_FORMAT" elements of %"TIFF_SIZE_FORMAT" each)",
+ 			  pixel_count,
+ 			  sizeof(uint32_t));
   		return (0);
   	}
 
@@ -372,6 +365,7 @@ const char* usage_info[] = {
 /* Help information format modified for the sake of consistency with the other tiff tools */
 /*    "usage: rgb2ycbcr [-c comp] [-r rows] [-h N] [-v N] input... output\n", */
 /*     "where comp is one of the following compression algorithms:\n", */
+"Convert RGB color, greyscale, or bi-level TIFF images to YCbCr images\n\n"
 "usage: rgb2ycbcr [options] input output",
 "where options are:",
 #ifdef JPEG_SUPPORT

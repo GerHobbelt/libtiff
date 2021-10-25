@@ -23,6 +23,7 @@
  */
 
 #include "tif_config.h"
+#include "libport.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,10 +31,6 @@
 
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
-#endif
-
-#ifdef NEED_LIBPORT
-# include "libport.h"
 #endif
 
 #include "tiffio.h"
@@ -46,18 +43,14 @@
 #define EXIT_FAILURE 1
 #endif
 
-#ifndef HAVE_GETOPT
-extern int getopt(int argc, char * const argv[], const char *optstring);
-#endif
-
 #define	streq(a,b)	(strcmp(a,b) == 0)
 #define	strneq(a,b,n)	(strncmp(a,b,n) == 0)
 
 #define	CopyField(tag, v) \
 	if (TIFFGetField(in, tag, &v)) TIFFSetField(out, tag, v)
 
-uint32	imagewidth;
-uint32	imagelength;
+uint32_t	imagewidth;
+uint32_t	imagelength;
 int	threshold = 128;
 
 static	void usage(int code);
@@ -73,8 +66,8 @@ fsdither(TIFF* in, TIFF* out)
 	short *thisline, *nextline, *tmpptr;
 	register unsigned char	*outptr;
 	register short *thisptr, *nextptr;
-	register uint32 i, j;
-	uint32 imax, jmax;
+	register uint32_t i, j;
+	uint32_t imax, jmax;
 	int lastline, lastpixel;
 	int bit;
 	tsize_t outlinesize;
@@ -160,9 +153,9 @@ fsdither(TIFF* in, TIFF* out)
 	return errcode;
 }
 
-static	uint16 compression = COMPRESSION_PACKBITS;
-static	uint16 predictor = 0;
-static	uint32 group3options = 0;
+static	uint16_t compression = COMPRESSION_PACKBITS;
+static	uint16_t predictor = 0;
+static	uint32_t group3options = 0;
 
 static void
 processG3Options(char* cp)
@@ -203,7 +196,7 @@ processCompressOptions(char* opt)
 		char* cp = strchr(opt, ':');
 		if (cp)
 			predictor = atoi(cp+1);
-		compression = COMPRESSION_DEFLATE;
+		compression = COMPRESSION_ADOBE_DEFLATE;
 	} else
 		return (0);
 	return (1);
@@ -213,11 +206,11 @@ int
 main(int argc, char* argv[])
 {
 	TIFF *in, *out;
-	uint16 samplesperpixel, bitspersample = 1, shortv;
+	uint16_t samplesperpixel, bitspersample = 1, shortv;
 	float floatv;
 	char thing[1024];
-	uint32 rowsperstrip = (uint32) -1;
-	uint16 fillorder = 0;
+	uint32_t rowsperstrip = (uint32_t) -1;
+	uint16_t fillorder = 0;
 	int c;
 #if !HAVE_DECL_OPTARG
 	extern int optind;
@@ -250,9 +243,12 @@ main(int argc, char* argv[])
 			break;
 		case 'h':
 			usage(EXIT_SUCCESS);
+                        /*NOTREACHED*/
+                        break;
 		case '?':
 			usage(EXIT_FAILURE);
 			/*NOTREACHED*/
+                        break;
 		}
 	if (argc - optind < 2)
 		usage(EXIT_FAILURE);
@@ -298,6 +294,7 @@ main(int argc, char* argv[])
 		TIFFSetField(out, TIFFTAG_GROUP3OPTIONS, group3options);
 		break;
 	case COMPRESSION_LZW:
+	case COMPRESSION_ADOBE_DEFLATE:
 	case COMPRESSION_DEFLATE:
 		if (predictor)
 			TIFFSetField(out, TIFFTAG_PREDICTOR, predictor);
@@ -309,51 +306,49 @@ main(int argc, char* argv[])
 	return (EXIT_SUCCESS);
 }
 
-static const char* usage_info[] = {
-"usage: tiffdither [options] input.tif output.tif",
-"where options are:",
-" -r #      make each strip have no more than # rows",
-" -t #      set the threshold value for dithering (default 128)",
-" -f lsb2msb    force lsb-to-msb FillOrder for output",
-" -f msb2lsb    force msb-to-lsb FillOrder for output",
-"",
+static const char usage_info[] =
+"Convert a greyscale image to bilevel using dithering\n\n"
+"usage: tiffdither [options] input.tif output.tif\n"
+"where options are:\n"
+" -r #      make each strip have no more than # rows\n"
+" -t #      set the threshold value for dithering (default 128)\n"
+" -f lsb2msb    force lsb-to-msb FillOrder for output\n"
+" -f msb2lsb    force msb-to-lsb FillOrder for output\n"
+"\n"
 #ifdef LZW_SUPPORT
-" -c lzw[:opts] compress output with Lempel-Ziv & Welch encoding",
-"    #          set predictor value",
-"    For example, -c lzw:2 for LZW-encoded data with horizontal differencing",
+" -c lzw[:opts] compress output with Lempel-Ziv & Welch encoding\n"
+"    #          set predictor value\n"
+"    For example, -c lzw:2 for LZW-encoded data with horizontal differencing\n"
 #endif
 #ifdef ZIP_SUPPORT
-" -c zip[:opts] compress output with deflate encoding",
-"    #          set predictor value",
+" -c zip[:opts] compress output with deflate encoding\n"
+"    #          set predictor value\n"
 #endif
 #ifdef PACKBITS_SUPPORT
-" -c packbits   compress output with packbits encoding",
+" -c packbits   compress output with packbits encoding\n"
 #endif
 #ifdef CCITT_SUPPORT
-" -c g3[:opts]  compress output with CCITT Group 3 encoding",
-"    Group 3 options:",
-"    1d	        use default CCITT Group 3 1D-encoding",
-"    2d	        use optional CCITT Group 3 2D-encoding",
-"    fill       byte-align EOL codes",
-"    For example, -c g3:2d:fill for G3-2D-encoded data with byte-aligned EOLs",
-" -c g4         compress output with CCITT Group 4 encoding",
+" -c g3[:opts]  compress output with CCITT Group 3 encoding\n"
+"    Group 3 options:\n"
+"    1d         use default CCITT Group 3 1D-encoding\n"
+"    2d         use optional CCITT Group 3 2D-encoding\n"
+"    fill       byte-align EOL codes\n"
+"    For example, -c g3:2d:fill for G3-2D-encoded data with byte-aligned EOLs\n"
+" -c g4         compress output with CCITT Group 4 encoding\n"
 #endif
 #if defined(LZW_SUPPORT) || defined(ZIP_SUPPORT) || defined(PACKBITS_SUPPORT) || defined(CCITT_SUPPORT)
-" -c none       use no compression algorithm on output",
+" -c none       use no compression algorithm on output\n"
 #endif
-"",
-NULL
-};
+"\n"
+;
 
 static void
 usage(int code)
 {
-	int i;
 	FILE * out = (code == EXIT_SUCCESS) ? stdout : stderr;
 
         fprintf(out, "%s\n\n", TIFFGetVersion());
-	for (i = 0; usage_info[i] != NULL; i++)
-		fprintf(out, "%s\n", usage_info[i]);
+        fprintf(out, "%s", usage_info);
 	exit(code);
 }
 

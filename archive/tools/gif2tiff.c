@@ -117,9 +117,9 @@ unsigned short green[COLSIZE];
 unsigned short blue[COLSIZE];
 char *filename, *imagename;
 
-static	uint16 compression = COMPRESSION_PACKBITS;
-static	uint16 predictor = 0;
-static	uint32 rowsperstrip = (uint32) -1;
+static	uint16_t compression = COMPRESSION_PACKBITS;
+static	uint16_t predictor = 0;
+static	uint32_t rowsperstrip = (uint32_t) -1;
 static	int processCompressOptions(char*);
 
 int	convert(void);
@@ -194,7 +194,7 @@ processCompressOptions(char* opt)
 		char* cp = strchr(opt, ':');
 		if (cp)
 			predictor = atoi(cp+1);
-		compression = COMPRESSION_DEFLATE;
+		compression = COMPRESSION_ADOBE_DEFLATE;
 	} else
 		return (0);
 	return (1);
@@ -545,8 +545,8 @@ rasterize(int interleaved, char* mode)
 	TIFFError(imagename,"Can not open output image");
 	exit(-1);
     }
-    TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, (uint32) width);
-    TIFFSetField(tif, TIFFTAG_IMAGELENGTH, (uint32) height);
+    TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, (uint32_t) width);
+    TIFFSetField(tif, TIFFTAG_IMAGELENGTH, (uint32_t) height);
     TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_PALETTE);
     TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
     TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
@@ -556,6 +556,7 @@ rasterize(int interleaved, char* mode)
     TIFFSetField(tif, TIFFTAG_COMPRESSION, compression);
     switch (compression) {
     case COMPRESSION_LZW:
+    case COMPRESSION_ADOBE_DEFLATE:
     case COMPRESSION_DEFLATE:
 	    if (predictor != 0)
 		    TIFFSetField(tif, TIFFTAG_PREDICTOR, predictor);
