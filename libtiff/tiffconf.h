@@ -17,6 +17,7 @@
 
 #ifndef _WIN32
 #include "tif_config.h"
+
 #else
 
 #ifdef __MINGW32__
@@ -75,7 +76,7 @@
 #if defined(_WIN64)
 #define TIFF_SSIZE_T signed __int64
 #else
-#define TIFF_SSIZE_T signed int
+#define TIFF_SSIZE_T signed long int
 #endif
 
 /* Signed size type formatter */
@@ -90,7 +91,7 @@
 
 /* Compatibility stuff. */
 
-/* Define as 0 or 1 according to the floating point format suported by the
+/* Define as 0 or 1 according to the floating point format supported by the
    machine */
 #define HAVE_IEEEFP 1
 
@@ -110,6 +111,9 @@
 /* Support JBIG compression (requires JBIG-KIT library) */
 /* #undef JBIG_SUPPORT */
 
+/* Support LERC compression */
+#undef LERC_SUPPORT
+
 /* Support LogLuv high dynamic range encoding */
 #define LOGLUV_SUPPORT 1
 
@@ -119,7 +123,7 @@
 /* Support NeXT 2-bit RLE algorithm */
 #define NEXT_SUPPORT 1
 
-/* Support Old JPEG compresson (read contrib/ojpeg/README first! Compilation
+/* Support Old JPEG compression (read contrib/ojpeg/README first! Compilation
    fails with unpatched IJG JPEG library) */
 /* #undef OJPEG_SUPPORT */
 
@@ -139,7 +143,7 @@
 /* #undef LIBDEFLATE_SUPPORT */
 
 /* Support strip chopping (whether or not to convert single-strip uncompressed
-   images to mutiple strips of ~8Kb to reduce memory usage) */
+   images to multiple strips of ~8Kb to reduce memory usage) */
 #define STRIPCHOP_DEFAULT TIFF_STRIPCHOP
 
 /* Enable SubIFD tag (330) support */

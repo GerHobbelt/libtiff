@@ -384,7 +384,7 @@
 #define STDC_HEADERS 1
 
 /* Support strip chopping (whether or not to convert single-strip uncompressed
-   images to mutiple strips of specified size to reduce memory usage) */
+   images to multiple strips of specified size to reduce memory usage) */
 #define STRIPCHOP_DEFAULT TIFF_STRIPCHOP
 
 /* Default size of the strip in bytes (when strip chopping enabled) */
@@ -490,7 +490,7 @@
 #define VERSION "4.2.0"
 
 /* Support webp compression */
-/* #undef WEBP_SUPPORT */
+#define WEBP_SUPPORT 1
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
