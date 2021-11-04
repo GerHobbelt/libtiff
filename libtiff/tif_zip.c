@@ -40,7 +40,7 @@
 #include "tif_predict.h"
 #include "zlib-ng.h"
 
-#if LIBDEFLATE_SUPPORT
+#ifdef LIBDEFLATE_SUPPORT
 #include "libdeflate.h"
 #endif
 #define LIBDEFLATE_MAX_COMPRESSION_LEVEL 12
@@ -69,7 +69,7 @@ typedef struct {
 	int             zipquality;            /* compression level */
 	int             state;                 /* state flags */
 	int             subcodec;              /* DEFLATE_SUBCODEC_ZLIB or DEFLATE_SUBCODEC_LIBDEFLATE */
-#if LIBDEFLATE_SUPPORT
+#ifdef LIBDEFLATE_SUPPORT
 	int             libdeflate_state;       /* -1 = until first time ZIPEncode() / ZIPDecode() is called, 0 = use zlib, 1 = use libdeflate */
 	struct libdeflate_decompressor* libdeflate_dec;
 	struct libdeflate_compressor*   libdeflate_enc;
@@ -136,7 +136,7 @@ ZIPPreDecode(TIFF* tif, uint16_t s)
 	if( (sp->state & ZSTATE_INIT_DECODE) == 0 )
             tif->tif_setupdecode( tif );
 
-#if LIBDEFLATE_SUPPORT
+#ifdef LIBDEFLATE_SUPPORT
         sp->libdeflate_state = -1;
 #endif
 	sp->stream.next_in = tif->tif_rawdata;
@@ -158,7 +158,7 @@ ZIPDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
 	assert(sp != NULL);
 	assert(sp->state == ZSTATE_INIT_DECODE);
 
-#if LIBDEFLATE_SUPPORT
+#ifdef LIBDEFLATE_SUPPORT
         if( sp->libdeflate_state == 1 )
             return 0;
 
@@ -310,7 +310,7 @@ ZIPPreEncode(TIFF* tif, uint16_t s)
 	if( sp->state != ZSTATE_INIT_ENCODE )
             tif->tif_setupencode( tif );
 
-#if LIBDEFLATE_SUPPORT
+#ifdef LIBDEFLATE_SUPPORT
         sp->libdeflate_state = -1;
 #endif
 	sp->stream.next_out = tif->tif_rawdata;
@@ -336,7 +336,7 @@ ZIPEncode(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s)
 
 	(void) s;
 
-#if LIBDEFLATE_SUPPORT
+#ifdef LIBDEFLATE_SUPPORT
         if( sp->libdeflate_state == 1 )
             return 0;
 
@@ -461,7 +461,7 @@ ZIPPostEncode(TIFF* tif)
 	ZIPState *sp = EncoderState(tif);
 	int state;
 
-#if LIBDEFLATE_SUPPORT
+#ifdef LIBDEFLATE_SUPPORT
         if( sp->libdeflate_state == 1 )
             return 1;
 #endif
@@ -510,7 +510,7 @@ ZIPCleanup(TIFF* tif)
 		sp->state = 0;
 	}
 
-#if LIBDEFLATE_SUPPORT
+#ifdef LIBDEFLATE_SUPPORT
         if( sp->libdeflate_dec )
             libdeflate_free_decompressor(sp->libdeflate_dec);
         if( sp->libdeflate_enc )
@@ -552,7 +552,7 @@ ZIPVSetField(TIFF* tif, uint32_t tag, va_list ap)
 			}
 		}
 
-#if LIBDEFLATE_SUPPORT
+#ifdef LIBDEFLATE_SUPPORT
                 if( sp->libdeflate_enc )
                 {
                     libdeflate_free_compressor(sp->libdeflate_enc);
@@ -571,7 +571,7 @@ ZIPVSetField(TIFF* tif, uint32_t tag, va_list ap)
                                  "Invalid DeflateCodec value.");
                     return 0;
                 }
-#if !LIBDEFLATE_SUPPORT
+#ifndef LIBDEFLATE_SUPPORT
                 if( sp->subcodec == DEFLATE_SUBCODEC_LIBDEFLATE )
                 {
                     TIFFErrorExt(tif->tif_clientdata, module,
@@ -656,7 +656,7 @@ TIFFInitZIP(TIFF* tif, int scheme)
 	/* Default values for codec-specific fields */
 	sp->zipquality = Z_DEFAULT_COMPRESSION;	/* default comp. level */
 	sp->state = 0;
-#if LIBDEFLATE_SUPPORT
+#ifdef LIBDEFLATE_SUPPORT
         sp->subcodec = DEFLATE_SUBCODEC_LIBDEFLATE;
 #else
         sp->subcodec = DEFLATE_SUBCODEC_ZLIB;

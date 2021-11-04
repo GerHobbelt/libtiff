@@ -44,7 +44,7 @@
  */
 #include <setjmp.h>
 
-/* Settings that are independ of libjpeg ABI. Used when reinitializing the */
+/* Settings that are independent of libjpeg ABI. Used when reinitializing the */
 /* JPEGState from libjpegs 8 bit to libjpeg 12 bits, which have potentially */
 /* different ABI */
 typedef struct {
@@ -109,6 +109,13 @@ typedef unsigned char boolean;
 #define HAVE_BOOLEAN /* prevent jmorecfg.h from redefining it */
 #endif
 
+#ifdef wxHACK_BOOLEAN
+  #include "wx/defs.h"
+  #define XMD_H 1
+  #define HAVE_BOOLEAN
+  #define boolean wxHACK_BOOLEAN
+#endif
+
 #include "jerror.h"
 #include "jpeglib.h"
 
@@ -118,9 +125,11 @@ typedef unsigned char boolean;
  */
 
 #if defined(JPEG_LIB_MK1)
-#define JPEG_LIB_MK1_OR_12BIT 1
+#  define JPEG_LIB_MK1_OR_12BIT 1
 #elif BITS_IN_JSAMPLE == 12
-#define JPEG_LIB_MK1_OR_12BIT 1
+#  define JPEG_LIB_MK1_OR_12BIT 1
+#else
+#  define JPEG_LIB_MK1_OR_12BIT 0
 #endif
 
 /*
