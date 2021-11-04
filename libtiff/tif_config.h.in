@@ -184,28 +184,6 @@
 
 /* Support Old JPEG compresson (read-only) */
 #undef OJPEG_SUPPORT
-
-/* Name of package */
-#undef PACKAGE
-
-/* Define to the address where bug reports for this package should be sent. */
-#undef PACKAGE_BUGREPORT
-
-/* Define to the full name of this package. */
-#undef PACKAGE_NAME
-
-/* Define to the full name and version of this package. */
-#undef PACKAGE_STRING
-
-/* Define to the one symbol short name of this package. */
-#undef PACKAGE_TARNAME
-
-/* Define to the home page for this package. */
-#undef PACKAGE_URL
-
-/* Define to the version of this package. */
-#undef PACKAGE_VERSION
-
 /* Support Macintosh PackBits algorithm */
 #undef PACKBITS_SUPPORT
 
@@ -244,7 +222,7 @@
 #undef STDC_HEADERS
 
 /* Support strip chopping (whether or not to convert single-strip uncompressed
-   images to mutiple strips of specified size to reduce memory usage) */
+   images to multiple strips of specified size to reduce memory usage) */
 #undef STRIPCHOP_DEFAULT
 
 /* Default size of the strip in bytes (when strip chopping enabled) */
@@ -319,11 +297,36 @@
 /* define to use win32 IO system */
 #undef USE_WIN32_FILEIO
 
+/* Name of package */
+#undef PACKAGE
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
 /* Version number of package */
 #undef VERSION
 
-/* Support webp compression */
+/* Support WEBP compression */
 #undef WEBP_SUPPORT
+
+/* Support ZSTD compression */
+#undef ZSTD_SUPPORT
+
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
