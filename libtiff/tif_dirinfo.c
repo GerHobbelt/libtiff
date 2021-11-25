@@ -532,7 +532,7 @@ _TIFFPrintFieldInfo(TIFF* tif, FILE* fd)
 }
 
 /*
- * Return size of TIFFDataType in bytes
+ * Return size of TIFFDataType within TIFF-file in bytes
  */
 int
 TIFFDataWidth(TIFFDataType type)
@@ -604,7 +604,7 @@ _TIFFDataSize(TIFFDataType type)
 
 /*
  * Rational2Double: 
- * Return size of TIFFSetGetFieldType in bytes.
+ * Return size of TIFFSetGetFieldType for internal storage in bytes.
  *
  * XXX: TIFF_RATIONAL values for FIELD_CUSTOM are stored internally as 4-byte float.
  * However, some of them should be stored internally as 8-byte double. 
@@ -621,7 +621,7 @@ _TIFFSetGetFieldSize(TIFFSetGetFieldType setgettype)
 		case TIFF_SETGET_C16_ASCII:
 		case TIFF_SETGET_C32_ASCII:
 		case TIFF_SETGET_OTHER:
-		    return 0;
+		    return 1;
 		case TIFF_SETGET_UINT8:
 		case TIFF_SETGET_SINT8:
 		case TIFF_SETGET_C0_UINT8:
