@@ -33,6 +33,8 @@ EXPORTS	TIFFAccessTagMethods
 	TIFFFieldWithName
 	TIFFFieldWithTag
 	TIFFFieldWriteCount
+	TIFFFieldSetGetSize
+	TIFFFieldSetGetCountSize
 	TIFFFileName
 	TIFFFileno
 	TIFFFindCODEC
