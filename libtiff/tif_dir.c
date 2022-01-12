@@ -1052,6 +1052,9 @@ _TIFFVGetField(TIFF* tif, uint32_t tag, va_list ap)
 			if (tif->tif_flags & TIFF_GETFIELDRETCNT) {
 				ret_val = (int)td->td_nstrips;
 			}
+			else if( td->td_stripoffset_p == NULL ) {
+				ret_val = 0;
+			}
 			break;
 		case TIFFTAG_STRIPBYTECOUNTS:
 		case TIFFTAG_TILEBYTECOUNTS:
@@ -1059,6 +1062,9 @@ _TIFFVGetField(TIFF* tif, uint32_t tag, va_list ap)
 			*va_arg(ap, const uint64_t**) = td->td_stripbytecount_p;
 			if (tif->tif_flags & TIFF_GETFIELDRETCNT) {
 				ret_val = (int)td->td_nstrips;
+			}
+			else if( td->td_stripbytecount_p == NULL ) {
+				ret_val = 0;
 			}
 			break;
 		case TIFFTAG_MATTEING:
