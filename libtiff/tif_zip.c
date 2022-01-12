@@ -266,7 +266,16 @@ ZIPDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
 		return (0);
 	}
 
-        tif->tif_rawcp = sp->stream.next_in;
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable: 4090)     // warning C4090: '=': different 'const' qualifiers
+#endif
+
+    tif->tif_rawcp = sp->stream.next_in;
+
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 
 	return (1);
 }
