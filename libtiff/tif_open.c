@@ -488,8 +488,6 @@ TIFFClientOpen(
 			 * Setup initial directory.
 			 */
 			if (TIFFReadDirectory(tif)) {
-				tif->tif_rawcc = (tmsize_t)-1;
-				tif->tif_flags |= TIFF_BUFFERSETUP;
 				return (tif);
 			}
 			break;
