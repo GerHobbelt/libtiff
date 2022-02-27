@@ -6772,7 +6772,7 @@ extractImageSection(struct image_data *image, struct pageseg *section,
 #ifdef DEVELMODE
   if (bitarray == NULL)
     {
-    if ((bitarray = (char *)malloc(img_width)) == NULL)
+    if ((bitarray = (char *)malloc(max(img_width + 4, 100))) == NULL)
       {
       TIFFError ("", "DEBUG: Unable to allocate debugging bitarray");
       return (-1);
@@ -6790,7 +6790,8 @@ extractImageSection(struct image_data *image, struct pageseg *section,
 #ifdef DEVELMODE
   sect_length = last_row - first_row + 1;
 #endif
-  img_rowsize = ((img_width * bps + 7) / 8) * spp;
+    /* Assumption: Interleaved samples and each row is padded with bits to the next byte boundary. */
+    img_rowsize = (((img_width * spp * bps) + 7) / 8);    /* row size in full bytes of source image */
   full_bytes = (sect_width * spp * bps) / 8;   /* number of COMPLETE bytes per row in section */
   trailing_bits = (sect_width * bps) % 8;
 
