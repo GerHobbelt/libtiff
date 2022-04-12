@@ -32,8 +32,8 @@ This structure looks like this:
 <pre>
 typedef	struct {
   ttag_t    field_tag;          /* field's tag */
-  short	    field_readcount;    /* read count/TIFF_VARIABLE/TIFF_VARIABLE2/TIFF_SPP */
-  short	    field_writecount;   /* write count/TIFF_VARIABLE/TIFF_VARIABLE2 */
+  short	    field_readcount;    /* read count / TIFF_VARIABLE / TIFF_VARIABLE2 / TIFF_SPP */
+  short	    field_writecount;   /* write count / TIFF_VARIABLE / TIFF_VARIABLE2 */
   TIFFDataType field_type;      /* type of associated data */
   unsigned short field_bit;     /* bit in fieldsset bit vector */
   unsigned char field_oktochange;/* if true, can change while writing */
@@ -51,9 +51,9 @@ tiff.h for each known tag. <p>
 The special value TIFF_VARIABLE (-1) indicates that a variable number of
 values may be read.  The special value TIFFTAG_SPP (-2) indicates that there
 should be one value for each sample as defined by TIFFTAG_SAMPLESPERPIXEL.  
-The special value TIFF_VARIABLE2 (-3) is presumably similar to TIFF_VARIABLE
-but the required TIFFGetField() count value has to be uint32_t* instead of uint16_t* as for TIFF_VARIABLE (-1).  
-This field is TIFF_VARIABLE for variable length ascii fields.<p>
+The special value TIFF_VARIABLE2 (-3) is similar to TIFF_VARIABLE
+but the required TIFFGetField() count value must be uint32_t* instead of uint16_t* as for TIFF_VARIABLE (-1).  
+For ASCII fields with variable length, this field is TIFF_VARIABLE.<p>
 
 <li> <b>field_writecount</b>: The number of values which should be written.
 Generally the same as field_readcount.  A few built-in exceptions exist, but
@@ -114,7 +114,7 @@ number.
 <pre>
     uint32_t count;
     void* value;  //has to be a pointer to the expected value type.
-    TIFFGetField(tif, TIFFTAG_PREDICTOR, &count, &value);
+    TIFFGetField(tif, TIFFTAG_UNKNOWN_TO_LIBTIFF, &count, &value);
 
 </pre><p>  
 
