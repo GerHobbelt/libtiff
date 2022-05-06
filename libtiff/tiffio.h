@@ -330,6 +330,7 @@ extern int TIFFFieldReadCount(const TIFFField*);
 extern int TIFFFieldWriteCount(const TIFFField*);
 extern int TIFFFieldSetGetSize(const TIFFField*);        /* returns internal storage size of TIFFSetGetFieldType in bytes. */
 extern int TIFFFieldSetGetCountSize(const TIFFField*);   /* returns size of count parameter 0=none, 2=uint16_t, 4=uint32_t */
+extern int TIFFFieldIsAnonymous(const TIFFField *);
 
 typedef int (*TIFFVSetMethod)(TIFF*, uint32_t, va_list);
 typedef int (*TIFFVGetMethod)(TIFF*, uint32_t, va_list);
