@@ -65,6 +65,7 @@ EXPORTS	TIFFAccessTagMethods
 	TIFFGetVersion
 	TIFFGetWriteProc
 	TIFFIsBigEndian
+	TIFFIsBigTIFF
 	TIFFIsByteSwapped
 	TIFFIsCODECConfigured
 	TIFFIsMSB2LSB
