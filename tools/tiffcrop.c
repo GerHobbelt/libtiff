@@ -212,6 +212,7 @@ static   char tiffcrop_rev_date[] = "27-08-2022";
 
 #define TIFF_DIR_MAX  65534
 
+
 /* To avoid mode buffer overflow */
 #define MAX_MODESTRING_LEN  9
 
@@ -932,7 +933,7 @@ static int readContigTilesIntoBuffer (TIFF* in, uint8_t* buf,
           {
 	  src_offset = trow * tile_rowsize;
           src = tilebuf + src_offset;
-	  dst_offset = (row + trow) * dst_rowsize;
+	  dst_offset = (row + trow) * (tmsize_t)dst_rowsize;
           dst = buf + dst_offset + col_offset;
           switch (shift_width)
             {
@@ -3906,11 +3907,11 @@ static int readContigStripsIntoBuffer (TIFF* in, uint8_t* buf)
                 rows = bytes_read / scanline_size;
                 if ((strip < (nstrips - 1)) && (bytes_read != (int32_t)stripsize))
                         TIFFError("", "Strip %"PRIu32": read %"PRId64" bytes, strip size %"PRIu64,
-                                  strip + 1, bytes_read, stripsize);
+                                  strip + 1, (uint64_t)bytes_read, (uint64_t)stripsize);
 
                 if (bytes_read < 0 && !ignore) {
                         TIFFError("", "Error reading strip %"PRIu32" after %"PRIu64" rows",
-                                  strip, rows);
+                                  strip, (uint64_t)rows);
                         return 0;
                 }
                 bufp += stripsize;
@@ -6341,7 +6342,7 @@ loadImage(TIFF* in, struct image_data *image, struct dump_opts *dump, unsigned c
 	exit(EXIT_FAILURE);
     }
 
-    if (buffsize < (uint32_t)(ntiles * tl * tile_rowsize))
+    if (buffsize < (tmsize_t)(ntiles * tl * tile_rowsize))
       {
       buffsize = ntiles * tl * tile_rowsize;
       if (ntiles != (buffsize / tl / tile_rowsize))
@@ -6359,12 +6360,12 @@ loadImage(TIFF* in, struct image_data *image, struct dump_opts *dump, unsigned c
     
     if (dump->infile != NULL)
       dump_info (dump->infile, dump->format, "", 
-                 "Tilesize: %"PRIu32", Number of Tiles: %"PRIu32", Tile row size: %"PRIu32,
+                 "Tilesize: %"TIFF_SSIZE_FORMAT", Number of Tiles: %"PRIu32", Tile row size: %"TIFF_SSIZE_FORMAT,
                  tlsize, ntiles, tile_rowsize);
     }
   else
     {
-    uint32_t buffsize_check;
+    tmsize_t buffsize_check;
     readunit = STRIP;
     TIFFGetFieldDefaulted(in, TIFFTAG_ROWSPERSTRIP, &rowsperstrip);
     stsize = TIFFStripSize(in);
@@ -6407,7 +6408,7 @@ loadImage(TIFF* in, struct image_data *image, struct dump_opts *dump, unsigned c
     
     if (dump->infile != NULL)
       dump_info (dump->infile, dump->format, "",
-                 "Stripsize: %"PRIu32", Number of Strips: %"PRIu32", Rows per Strip: %"PRIu32", Scanline size: %"PRIu32,
+                 "Stripsize: %"TIFF_SSIZE_FORMAT", Number of Strips: %"PRIu32", Rows per Strip: %"PRIu32", Scanline size: %"TIFF_SSIZE_FORMAT,
 		 stsize, nstrips, rowsperstrip, scanlinesize);
     }
   
@@ -6526,7 +6527,7 @@ loadImage(TIFF* in, struct image_data *image, struct dump_opts *dump, unsigned c
   if ((dump->infile != NULL) && (dump->level == 2))
     {
     dump_info  (dump->infile, dump->format, "loadImage", 
-                "Image width %"PRIu32", length %"PRIu32", Raw image data, %4"PRIu32" bytes",
+                "Image width %"PRIu32", length %"PRIu32", Raw image data, %4"TIFF_SSIZE_FORMAT" bytes",
                 width, length,  buffsize);
     dump_info  (dump->infile, dump->format, "", 
                 "Bits per sample %"PRIu16", Samples per pixel %"PRIu16, bps, spp);
