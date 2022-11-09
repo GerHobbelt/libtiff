@@ -240,7 +240,7 @@ struct offset {
  */
 
 struct  buffinfo {
-  uint64_t size;           /* size of this buffer */
+  size_t size;           /* size of this buffer */
   unsigned char *buffer; /* address of the allocated buffer */
 };
 
