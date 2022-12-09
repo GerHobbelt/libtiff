@@ -35,6 +35,22 @@ Synopsis
 
 .. c:function:: thandle_t TIFFSetClientdata(TIFF* tif, thandle_t newvalue)
 
+.. c:function:: TIFFOpenOptions* TIFFOpenOptionsAlloc(void)
+
+.. c:function:: void TIFFOpenOptionsFree(TIFFOpenOptions*);
+
+.. c:function:: void TIFFOpenOptionsSetErrorHandlerExtR(TIFFOpenOptions* opts, TIFFErrorHandlerExtR handler, void* errorhandler_user_data)
+
+.. c:function:: void TIFFOpenOptionsSetWarningHandlerExtR(TIFFOpenOptions* opts, TIFFErrorHandlerExtR handler, void* warnhandler_user_data)
+
+.. c:function:: TIFF* TIFFOpenExt(const char* filename, const char* mode, TIFFOpenOptions* opts)
+
+.. c:function:: TIFF* TIFFOpenWExt(const wchar_t* name, const char* mode, TIFFOpenOptions* opts)
+
+.. c:function:: TIFF* TIFFFdOpenExt(const int fd, const char* filename, const char*mode, TIFFOpenOptions* opts)
+
+.. c:function:: TIFF* TIFFClientOpenExt(const char* filename, const char* mode, thandle_t clientdata, TIFFReadWriteProc readproc, TIFFReadWriteProc writeproc, TIFFSeekProc seekproc, TIFFCloseProc closeproc, TIFFSizeProc sizeproc, TIFFMapFileProc mapproc, TIFFUnmapFileProc unmapproc, TIFFOpenOptions* opts)
+
 Description
 -----------
 
@@ -52,7 +68,7 @@ overwritten.
 
 If a file is opened for reading, the first TIFF directory in the file
 is automatically read (also see :c:func:`TIFFSetDirectory` for reading
-directories other than the first).
+directories other than the first). 
 If a file is opened for writing or appending, a default directory
 is automatically created for writing subsequent data.
 This directory has all the default values specified in TIFF Revision 6.0:
@@ -70,20 +86,48 @@ This directory has all the default values specified in TIFF Revision 6.0:
 To alter these values, or to define values for additional fields,
 :c:func:`TIFFSetField` must be used.
 
+A file can also be opened for reading and writing with *mode* (``r+``).
+In this case, the first TIFF directory in the file is automatically read,
+but calls to :c:func:`TIFFSetField` are put into a fresh directory, which
+will be appended when the file is closed.
+
 :c:func:`TIFFOpenW` opens a TIFF file with a Unicode filename, for read/writing.
 
 :c:func:`TIFFFdOpen` is like :c:func:`TIFFOpen` except that it opens a
 TIFF file given an open file descriptor *fd*.
 The file's name and mode must reflect that of the open descriptor.
 The object associated with the file descriptor **must support random access**.
+In order to close a TIFF file opened with :c:func:`TIFFFdOpen`
+first :c:func:`TIFFCleanup` should be called to free the internal
+TIFF structure without closing the file handle and afterwards the
+file should be closed using its file descriptor *fd*.
+
+:c:func:`TIFFOpenExt` (added in libtiff 4.5) is like :c:func:`TIFFOpen`, but options,
+such as re-entrant error and warning handlers may be passed. The opts argument
+may be NULL. Note that in the early stages of the execution of the function,
+the TIFF* argument passed to the re-entrant error handler (specified in opts)
+may be NULL.
+
+:c:func:`TIFFOpenWExt` (added in libtiff 4.5) is like :c:func:`TIFFOpenW`, but options,
+such as re-entrant error and warning handlers may be passed. The opts argument
+may be NULL. Note that in the early stages of the execution of the function,
+the TIFF* argument passed to the re-entrant error handler (specified in opts)
+may be NULL.
+
+:c:func:`TIFFFdOpenExt` (added in libtiff 4.5) is like :c:func:`TIFFFdOpen`, but options,
+such as re-entrant error and warning handlers may be passed. The opts argument
+may be NULL. Note that in the early stages of the execution of the function,
+the TIFF* argument passed to the re-entrant error handler (specified in opts)
+may be NULL.
 
 :c:func:`TIFFSetFileName` sets the file name in the tif-structure
 and returns the old file name.
 
-:c:func:`TIFFSetFileno` sets open file's I/O descriptor,
-and returns the previous value.
+:c:func:`TIFFSetFileno` overwrites a copy of the open file's I/O descriptor,
+that was saved when the TIFF file was first opened,
+and returns the previous value. See note below.
 
-:c:func:`TIFFSetMode` sets the `libtiff` open mode in the tif-structure
+:c:func:`TIFFSetMode` sets the ``libtiff`` open mode in the tif-structure
 and returns the old mode.
 
 :c:func:`TIFFClientOpen` is like :c:func:`TIFFOpen` except that the caller
@@ -98,9 +142,26 @@ memory; c.f. :c:func:`mmap` (2) and :c:func:`munmap` (2).
 The *clientdata* parameter is an opaque "handle" passed to the client-specified
 routines passed as parameters to :c:func:`TIFFClientOpen`.
 
-:c:func:`TIFFClientdata` returns open file's clientdata handle.
+:c:func:`TIFFClientdata` returns open file's clientdata handle,
+which is the real open file's I/O descriptor used by ``libtiff``.
+Note: Within tif_unix.c this handle is converted into an integer file descriptor.
 
 :c:func:`TIFFSetClientdata` sets open file's clientdata, and return previous value.
+The clientdata is used as open file's I/O descriptor within ``libtiff``.
+
+.. note::
+  *clientdata* is used as file descriptor or handle of the opened TIFF file within
+  `libtif`, whereas the file descriptor *fd* (changeable by :c:func:`TIFFSetFileno`)
+  is only set once to the value of *clientdata* converted to an integer
+  (in tif_win32.c as well as in tif_unix.c).
+  When updating the file's clientdata with :c:func:`TIFFSetClientdata`,
+  the *fd* value is **not** updated.
+
+:c:func:`TIFFClientOpenExt` (added in libtiff 4.5) is like :c:func:`TIFFClientOpen`, but options,
+such as re-entrant error and warning handlers may be passed. The opts argument
+may be NULL. Note that in the early stages of the execution of the function,
+the TIFF* argument passed to the re-entrant error handler (specified in opts)
+may be NULL.
 
 Options
 -------
