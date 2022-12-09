@@ -247,7 +247,7 @@ static void TIFFjpeg_error_exit(j_common_ptr cinfo) {
   char buffer[JMSG_LENGTH_MAX];
 
   (*cinfo->err->format_message)(cinfo, buffer);
-  TIFFErrorExt(sp->tif->tif_clientdata, "JPEGLib", "%s",
+  TIFFErrorExtR(sp->tif, "JPEGLib", "%s",
                buffer);        /* display the error message */
   jpeg_abort(cinfo);           /* clean up libjpeg state */
   LONGJMP(sp->exit_jmpbuf, 1); /* return to libtiff caller */
@@ -262,7 +262,7 @@ static void TIFFjpeg_output_message(j_common_ptr cinfo) {
   char buffer[JMSG_LENGTH_MAX];
 
   (*cinfo->err->format_message)(cinfo, buffer);
-  TIFFWarningExt(((JPEGState *)cinfo)->tif->tif_clientdata, "JPEGLib", "%s",
+  TIFFWarningExtR(((JPEGState *)cinfo)->tif, "JPEGLib", "%s",
                  buffer);
 }
 
@@ -276,8 +276,8 @@ static void TIFFjpeg_progress_monitor(j_common_ptr cinfo) {
   if (cinfo->is_decompressor) {
     const int scan_no = ((j_decompress_ptr)cinfo)->input_scan_number;
     if (scan_no >= sp->otherSettings.max_allowed_scan_number) {
-      TIFFErrorExt(
-          ((JPEGState *)cinfo)->tif->tif_clientdata,
+      TIFFErrorExtR(
+          ((JPEGState *)cinfo)->tif,
           "TIFFjpeg_progress_monitor",
           "Scan number %d exceeds maximum scans (%d). This limit "
           "can be raised through the LIBTIFF_JPEG_MAX_ALLOWED_SCAN_NUMBER "
@@ -529,7 +529,7 @@ static int TIFFjpeg_tables_dest(JPEGState *sp, TIFF *tif) {
       (void *)_TIFFmalloc((tmsize_t)sp->otherSettings.jpegtables_length);
   if (sp->otherSettings.jpegtables == NULL) {
     sp->otherSettings.jpegtables_length = 0;
-    TIFFErrorExt(sp->tif->tif_clientdata, "TIFFjpeg_tables_dest",
+    TIFFErrorExtR(sp->tif, "TIFFjpeg_tables_dest",
                  "No space for JPEGTables");
     return (0);
   }
@@ -756,7 +756,7 @@ static void JPEGFixupTagsSubsampling(TIFF *tif) {
   m.buffersize = 2048;
   m.buffer = _TIFFmalloc(m.buffersize);
   if (m.buffer == NULL) {
-    TIFFWarningExt(tif->tif_clientdata, module,
+    TIFFWarningExtR(tif, module,
                    "Unable to allocate memory for auto-correcting of "
                    "subsampling values; auto-correcting skipped");
     return;
@@ -767,8 +767,8 @@ static void JPEGFixupTagsSubsampling(TIFF *tif) {
   m.filepositioned = 0;
   m.filebytesleft = TIFFGetStrileByteCount(tif, 0);
   if (!JPEGFixupTagsSubsamplingSec(&m))
-    TIFFWarningExt(
-        tif->tif_clientdata, module,
+    TIFFWarningExtR(
+        tif, module,
         "Unable to auto-correct subsampling values, likely corrupt JPEG "
         "compressed data in first strip/tile; auto-correcting skipped");
   _TIFFfree(m.buffer);
@@ -857,7 +857,7 @@ JPEGFixupTagsSubsamplingSec(struct JPEGFixupTagsSubsamplingData *data) {
           if (!JPEGFixupTagsSubsamplingReadByte(data, &p))
             return (0);
           if (p != 0x11) {
-            TIFFWarningExt(data->tif->tif_clientdata, module,
+            TIFFWarningExtR(data->tif, module,
                            "Subsampling values inside JPEG compressed data "
                            "have no TIFF equivalent, auto-correction of TIFF "
                            "subsampling values failed");
@@ -867,16 +867,16 @@ JPEGFixupTagsSubsamplingSec(struct JPEGFixupTagsSubsamplingData *data) {
         }
         if (((ph != 1) && (ph != 2) && (ph != 4)) ||
             ((pv != 1) && (pv != 2) && (pv != 4))) {
-          TIFFWarningExt(
-              data->tif->tif_clientdata, module,
+          TIFFWarningExtR(
+              data->tif, module,
               "Subsampling values inside JPEG compressed data have no TIFF "
               "equivalent, auto-correction of TIFF subsampling values failed");
           return (1);
         }
         if ((ph != data->tif->tif_dir.td_ycbcrsubsampling[0]) ||
             (pv != data->tif->tif_dir.td_ycbcrsubsampling[1])) {
-          TIFFWarningExt(
-              data->tif->tif_clientdata, module,
+          TIFFWarningExtR(
+              data->tif, module,
               "Auto-corrected former TIFF subsampling values [%" PRIu16
               ",%" PRIu16 "] to match subsampling values inside JPEG "
               "compressed data [%" PRIu8 ",%" PRIu8 "]",
@@ -981,7 +981,7 @@ static int JPEGSetupDecode(TIFF *tif) {
   if (TIFFFieldSet(tif, FIELD_JPEGTABLES)) {
     TIFFjpeg_tables_src(sp);
     if (TIFFjpeg_read_header(sp, FALSE) != JPEG_HEADER_TABLES_ONLY) {
-      TIFFErrorExt(tif->tif_clientdata, "JPEGSetupDecode",
+      TIFFErrorExtR(tif, "JPEGSetupDecode",
                    "Bogus JPEGTables field");
       return (0);
     }
@@ -1100,7 +1100,7 @@ int TIFFJPEGIsFullStripRequired(TIFF *tif) {
   }
   if (sp->cinfo.d.image_width < segment_width ||
       sp->cinfo.d.image_height < segment_height) {
-    TIFFWarningExt(tif->tif_clientdata, module,
+    TIFFWarningExtR(tif, module,
                    "Improper JPEG strip/tile size, "
                    "expected %" PRIu32 "x%" PRIu32 ", got %ux%u",
                    segment_width, segment_height, sp->cinfo.d.image_width,
@@ -1113,7 +1113,7 @@ int TIFFJPEGIsFullStripRequired(TIFF *tif) {
     /* but their JPEG codestream has still the maximum strip */
     /* height. Warn about this as this is non compliant, but */
     /* we can safely recover from that. */
-    TIFFWarningExt(tif->tif_clientdata, module,
+    TIFFWarningExtR(tif, module,
                    "JPEG strip size exceeds expected dimensions,"
                    " expected %" PRIu32 "x%" PRIu32 ", got %ux%u",
                    segment_width, segment_height, sp->cinfo.d.image_width,
@@ -1126,7 +1126,7 @@ int TIFFJPEGIsFullStripRequired(TIFF *tif) {
      * return, some potential security issues arise. Catch this
      * case and error out.
      */
-    TIFFErrorExt(tif->tif_clientdata, module,
+    TIFFErrorExtR(tif, module,
                  "JPEG strip/tile size exceeds expected dimensions,"
                  " expected %" PRIu32 "x%" PRIu32 ", got %ux%u",
                  segment_width, segment_height, sp->cinfo.d.image_width,
@@ -1136,26 +1136,26 @@ int TIFFJPEGIsFullStripRequired(TIFF *tif) {
   if (sp->cinfo.d.num_components != (td->td_planarconfig == PLANARCONFIG_CONTIG
                                          ? td->td_samplesperpixel
                                          : 1)) {
-    TIFFErrorExt(tif->tif_clientdata, module, "Improper JPEG component count");
+    TIFFErrorExtR(tif, module, "Improper JPEG component count");
     return (0);
   }
 #ifdef JPEG_LIB_MK1
   if (12 != td->td_bitspersample && 8 != td->td_bitspersample) {
-    TIFFErrorExt(tif->tif_clientdata, module, "Improper JPEG data precision");
+    TIFFErrorExtR(tif, module, "Improper JPEG data precision");
     return (0);
   }
   sp->cinfo.d.data_precision = td->td_bitspersample;
   sp->cinfo.d.bits_in_jsample = td->td_bitspersample;
 #else
   if (sp->cinfo.d.data_precision != td->td_bitspersample) {
-    TIFFErrorExt(tif->tif_clientdata, module, "Improper JPEG data precision");
+    TIFFErrorExtR(tif, module, "Improper JPEG data precision");
     return (0);
   }
 #endif
 
   if (sp->cinfo.d.progressive_mode &&
       !sp->otherSettings.has_warned_about_progressive_mode) {
-    TIFFWarningExt(tif->tif_clientdata, module,
+    TIFFWarningExtR(tif, module,
                    "The JPEG strip/tile is encoded with progressive mode, "
                    "which is normally not legal for JPEG-in-TIFF.\n"
                    "libtiff should be able to decode it, but it might "
@@ -1190,8 +1190,8 @@ int TIFFJPEGIsFullStripRequired(TIFF *tif) {
     if (sp->cinfo.d.mem->max_memory_to_use > 0 &&
         nRequiredMemory > (toff_t)(sp->cinfo.d.mem->max_memory_to_use) &&
         getenv("LIBTIFF_ALLOW_LARGE_LIBJPEG_MEM_ALLOC") == NULL) {
-      TIFFErrorExt(
-          tif->tif_clientdata, module,
+      TIFFErrorExtR(
+          tif, module,
           "Reading this image would require libjpeg to allocate "
           "at least %" PRIu64 " bytes. "
           "This is disabled since above the %ld threshold. "
@@ -1209,7 +1209,7 @@ int TIFFJPEGIsFullStripRequired(TIFF *tif) {
     /* Component 0 should have expected sampling factors */
     if (sp->cinfo.d.comp_info[0].h_samp_factor != sp->h_sampling ||
         sp->cinfo.d.comp_info[0].v_samp_factor != sp->v_sampling) {
-      TIFFErrorExt(tif->tif_clientdata, module,
+      TIFFErrorExtR(tif, module,
                    "Improper JPEG sampling factors %d,%d\n"
                    "Apparently should be %" PRIu16 ",%" PRIu16 ".",
                    sp->cinfo.d.comp_info[0].h_samp_factor,
@@ -1221,7 +1221,7 @@ int TIFFJPEGIsFullStripRequired(TIFF *tif) {
     for (ci = 1; ci < sp->cinfo.d.num_components; ci++) {
       if (sp->cinfo.d.comp_info[ci].h_samp_factor != 1 ||
           sp->cinfo.d.comp_info[ci].v_samp_factor != 1) {
-        TIFFErrorExt(tif->tif_clientdata, module,
+        TIFFErrorExtR(tif, module,
                      "Improper JPEG sampling factors");
         return (0);
       }
@@ -1230,7 +1230,7 @@ int TIFFJPEGIsFullStripRequired(TIFF *tif) {
     /* PC 2's single component should have sampling factors 1,1 */
     if (sp->cinfo.d.comp_info[0].h_samp_factor != 1 ||
         sp->cinfo.d.comp_info[0].v_samp_factor != 1) {
-      TIFFErrorExt(tif->tif_clientdata, module,
+      TIFFErrorExtR(tif, module,
                    "Improper JPEG sampling factors");
       return (0);
     }
@@ -1302,7 +1302,7 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
 
   nrows = cc / sp->bytesperline;
   if (cc % sp->bytesperline)
-    TIFFWarningExt(tif->tif_clientdata, tif->tif_name,
+    TIFFWarningExtR(tif, tif->tif_name,
                    "fractional scanline not read");
 
   if (nrows > (tmsize_t)sp->cinfo.d.image_height)
@@ -1355,7 +1355,7 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
 
   nrows = cc / sp->bytesperline;
   if (cc % sp->bytesperline)
-    TIFFWarningExt(tif->tif_clientdata, tif->tif_name,
+    TIFFWarningExtR(tif, tif->tif_name,
                    "fractional scanline not read");
 
   if (nrows > (tmsize_t)sp->cinfo.d.image_height)
@@ -1438,7 +1438,7 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
   (void)cc;
   (void)s;
 
-  TIFFErrorExt(tif->tif_clientdata, "TIFFReadScanline",
+  TIFFErrorExtR(tif, "TIFFReadScanline",
                "scanline oriented access is not supported for downsampled JPEG "
                "compressed images, consider enabling TIFFTAG_JPEGCOLORMODE as "
                "JPEGCOLORMODE_RGB.");
@@ -1478,7 +1478,7 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
     tmpbuf = _TIFFmalloc(sizeof(unsigned short) * sp->cinfo.d.output_width *
                          sp->cinfo.d.num_components);
     if (tmpbuf == NULL) {
-      TIFFErrorExt(tif->tif_clientdata, "JPEGDecodeRaw", "Out of memory");
+      TIFFErrorExtR(tif, "JPEGDecodeRaw", "Out of memory");
       return 0;
     }
 #endif
@@ -1488,7 +1488,7 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
       int ci, clumpoffset;
 
       if (cc < sp->bytesperline) {
-        TIFFErrorExt(tif->tif_clientdata, "JPEGDecodeRaw",
+        TIFFErrorExtR(tif, "JPEGDecodeRaw",
                      "application buffer not large enough for all data.");
         goto error;
       }
@@ -1522,7 +1522,7 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
               (tmsize_t)(clumpoffset +
                          (tmsize_t)samples_per_clump * (clumps_per_line - 1) +
                          hsamp)) {
-            TIFFErrorExt(tif->tif_clientdata, "JPEGDecodeRaw",
+            TIFFErrorExtR(tif, "JPEGDecodeRaw",
                          "application buffer not large enough for all data, "
                          "possible subsampling issue");
             goto error;
@@ -1749,7 +1749,7 @@ static int JPEGSetupEncode(TIFF *tif) {
       (sp->otherSettings.jpegtablesmode & JPEGTABLESMODE_HUFF) != 0) {
     /* it has been found that mozjpeg could create corrupt strips/tiles */
     /* in non optimize_coding mode. */
-    TIFFWarningExt(tif->tif_clientdata, module,
+    TIFFWarningExtR(tif, module,
                    "mozjpeg library likely detected. Disable emission of "
                    "Huffman tables in JpegTables tag, and use optimize_coding "
                    "to avoid potential issues");
@@ -1764,12 +1764,12 @@ static int JPEGSetupEncode(TIFF *tif) {
     sp->h_sampling = td->td_ycbcrsubsampling[0];
     sp->v_sampling = td->td_ycbcrsubsampling[1];
     if (sp->h_sampling == 0 || sp->v_sampling == 0) {
-      TIFFErrorExt(tif->tif_clientdata, module,
+      TIFFErrorExtR(tif, module,
                    "Invalig horizontal/vertical sampling value");
       return (0);
     }
     if (td->td_bitspersample > 16) {
-      TIFFErrorExt(tif->tif_clientdata, module,
+      TIFFErrorExtR(tif, module,
                    "BitsPerSample %" PRIu16 " not allowed for JPEG",
                    td->td_bitspersample);
       return (0);
@@ -1797,7 +1797,7 @@ static int JPEGSetupEncode(TIFF *tif) {
     break;
   case PHOTOMETRIC_PALETTE: /* disallowed by Tech Note */
   case PHOTOMETRIC_MASK:
-    TIFFErrorExt(tif->tif_clientdata, module,
+    TIFFErrorExtR(tif, module,
                  "PhotometricInterpretation %" PRIu16 " not allowed for JPEG",
                  sp->photometric);
     return (0);
@@ -1840,7 +1840,7 @@ static int JPEGSetupEncode(TIFF *tif) {
   if (td->td_bitspersample != BITS_IN_JSAMPLE)
 #endif
   {
-    TIFFErrorExt(tif->tif_clientdata, module,
+    TIFFErrorExtR(tif, module,
                  "BitsPerSample %" PRIu16 " not allowed for JPEG",
                  td->td_bitspersample);
     return (0);
@@ -1851,13 +1851,13 @@ static int JPEGSetupEncode(TIFF *tif) {
 #endif
   if (isTiled(tif)) {
     if ((td->td_tilelength % (sp->v_sampling * DCTSIZE)) != 0) {
-      TIFFErrorExt(tif->tif_clientdata, module,
+      TIFFErrorExtR(tif, module,
                    "JPEG tile height must be multiple of %" PRIu32,
                    (uint32_t)(sp->v_sampling * DCTSIZE));
       return (0);
     }
     if ((td->td_tilewidth % (sp->h_sampling * DCTSIZE)) != 0) {
-      TIFFErrorExt(tif->tif_clientdata, module,
+      TIFFErrorExtR(tif, module,
                    "JPEG tile width must be multiple of %" PRIu32,
                    (uint32_t)(sp->h_sampling * DCTSIZE));
       return (0);
@@ -1865,7 +1865,7 @@ static int JPEGSetupEncode(TIFF *tif) {
   } else {
     if (td->td_rowsperstrip < td->td_imagelength &&
         (td->td_rowsperstrip % (sp->v_sampling * DCTSIZE)) != 0) {
-      TIFFErrorExt(tif->tif_clientdata, module,
+      TIFFErrorExtR(tif, module,
                    "RowsPerStrip must be multiple of %" PRIu32 " for JPEG",
                    (uint32_t)(sp->v_sampling * DCTSIZE));
       return (0);
@@ -1949,7 +1949,7 @@ static int JPEGPreEncode(TIFF *tif, uint16_t s) {
     segment_height = TIFFhowmany_32(segment_height, sp->v_sampling);
   }
   if (segment_width > 65535 || segment_height > 65535) {
-    TIFFErrorExt(tif->tif_clientdata, module, "Strip/tile too large for JPEG");
+    TIFFErrorExtR(tif, module, "Strip/tile too large for JPEG");
     return (0);
   }
   sp->cinfo.c.image_width = segment_width;
@@ -2056,7 +2056,7 @@ static int JPEGEncode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
   /* data is expected to be supplied in multiples of a scanline */
   nrows = cc / sp->bytesperline;
   if (cc % sp->bytesperline)
-    TIFFWarningExt(tif->tif_clientdata, tif->tif_name,
+    TIFFWarningExtR(tif, tif->tif_name,
                    "fractional scanline discarded");
 
   /* The last strip will be limited to image size */
@@ -2067,7 +2067,7 @@ static int JPEGEncode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
     line16_count = (int)((sp->bytesperline * 2) / 3);
     line16 = (short *)_TIFFmalloc(sizeof(short) * line16_count);
     if (!line16) {
-      TIFFErrorExt(tif->tif_clientdata, "JPEGEncode",
+      TIFFErrorExtR(tif, "JPEGEncode",
                    "Failed to allocate memory");
 
       return 0;
@@ -2138,7 +2138,7 @@ static int JPEGEncodeRaw(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
 
   nrows = (cc / bytesperclumpline) * sp->v_sampling;
   if (cc % bytesperclumpline)
-    TIFFWarningExt(tif->tif_clientdata, tif->tif_name,
+    TIFFWarningExtR(tif, tif->tif_name,
                    "fractional scanline discarded");
 
   /* Cb,Cr both have sampling factors 1, so this is correct */
@@ -2508,7 +2508,7 @@ int TIFFInitJPEG(TIFF *tif, int scheme) {
    * Merge codec-specific tag information.
    */
   if (!_TIFFMergeFields(tif, jpegFields, TIFFArrayCount(jpegFields))) {
-    TIFFErrorExt(tif->tif_clientdata, "TIFFInitJPEG",
+    TIFFErrorExtR(tif, "TIFFInitJPEG",
                  "Merging JPEG codec-specific tags failed");
     return 0;
   }
@@ -2519,7 +2519,7 @@ int TIFFInitJPEG(TIFF *tif, int scheme) {
   tif->tif_data = (uint8_t *)_TIFFmalloc(sizeof(JPEGState));
 
   if (tif->tif_data == NULL) {
-    TIFFErrorExt(tif->tif_clientdata, "TIFFInitJPEG",
+    TIFFErrorExtR(tif, "TIFFInitJPEG",
                  "No space for JPEG state block");
     return 0;
   }
@@ -2560,7 +2560,7 @@ int TIFFInitJPEG(TIFF *tif, int scheme) {
     if (sp->otherSettings.jpegtables) {
       _TIFFmemset(sp->otherSettings.jpegtables, 0, SIZE_OF_JPEGTABLES);
     } else {
-      TIFFErrorExt(tif->tif_clientdata, "TIFFInitJPEG",
+      TIFFErrorExtR(tif, "TIFFInitJPEG",
                    "Failed to allocate memory for JPEG tables");
       return 0;
     }
