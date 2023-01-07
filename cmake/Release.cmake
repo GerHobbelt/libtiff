@@ -23,9 +23,30 @@
 # OF THIS SOFTWARE.
 
 
-add_custom_target(tiff_release
-        COMMAND ${CMAKE_COMMAND}
-        "-DSOURCE_DIR:PATH=${PROJECT_SOURCE_DIR}"
-        "-DLIBTIFF_VERSION=${PROJECT_VERSION}"
-        -P "${CMAKE_CURRENT_LIST_DIR}/ReleaseScript.cmake"
-        COMMENT "Releasing ${PROJECT_NAME} ${PROJECT_VERSION}")
+# Update version information in root files only when configure.ac has changed.
+
+# Note: Single command "cmake --build . --target tiff_release"
+#       does not work correctly, because version information is taken from CMakeCache.txt,
+#       because AutotoolsVersion.cmake is not executed then. 
+
+add_custom_command(
+	OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/VERSION
+	${CMAKE_CURRENT_SOURCE_DIR}/RELEASE-DATE
+	COMMAND ${CMAKE_COMMAND}
+	"-DSOURCE_DIR:PATH=${PROJECT_SOURCE_DIR}"
+	"-DLIBTIFF_VERSION=${PROJECT_VERSION}"
+	"-DLIBTIFF_RELEASE_DATE=${LIBTIFF_RELEASE_DATE}"
+	"-DLIBTIFF_MAJOR_VERSION=${LIBTIFF_MAJOR_VERSION}"
+	"-DLIBTIFF_MINOR_VERSION=${LIBTIFF_MINOR_VERSION}"
+	"-DLIBTIFF_MICRO_VERSION=${LIBTIFF_MICRO_VERSION}"
+	"-DLIBTIFF_BASIC_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
+	"-DLIBTIFF_BASIC_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+	-P "${CMAKE_CURRENT_LIST_DIR}/ReleaseScript.cmake"
+	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configure.ac
+    COMMENT "== Update release version information from configure.ac: ${PROJECT_NAME} ${PROJECT_VERSION} ${LIBTIFF_RELEASE_DATE}")
+
+add_custom_target(tiff_release ALL 
+	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/VERSION
+	${CMAKE_CURRENT_SOURCE_DIR}/RELEASE-DATE
+)
+

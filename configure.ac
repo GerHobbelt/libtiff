@@ -1185,6 +1185,7 @@ AC_CONFIG_FILES([Makefile \
 		 libtiff/Makefile \
 		 port/Makefile \
 		 test/Makefile \
+		 libtiff/tiffvers.h \
 		 tools/Makefile \
 		 tools/unsupported/Makefile])
 AC_OUTPUT

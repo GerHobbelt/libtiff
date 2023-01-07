@@ -22,11 +22,19 @@
 # LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 # OF THIS SOFTWARE.
 
-string(TIMESTAMP LIBTIFF_RELEASE_DATE "%Y%m%d")
 
+
+# Update version information in all relevant files
 message(STATUS "Setting release version to ${LIBTIFF_VERSION}")
 message(STATUS "Setting release date to ${LIBTIFF_RELEASE_DATE}")
 
-configure_file("${SOURCE_DIR}/libtiff/tiffvers.h.cmake.in"
-        "${SOURCE_DIR}/libtiff/tiffvers.h"
-        @ONLY)
+# Only needed here, for manual build of tiff_release
+# because otherwise generated when building all targets.
+configure_file(${LIBTIFF_BASIC_SOURCE_DIR}/libtiff/tiffvers.h.cmake.in
+               ${LIBTIFF_BASIC_BINARY_DIR}/libtiff/tiffvers.h
+               @ONLY)
+
+# Write versioninfo and release date to root files when configure.ac has been updated.
+FILE(WRITE ${LIBTIFF_BASIC_SOURCE_DIR}/VERSION "${LIBTIFF_VERSION}" \n) 
+FILE(WRITE ${LIBTIFF_BASIC_SOURCE_DIR}/RELEASE-DATE "${LIBTIFF_RELEASE_DATE}" \n)
+

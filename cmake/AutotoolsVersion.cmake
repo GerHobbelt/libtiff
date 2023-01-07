@@ -40,6 +40,9 @@ endforeach()
 set(LIBTIFF_VERSION "${LIBTIFF_MAJOR_VERSION}.${LIBTIFF_MINOR_VERSION}.${LIBTIFF_MICRO_VERSION}")
 set(LIBTIFF_VERSION_FULL "${LIBTIFF_VERSION}${LIBTIFF_ALPHA_VERSION}")
 
+# Package date
+string(TIMESTAMP LIBTIFF_RELEASE_DATE "%Y%m%d")
+
 # Convert the libtool version variables to proper major and minor versions
 math(EXPR SO_MAJOR "${LIBTIFF_CURRENT} - ${LIBTIFF_AGE}")
 set(SO_MINOR "${LIBTIFF_AGE}")
