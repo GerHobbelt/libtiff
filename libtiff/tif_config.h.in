@@ -318,6 +318,9 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
+/* Maximum number of TIFF IFDs that libtiff can iterate through in a file. */
+#undef TIFF_MAX_DIR_COUNT
+
 /* Version number of package */
 #undef VERSION
 
