@@ -22,6 +22,7 @@
  * OF THIS SOFTWARE.
  */
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,8 +32,8 @@
 
 #include "tiffio.h"
 
-typedef unsigned char unsigned char;
-typedef unsigned long uint32_t;
+//typedef unsigned char unsigned char;
+//typedef unsigned long uint32_t;
 
 #define streq(a, b) (strcmp(a, b) == 0)
 #define strneq(a, b, n) (strncmp(a, b, n) == 0)

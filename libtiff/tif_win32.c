@@ -27,6 +27,8 @@
  * Scott Wagner (wagner@itek.com), Itek Graphix, Rochester, NY USA
  */
 
+#if defined(_WIN32)
+
 #include "tiffiop.h"
 #include <stdlib.h>
 
@@ -490,3 +492,5 @@ Win32ErrorHandler(const char* module, const char* fmt, va_list ap)
 TIFFErrorHandler _TIFFerrorHandler = Win32ErrorHandler;
 
 #endif /* ndef _WIN32_WCE */
+
+#endif

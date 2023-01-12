@@ -1,3 +1,11 @@
+#ifndef _TIF_IMAGEITER_H_
+#define _TIF_IMAGEITER_H_
+
+#include <stdint.h>
+#include "tiffio.h"
+
+typedef unsigned char u_char;
+
 typedef struct _TIFFImageIter TIFFImageIter;
 
 /* The callback function is called for each "block" of image pixel data after
@@ -49,3 +57,5 @@ struct _TIFFImageIter
         ImageIterTileSeparateRoutine separate;
     } callback; /* fn to exec for each block */
 };
+
+#endif

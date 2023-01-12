@@ -43,6 +43,12 @@ OF THIS SOFTWARE.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+
+#ifndef EDQUOT
+#define EDQUOT ENOMEM
+#endif
+
 
 /*
 --------------------------------------------------------------------------------

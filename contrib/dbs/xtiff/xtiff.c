@@ -52,6 +52,9 @@
  *
  * Only TIFFTAG_BITSPERSAMPLE values that are 1, 2, 4 or 8 are supported.
  */
+
+#if !defined(_WIN32)
+
 #include <X11/Intrinsic.h>
 #include <X11/Shell.h>
 #include <X11/StringDefs.h>
@@ -1343,3 +1346,5 @@ void Usage()
     fprintf(stderr, "\t[-verbose (True | False)]\n");
     exit(0);
 }
+
+#endif

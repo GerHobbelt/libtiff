@@ -29,6 +29,8 @@
 
 #include <tif_config.h>
 
+#if !defined(_WIN32)
+
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -368,3 +370,5 @@ static void unixErrorHandler(const char *module, const char *fmt, va_list ap)
     fprintf(stderr, ".\n");
 }
 TIFFErrorHandler _TIFFerrorHandler = unixErrorHandler;
+
+#endif

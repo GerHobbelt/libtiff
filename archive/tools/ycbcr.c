@@ -1,35 +1,43 @@
-float ycbcrCoeffs[3] = {.299, .587, .114};
+#include <stdio.h>
+#include <stdlib.h>
+#include "tiffio.h"
+
+static float ycbcrCoeffs[3] = {.299, .587, .114};
 /* default coding range is CCIR Rec 601-1 with no headroom/footroom */
-unsigned long refBlackWhite[6] = {0, 255, 128, 255, 128, 255};
+static unsigned long refBlackWhite[6] = {0, 255, 128, 255, 128, 255};
 
 #define LumaRed ycbcrCoeffs[0]
 #define LumaGreen ycbcrCoeffs[1]
 #define LumaBlue ycbcrCoeffs[2]
 
-long eRtotal = 0;
-long eGtotal = 0;
-long eBtotal = 0;
-long preveRtotal = 0;
-long preveGtotal = 0;
-long preveBtotal = 0;
-unsigned long AbseRtotal = 0;
-unsigned long AbseGtotal = 0;
-unsigned long AbseBtotal = 0;
-unsigned long eCodes = 0;
-unsigned long preveCodes = 0;
-unsigned long eBits = 0;
-unsigned long preveBits = 0;
+static long eRtotal = 0;
+static long eGtotal = 0;
+static long eBtotal = 0;
+static long preveRtotal = 0;
+static long preveGtotal = 0;
+static long preveBtotal = 0;
+static unsigned long AbseRtotal = 0;
+static unsigned long AbseGtotal = 0;
+static unsigned long AbseBtotal = 0;
+static unsigned long eCodes = 0;
+static unsigned long preveCodes = 0;
+static unsigned long eBits = 0;
+static unsigned long preveBits = 0;
 
-static void setupLumaTables();
-static int abs(int v) { return (v < 0 ? -v : v); }
-static double pct(int v, double range) { return (v * 100. / range); }
+static	void setupLumaTables();
+// static int abs(int v) { return (v < 0 ? -v : v); }      // error C2169: 'abs': intrinsic function, cannot be defined
+static double pct(int v,double range) { return (v*100. / range); }
 static void check(int R, int G, int B);
 
-float D1, D2;
-float D3, D4;
-float D5, D6;
+static float D1, D2;
+static float D3, D4;
+static float D5, D6;
 
-int main(int argc, char **argv)
+#if defined(BUILD_MONOLITHIC)
+#define main		tiff_ycbcr_main
+#endif
+
+int main(int argc, const char **argv)
 {
     int R, G, B;
 

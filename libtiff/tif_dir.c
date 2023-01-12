@@ -1913,7 +1913,6 @@ TIFFSetSubDirectory(TIFF* tif, uint64_t diroff)
 	tif->tif_nextdiroff = diroff;
 	retval = TIFFReadDirectory(tif);
 	/* If failed, curdir was not incremented in TIFFReadDirectory(), so set it back. */
-     * back. */
     if (!retval)
     {
         if (tif->tif_curdir == TIFF_NON_EXISTENT_DIR_NUMBER)
