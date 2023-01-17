@@ -339,7 +339,7 @@ TIFFOpenWExt(const wchar_t* name, const char* mode, TIFFOpenOptions* opts)
 
 	switch(m) {
 		case O_RDONLY:			dwMode = OPEN_EXISTING; break;
-		case O_RDWR:			dwMode = OPEN_ALWAYS;   break;
+		case O_RDWR:			dwMode = OPEN_EXISTING;   break;
 		case O_RDWR|O_CREAT:		dwMode = OPEN_ALWAYS;   break;
 		case O_RDWR|O_TRUNC:		dwMode = CREATE_ALWAYS; break;
 		case O_RDWR|O_CREAT|O_TRUNC:	dwMode = CREATE_ALWAYS; break;
