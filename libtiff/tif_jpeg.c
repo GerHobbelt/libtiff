@@ -336,7 +336,7 @@ static int TIFFjpeg_create_compress(JPEGState *sp) {
   sp->err.output_message = TIFFjpeg_output_message;
 
   /* set client_data to avoid UMR warning from tools like Purify */
-  sp->cinfo.c.client_data = NULL;
+  sp->cinfo.c.client_data_ref = NULL;
 
   return CALLVJPEG(sp, jpeg_create_compress(&sp->cinfo.c));
 }
@@ -348,7 +348,7 @@ static int TIFFjpeg_create_decompress(JPEGState *sp) {
   sp->err.output_message = TIFFjpeg_output_message;
 
   /* set client_data to avoid UMR warning from tools like Purify */
-  sp->cinfo.d.client_data = NULL;
+  sp->cinfo.d.client_data_ref = NULL;
 
   return CALLVJPEG(sp, jpeg_create_decompress(&sp->cinfo.d));
 }
