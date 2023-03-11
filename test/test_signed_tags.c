@@ -21,7 +21,27 @@
  * OF THIS SOFTWARE.
  */
 
+/* ===========  Purpose ===============================================
+ * Tests the following points:
+ *
+ *  - Handling of signed tags
+ *
+ *  - Definition of additional, user-defined tags
+ *
+ *  - Immediate clearing of the memory for the definition of the additional tags
+ *    (allocate memmory for TIFFFieldInfo structure and free that memory
+ *     immediately after calling TIFFMergeFieldInfo().
+ *
+ *  - Specification of field name strings or with field_name = NULL
+ *
+ *  - Reading anonymous (unknown) tags
+ *
+ *  - Prevent reading anonymous tags by specifying them as FIELD_IGNORE
+ */
+
+#include <memory.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "tif_config.h" /* necessary for linux compiler to get HAVE_UNISTD_H */
 #ifdef HAVE_UNISTD_H
@@ -89,6 +109,53 @@ static void extender(TIFF *tif)
 {
     TIFFMergeFieldInfo(tif, tiff_field_info,
                        sizeof(tiff_field_info) / sizeof(tiff_field_info[0]));
+    if (parent)
+    {
+        (*parent)(tif);
+    }
+}
+
+/* Second TagExtender for allocating TIFFFieldInfo structure and generating
+ * anonymous tags and ignored tags. */
+static void extender2(TIFF *tif)
+{
+    const size_t count = 3;
+    TIFFFieldInfo *ignore_field_info;
+
+    /* Define an empty (or non empty) static string to be passed as field_name,
+     * which must not be NULL. */
+    static const char *string_static_empty = "";
+
+    /* Allocate memory for tags definition. */
+    ignore_field_info =
+        (TIFFFieldInfo *)malloc(count * sizeof(*ignore_field_info));
+    if (ignore_field_info == (TIFFFieldInfo *)NULL)
+    {
+        fprintf(stdout,
+                "Can't allocate memoy for ignore_field_info structure.\n");
+        return;
+    }
+    /*
+     * This also sets field_bit to 0 (FIELD_IGNORE),
+     * and field_name = NULL.
+     * Not all written tag numbers are copied getting anonymous tags.
+     */
+    (void)memset(ignore_field_info, 0, count * sizeof(*ignore_field_info));
+
+    /* defined tag */
+    ignore_field_info[0] = tiff_field_info[0];
+    /* ignored tag for reading test */
+    ignore_field_info[1].field_tag = tiff_field_info[1].field_tag;
+    ignore_field_info[1].field_name = (char *)string_static_empty;
+    /* FIELD_CUSTOM  to be printed with  field_name. */
+    ignore_field_info[2] = tiff_field_info[5];
+    ignore_field_info[2].field_name = (char *)string_static_empty;
+
+    /* rest is anonymous */
+
+    (void)TIFFMergeFieldInfo(tif, ignore_field_info, (uint32_t)count);
+    free(ignore_field_info);
+
     if (parent)
     {
         (*parent)(tif);
@@ -507,8 +574,117 @@ failure:
     return (retcode);
 }
 
+/* Second readTestTiff to check anonymous tags reading etc. */
+static int readTestTiff2(const char *szFileName, int isBigTiff)
+{
+    int ret;
+    int i;
+    int8_t s8l, *s8p;
+    int16_t s16l;
+    int32_t s32l;
+    uint32_t count32;
+    void *voidPtr;
+    int retcode = FAULT_RETURN;
+
+    fprintf(stdout, "-- Reading signed, anonymous and ignored values ...\n");
+    TIFF *tif = TIFFOpen(szFileName, "r");
+    if (!tif)
+    {
+        fprintf(stdout, "Can't open test TIFF file %s.\n", szFileName);
+        return (FAULT_RETURN);
+    }
+
+    /* Read normal defined tag. */
+    ret = TIFFGetField(tif, SINT8, &s8l);
+    if (ret != 1)
+    {
+        fprintf(stdout, "Error reading SINT8: ret=%d\n", ret);
+        GOTOFAILURE
+    }
+    else
+    {
+        if (s8l != s8[idxSingle])
+        {
+            fprintf(stdout,
+                    "Read value of SINT8  %d differs from set value %d\n", s8l,
+                    s8[idxSingle]);
+            GOTOFAILURE
+        }
+    }
+    /* Try to read ignored tag, which should fail! */
+    ret = TIFFGetField(tif, SINT16, &s16l);
+    if (ret != 0)
+    {
+        fprintf(stdout,
+                "Error: Could read ignored tag SINT16: ret=%d value=%d "
+                "expected=%d\n",
+                ret, s16l, s16[idxSingle]);
+        GOTOFAILURE
+    }
+
+    /* Reading anonymous single value tag as variable C32_array. */
+    ret = TIFFGetField(tif, SINT32, &count32, &voidPtr);
+    if (ret != 1)
+    {
+        fprintf(stdout, "Error reading SINT32 as anonymous tag: ret=%d\n", ret);
+        GOTOFAILURE
+    }
+    else
+    {
+        s32l = *(int32_t *)voidPtr;
+        if (s32l != s32[idxSingle])
+        {
+            fprintf(stdout,
+                    "Read value of SINT32  %d differs from set value %d\n",
+                    s32l, s32[idxSingle]);
+            GOTOFAILURE
+        }
+    }
+
+    /* Reading anonymous int-array tag as variable C32_array. */
+    ret = TIFFGetField(tif, C0_SINT8, &count32, &voidPtr);
+    if (ret != 1)
+    {
+        fprintf(stdout, "Error reading C0_SINT8 as anonymous tag: ret=%d\n",
+                ret);
+        GOTOFAILURE
+    }
+    else if (count32 != N(s8))
+    {
+        fprintf(stdout,
+                "Error of number of elements at reading C0_SINT8 as anonymous "
+                "tag: ret=%d, count=%d, expected count=%d \n",
+                ret, count32, (uint32_t)N(s8));
+        GOTOFAILURE
+    }
+    s8p = (int8_t *)voidPtr;
+    for (i = 0; i < (int)count32; i++)
+    {
+        if (s8p[i] != s8[i])
+        {
+            fprintf(stdout,
+                    "Anonymous tag: Read value %d of C0_SINT8-Array %d differs "
+                    "from set value "
+                    "%d\n",
+                    i, s8p[i], s8[i]);
+            GOTOFAILURE
+        }
+    }
+
+    fprintf(stdout, "PrintDirectory after open with anonymous tags.\n");
+    TIFFPrintDirectory(tif, stdout, 0);
+
+    retcode = OK_RETURN;
+failure:
+
+    fprintf(stdout, "-- End of test. Closing TIFF file. --\n");
+    TIFFClose(tif);
+    return (retcode);
+}
+
 int main(void)
 {
+    /* Signed tags test */
     parent = TIFFSetTagExtender(&extender);
     if (writeTestTiff("temp.tif", 0) != OK_RETURN)
         return (-1);
@@ -520,6 +696,18 @@ int main(void)
     if (readTestTiff("tempBig.tif", 1) != OK_RETURN)
         return (-1);
     unlink("tempBig.tif");
-    fprintf(stdout, "---------- Test finished OK -----------\n");
+    fprintf(stdout, "---------- Signed tag test finished OK -----------\n");
+
+    /* Test of anonymous tags and other use cases. */
+    if (writeTestTiff("temp2.tif", 1) != OK_RETURN)
+        return (-1);
+    /* Now change defined tags to set some as anonymous and ignored. */
+    (void)TIFFSetTagExtender(&extender2);
+    if (readTestTiff2("temp2.tif", 1) != OK_RETURN)
+        return (-1);
+    unlink("temp2.tif");
+    fprintf(stdout, "---------- Anonymous and field_name=NULL tag test "
+                    "finished OK -----------\n");
+
     return 0;
 }
