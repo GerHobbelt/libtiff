@@ -3890,8 +3890,11 @@ TIFFReadDirectory(TIFF* tif)
         int color_channels;
 
 	if (tif->tif_nextdiroff == 0) {
-		/* In this special case, tif_diroff needs also to be set to 0. */
+        /* In this special case, tif_diroff needs also to be set to 0.
+         * Furthermore, TIFFSetDirectory() needs to be switched to
+         * absolute stepping. */
 		tif->tif_diroff = tif->tif_nextdiroff;
+        tif->tif_setdirectory_force_absolute = TRUE;
 		return 0;           /* last offset, thus no checking necessary */
 	}
 
@@ -4871,6 +4874,8 @@ TIFFReadCustomDirectory(TIFF* tif, toff_t diroff,
 			} /*-- if (!dp->tdir_ignore) */
 		}
 	}
+    /* To be able to return from SubIFD or custom-IFD to main-IFD */
+    tif->tif_setdirectory_force_absolute = TRUE;
 	if (dir)
 		_TIFFfreeExt(tif, dir);
 	return 1;
