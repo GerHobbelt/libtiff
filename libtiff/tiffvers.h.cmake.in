@@ -22,6 +22,7 @@
 #define TIFFLIB_MAJOR_VERSION @LIBTIFF_MAJOR_VERSION@
 #define TIFFLIB_MINOR_VERSION @LIBTIFF_MINOR_VERSION@
 #define TIFFLIB_MICRO_VERSION @LIBTIFF_MICRO_VERSION@
+#define TIFFLIB_VERSION_STR_MAJ_MIN_MIC "@LIBTIFF_VERSION@"
 
 /* Macro added in 4.5.0. Returns TRUE if the current libtiff version is
  * greater or equal to major.minor.micro
