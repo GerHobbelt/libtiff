@@ -35,7 +35,6 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 # Read version information from configure.ac.
 include(AutotoolsVersion)
 message(STATUS "Building tiff version ${LIBTIFF_VERSION_FULL}")
-string(TIMESTAMP LIBTIFF_BUILD_DATE "%Y%m%d")
 
 # Project definition
 set(CMAKE_C_STANDARD 99)
@@ -171,7 +170,6 @@ endif()
 message(STATUS "  Libtiff build version:       ${LIBTIFF_VERSION_FULL}")
 message(STATUS "  Libtiff library version:     ${SO_VERSION}")
 message(STATUS "  Libtiff release date:        ${LIBTIFF_RELEASE_DATE}")
-message(STATUS "  Libtiff build date:          ${LIBTIFF_BUILD_DATE}")
 message(STATUS "")
 message(STATUS "  Installation directory:             ${prefix}")
 message(STATUS "  Documentation directory:            ${LIBTIFF_DOCDIR}")
