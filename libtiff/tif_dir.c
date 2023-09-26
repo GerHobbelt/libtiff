@@ -160,10 +160,10 @@ static uint16_t
 countInkNamesString(TIFF *tif, uint32_t slen, const char *s)
 {
 	uint16_t i = 0;
-	const char *ep = s + slen;
-	const char *cp = s;
 
 	if (slen > 0) {
+        const char *ep = s + slen;
+        const char *cp = s;
 		do {
 			for (; cp < ep && *cp != '\0'; cp++) {}
 			if (cp >= ep)
