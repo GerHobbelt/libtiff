@@ -364,8 +364,12 @@ TIFFClientOpenExt(
 				    FILLORDER_LSB2MSB;
 				break;
 			case 'H':
-				tif->tif_flags = (tif->tif_flags &~ TIFF_FILLORDER) |
-				    HOST_FILLORDER;
+                TIFFWarningExtR(tif, name,
+                                "H(ost) mode is deprecated. Since "
+                                "libtiff 4.5.1, it is an alias of 'B' / "
+                                "FILLORDER_MSB2LSB.");
+                tif->tif_flags =
+                    (tif->tif_flags & ~TIFF_FILLORDER) | FILLORDER_MSB2LSB;
 				break;
 			case 'M':
 				if (m == O_RDONLY)
