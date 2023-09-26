@@ -860,9 +860,8 @@ TIFFFieldWithTag(TIFF* tif, uint32_t tag)
 {
 	const TIFFField* fip = TIFFFindField(tif, tag, TIFF_ANY);
 	if (!fip) {
-		TIFFErrorExtR(tif, "TIFFFieldWithTag",
-			     "Internal error, unknown tag 0x%x",
-			     (unsigned int) tag);
+        TIFFWarningExtR(tif, "TIFFFieldWithTag", "Warning, unknown tag 0x%x",
+                        (unsigned int)tag);
 	}
 	return (fip);
 }
@@ -873,8 +872,8 @@ TIFFFieldWithName(TIFF* tif, const char *field_name)
 	const TIFFField* fip =
 		_TIFFFindFieldByName(tif, field_name, TIFF_ANY);
 	if (!fip) {
-		TIFFErrorExtR(tif, "TIFFFieldWithName",
-			     "Internal error, unknown tag %s", field_name);
+        TIFFWarningExtR(tif, "TIFFFieldWithName", "Warning, unknown tag %s",
+                        field_name);
 	}
 	return (fip);
 }
