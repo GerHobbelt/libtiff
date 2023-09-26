@@ -136,6 +136,7 @@ typedef unsigned char boolean;
  */
 
 #if defined(HAVE_JPEGTURBO_DUAL_MODE_8_12)
+#  undef JPEG_DUAL_MODE_8_12
 #  define JPEG_DUAL_MODE_8_12
 /* Start by undefining BITS_IN_JSAMPLE which is always set to 8 in libjpeg-turbo >= 2.2
  * Cf https://github.com/libjpeg-turbo/libjpeg-turbo/commit/8b9bc4b9635a2a047fb23ebe70c9acd728d3f99b */
