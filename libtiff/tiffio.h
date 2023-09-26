@@ -255,6 +255,12 @@ typedef struct {
 	TIFFInitMethod init;
 } TIFFCodec;
 
+typedef struct
+{
+    uint32_t uNum;
+    uint32_t uDenom;
+} TIFFRational_t;
+
 #include <stdio.h>
 #include <stdarg.h>
 
