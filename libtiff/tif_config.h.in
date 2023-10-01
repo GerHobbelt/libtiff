@@ -294,23 +294,15 @@
 /* Define to the full name of this package. */
 #undef PACKAGE_NAME
 
-/* Define to the full name and version of this package. */
-#undef PACKAGE_STRING
-
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME
 
 /* Define to the home page for this package. */
 #undef PACKAGE_URL
 
-/* Define to the version of this package. */
-#undef PACKAGE_VERSION
-
 /* Maximum number of TIFF IFDs that libtiff can iterate through in a file. */
 #undef TIFF_MAX_DIR_COUNT
 
-/* Version number of package */
-#undef VERSION
 
 /* Support WEBP compression */
 #undef WEBP_SUPPORT

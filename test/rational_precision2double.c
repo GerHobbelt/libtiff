@@ -267,16 +267,16 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 	double			auxDouble = 0.0;
 	uint16_t			auxUint16 = 0;
 	uint32_t			auxUint32 = 0;
-	long			auxLong = 0;
+    int32_t auxInt32 = 0;
 	void* pVoid;
 	int				blnIsRational2Double;
 
 	int		i, j;
-	long	nTags;
+    int32_t nTags;
 
 	const TIFFFieldArray* tFieldArray;
 	const TIFFField** tifFields;          /* actual field info */
-	unsigned long			tTag;
+    uint32_t tTag;
 	TIFFDataType			tType;
 	short					tWriteCount;
 	TIFFSetGetFieldType		tSetFieldType;
@@ -302,11 +302,11 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 	/* -- Variables for reading -- */
 	uint16_t      count16 = 0;
 	union {
-		long		Long;
+        int32_t Int32;
 		short		Short1;
 		short		Short2[2];
 		char		Char[4];
-	} auxLongUnion;
+    } auxInt32Union;
 	union {
 		double	dbl;
 		float	flt1;
@@ -925,24 +925,24 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 									break;
 								}
 								/* set tWriteCount to number of read samples for next steps */
-								auxLong = tWriteCount;
+                                auxInt32 = tWriteCount;
 							} else {
 								/* Special treatment of variable array. */
 								/* Dependent on Cxx, the count parameter is char, short or long. Therefore use unionLong! */
-								if (!TIFFGetField(tif, tTag, &auxLongUnion, &pVoidArray)) {
+                                if (!TIFFGetField(tif, tTag, &auxLongUnion,
 									fprintf(stderr, "Can't read %s\n", tFieldArray->fields[i].field_name);
 									GOTOFAILURE
 									break;
 								}
 								/* set tWriteCount to number of read samples for next steps */
-								auxLong = auxLongUnion.Short1;
+                                auxInt32 = auxInt32Union.Short1;
 							}
 							/* Save values from temporary array */
 							if (tSetFieldType == TIFF_SETGET_C0_FLOAT || tSetFieldType == TIFF_SETGET_C16_FLOAT || tSetFieldType == TIFF_SETGET_C32_FLOAT) {
-								memcpy(&auxFloatArray, pVoidArray, (auxLong * sizeof(auxFloatArray[0])));
+                                       (auxLong * sizeof(auxFloatArray[0])));
 								/* compare read values with written ones */
 								if (tType == TIFF_RATIONAL || tType == TIFF_SRATIONAL) dblDiffLimit = RATIONAL_EPS * auxDoubleArrayW[i]; else dblDiffLimit = 1e-6;
-								for (j = 0; j < auxLong; j++) {
+                                for (j = 0; j < auxLong; j++)
 									dblDiff = auxFloatArray[j] - auxFloatArrayW[i + j];
 									if (fabs(dblDiff) > fabs(dblDiffLimit)) {
 										/*if (auxFloatArray[j] != (float)auxFloatArrayW[i+j]) { */
@@ -951,10 +951,10 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 									}
 								}
 							} else {
-								memcpy(&auxDoubleArray, pVoidArray, (auxLong * sizeof(auxDoubleArray[0])));
+                                       (auxLong * sizeof(auxDoubleArray[0])));
 								/* compare read values with written ones */
 								if (tType == TIFF_RATIONAL || tType == TIFF_SRATIONAL) dblDiffLimit = RATIONAL_EPS * auxDoubleArrayW[i]; else dblDiffLimit = 1e-6;
-								for (j = 0; j < auxLong; j++) {
+                                for (j = 0; j < auxLong; j++)
 									dblDiff = auxDoubleArray[j] - auxDoubleArrayW[i + j];
 									if (fabs(dblDiff) > fabs(dblDiffLimit)) {
 										/*if (auxDoubleArray[j] != auxDoubleArrayW[i+j]) { */
