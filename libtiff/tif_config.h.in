@@ -299,10 +299,8 @@
 
 /* Define to the home page for this package. */
 #undef PACKAGE_URL
-
 /* Maximum number of TIFF IFDs that libtiff can iterate through in a file. */
 #undef TIFF_MAX_DIR_COUNT
-
 
 /* Support WEBP compression */
 #undef WEBP_SUPPORT
