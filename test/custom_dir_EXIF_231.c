@@ -136,7 +136,10 @@ main()
 	fprintf(stderr, "\n\n-------- Test with BigTIFF started  ----------\n");
 	ret2 = write_test_tiff(tif, filenameBigTiff);
 
-	if (ret2 > 0) return(ret2 + 10); else return(ret2);
+    if (ret2 > 0)
+        return (ret2 + 10);
+    else
+        return (ret2);
 
 } /* main() */
 
