@@ -48,9 +48,11 @@ typedef struct {
   TIFFPredictorState predict;
   uint16_t           nSamples;               /* number of samples per pixel */
 
-  int              lossless;               /* lossy/lossless compression */
-  int              quality_level;          /* compression level */
-  WebPPicture      sPicture;               /* WebP Picture */
+  int lossless;         /* lossy/lossless compression */
+  int lossless_exact;   /* lossless exact mode. If TRUE, R,G,B values in areas
+                           with alpha = 0 will be preserved */
+  int quality_level;    /* compression level */
+  WebPPicture sPicture; /* WebP Picture */
   WebPConfig       sEncoderConfig;         /* WebP encoder config */
   uint8_t*           pBuffer;                /* buffer to hold raw data on encoding */
   unsigned int     buffer_offset;          /* current offset into the buffer */
@@ -501,6 +503,9 @@ TWebPSetupEncode(TIFF* tif)
     sp->sEncoderConfig.lossless = sp->lossless;
     if (sp->lossless) {
       sp->sPicture.use_argb = 1;
+#if WEBP_ENCODER_ABI_VERSION >= 0x0209
+        sp->sEncoderConfig.exact = sp->lossless_exact;
+#endif
     }
   #endif
 
@@ -723,6 +728,17 @@ TWebPVSetField(TIFF* tif, uint32_t tag, va_list ap)
                   "lossless compression.");
       return 0;
     #endif
+  case TIFFTAG_WEBP_LOSSLESS_EXACT:
+#if WEBP_ENCODER_ABI_VERSION >= 0x0209
+    sp->lossless_exact = va_arg(ap, int);
+    return 1;
+#else
+    TIFFErrorExtR(
+        tif, module,
+        "Need to upgrade WEBP driver, this version doesn't support "
+        "lossless compression.");
+    return 0;
+#endif
   default:
     return (*sp->vsetparent)(tif, tag, ap);
   }
@@ -741,6 +757,9 @@ TWebPVGetField(TIFF* tif, uint32_t tag, va_list ap)
   case TIFFTAG_WEBP_LOSSLESS:
     *va_arg(ap, int*) = sp->lossless;
     break;
+  case TIFFTAG_WEBP_LOSSLESS_EXACT:
+    *va_arg(ap, int *) = sp->lossless_exact;
+    break;
   default:
     return (*sp->vgetparent)(tif, tag, ap);
   }
@@ -754,6 +773,9 @@ static const TIFFField TWebPFields[] = {
   { TIFFTAG_WEBP_LOSSLESS, 0, 0, TIFF_ANY, 0, TIFF_SETGET_INT,
     TIFF_SETGET_UNDEFINED,
     FIELD_PSEUDO, TRUE, FALSE, "WEBP lossless/lossy", NULL
+     NULL},
+    {TIFFTAG_WEBP_LOSSLESS_EXACT, 0, 0, TIFF_ANY, 0, TIFF_SETGET_INT,
+     TIFF_SETGET_UNDEFINED, FIELD_PSEUDO, TRUE, FALSE, "WEBP exact lossless",
   },
 };
 
@@ -794,6 +816,7 @@ TIFFInitWebP(TIFF* tif, int scheme)
   /* Default values for codec-specific fields */
   sp->quality_level = 75;		/* default comp. level */
   sp->lossless = 0; /* default to false */
+  sp->lossless_exact = 1; /* exact lossless mode (if lossless enabled) */
   sp->state = 0;
   sp->nSamples = 0;
   sp->psDecoder = NULL;
