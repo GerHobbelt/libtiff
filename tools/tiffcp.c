@@ -871,10 +871,25 @@ static int tiffcp(TIFF *in, TIFF *out)
     }
     if (compression == COMPRESSION_JPEG)
     {
-        if (input_photometric == PHOTOMETRIC_RGB &&
-            jpegcolormode == JPEGCOLORMODE_RGB)
-            TIFFSetField(out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_YCBCR);
+        /* For the input JPEG default decompression conversion is forced
+         * (JPEGCOLORMODE_RGB) which converts at reading: YCBCR => RGB
+         * and RGB =>RGB stays.
+         * For output compression, the mode JPEGCOLORMODE_RGB reverts this
+         * and converts at writing: RGB => YCbCr, GRAYSCALE is not converted.
+         * The option JPEGCOLORMODE_RAW does NO conversion. Thus internal RGB
+         * will be written as RGB.
+         */
+        if (input_photometric == PHOTOMETRIC_RGB ||
+            input_photometric == PHOTOMETRIC_YCBCR)
+        {
+            if (jpegcolormode == JPEGCOLORMODE_RGB)
+                TIFFSetField(out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_YCBCR);
+            else
+                TIFFSetField(out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
+        }
         else
+            /* Just a quess for all other input_photometric settings with JPEG.
+             * GRAYSCALE will stay and jpegcolormode has no effect! */
             TIFFSetField(out, TIFFTAG_PHOTOMETRIC, input_photometric);
     }
     else if (compression == COMPRESSION_SGILOG ||
