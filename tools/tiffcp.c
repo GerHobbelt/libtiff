@@ -87,7 +87,7 @@ static uint32_t g3opts;
 static int ignore = FALSE;		/* if true, ignore read errors */
 static uint32_t defg3opts = (uint32_t) -1;
 static int quality = 75;		/* JPEG quality */
-static int jpegcolormode = JPEGCOLORMODE_RGB;
+static int jpeg_photometric = PHOTOMETRIC_YCBCR;
 static uint16_t defcompression = (uint16_t) -1;
 static uint16_t defpredictor = (uint16_t) -1;
 static int defpreset =  -1;
@@ -181,7 +181,7 @@ static TIFF* openSrcImage (char **imageSpec)
 				tif = NULL;
 			}
 		}
-	}else
+	} else
 		tif = TIFFOpenExt (fn, mode, opts);
 	TIFFOpenOptionsFree(opts);
 	return tif;
@@ -449,7 +449,7 @@ processCompressOptions(char* opt)
 			if (isdigit((int)cp[1]))
 				quality = atoi(cp+1);
 			else if (cp[1] == 'r' )
-				jpegcolormode = JPEGCOLORMODE_RAW;
+                jpeg_photometric = PHOTOMETRIC_RGB;
 			else
 				usage(EXIT_FAILURE);
 
@@ -766,7 +766,7 @@ tiffcp(TIFF* in, TIFF* out)
 	if (compression == COMPRESSION_JPEG) {
         /* For the input JPEG default decompression conversion is forced
          * (JPEGCOLORMODE_RGB) which converts at reading: YCBCR => RGB
-         * and RGB =>RGB stays.
+         * and RGB => RGB stays.
          * For output compression, the mode JPEGCOLORMODE_RGB reverts this
          * and converts at writing: RGB => YCbCr, GRAYSCALE is not converted.
          * The option JPEGCOLORMODE_RAW does NO conversion. Thus internal RGB
@@ -775,10 +775,7 @@ tiffcp(TIFF* in, TIFF* out)
         if (input_photometric == PHOTOMETRIC_RGB ||
             input_photometric == PHOTOMETRIC_YCBCR)
         {
-            if (jpegcolormode == JPEGCOLORMODE_RGB)
-                TIFFSetField(out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_YCBCR);
-            else
-                TIFFSetField(out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
+            TIFFSetField(out, TIFFTAG_PHOTOMETRIC, jpeg_photometric);
         }
 		else
             /* Just a quess for all other input_photometric settings with JPEG.
@@ -790,12 +787,6 @@ tiffcp(TIFF* in, TIFF* out)
 		TIFFSetField(out, TIFFTAG_PHOTOMETRIC,
 		    samplesperpixel == 1 ?
 		    PHOTOMETRIC_LOGL : PHOTOMETRIC_LOGLUV);
-	else if (input_compression == COMPRESSION_JPEG &&
-			 samplesperpixel == 3 ) {
-		/* RGB conversion was forced above
-		hence the output will be of the same type */
-		TIFFSetField(out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
-	}
 	else
 		CopyTag(TIFFTAG_PHOTOMETRIC, 1, TIFF_SHORT);
 	if (fillorder != 0)
@@ -858,7 +849,9 @@ tiffcp(TIFF* in, TIFF* out)
 	switch (compression) {
 		case COMPRESSION_JPEG:
 			TIFFSetField(out, TIFFTAG_JPEGQUALITY, quality);
-			TIFFSetField(out, TIFFTAG_JPEGCOLORMODE, jpegcolormode);
+            /* For 3 sample images, the input data provided to libtiff is
+             * always RGB, not YCbCr subsampled. */
+            TIFFSetField(out, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB);
 			break;
 		case COMPRESSION_JBIG:
 			CopyTag(TIFFTAG_FAXRECVPARAMS, 1, TIFF_LONG);
@@ -2028,7 +2021,7 @@ pickCopyFunc(TIFF* in, TIFF* out, uint16_t bitspersample, uint16_t samplesperpix
 	(void) TIFFGetFieldDefaulted(in, TIFFTAG_PLANARCONFIG, &shortv);
 	if (shortv != config && bitspersample != 8 && samplesperpixel > 1) {
 		fprintf(stderr,
-		    "%s: Cannot handle different planar configuration w/ bits/sample != 8\n",
+		    "%s: Cannot handle different planar configuration with bits/sample != 8\n",
 		    TIFFFileName(in));
 		return (NULL);
 	}
@@ -2039,7 +2032,7 @@ pickCopyFunc(TIFF* in, TIFF* out, uint16_t bitspersample, uint16_t samplesperpix
 		TIFFGetField(in, TIFFTAG_ROWSPERSTRIP, &irps);
 		/* if biased, force decoded copying to allow image subtraction */
 		bychunk = !bias && (rowsperstrip == irps);
-	}else{  /* either in or out is tiled */
+	} else {  /* either in or out is tiled */
 		if (bias) {
 			fprintf(stderr,
 			    "%s: Cannot handle tiled configuration w/bias image\n",
@@ -2060,7 +2053,7 @@ pickCopyFunc(TIFF* in, TIFF* out, uint16_t bitspersample, uint16_t samplesperpix
 	}
 #define	T 1
 #define	F 0
-#define pack(a,b,c,d,e)	((long)(((a)<<11)|((b)<<3)|((c)<<2)|((d)<<1)|(e)))
+#define pack(a, b, c, d, e)	((long)(((a) << 11) | ((b) << 3) | ((c) << 2) | ((d) << 1) | ( e)))
 	switch(pack(shortv,config,TIFFIsTiled(in),TIFFIsTiled(out),bychunk)) {
 		/* Strips -> Tiles */
 		case pack(PLANARCONFIG_CONTIG,   PLANARCONFIG_CONTIG,   F,T,F):
