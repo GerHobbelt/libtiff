@@ -784,7 +784,7 @@ PixarLogDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
 	(void) s;
 	assert(sp != NULL);
 
-        sp->stream.next_in = tif->tif_rawcp;
+    sp->stream.next_in = tif->tif_rawcp;
 	sp->stream.avail_in = (uInt) tif->tif_rawcc;
 
 	sp->stream.next_out = (unsigned char *) sp->tbuf;
@@ -830,8 +830,8 @@ PixarLogDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
 		return (0);
 	}
 
-        tif->tif_rawcp = sp->stream.next_in;
-        tif->tif_rawcc = sp->stream.avail_in;
+    tif->tif_rawcp = (uint8_t *)sp->stream.next_in;		// compiler: safe to remove const in cast: has been assigned to sp->stream.next_in further above
+    tif->tif_rawcc = sp->stream.avail_in;
 
 	up = sp->tbuf;
 	/* Swap bytes in the data if from a different endian machine. */
