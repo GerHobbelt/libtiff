@@ -1290,19 +1290,22 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryArrayWithLimit(
 	datasize=(*count)*typesize;
 	assert((tmsize_t)datasize>0);
 
-    /* Before allocating a huge amount of memory for corrupted files, check if
-     * size of requested memory is not greater than file size.
-     */
-    uint64_t filesize = TIFFGetFileSize(tif);
-    if (datasize > filesize)
+    if (datasize > 100 * 1024 * 1024)
     {
-        TIFFWarningExtR(tif, "ReadDirEntryArray",
-                        "Requested memory size for tag %d (0x%x) %" PRIu32
-                        " is greather than filesize %" PRIu64
-                        ". Memory not allocated, tag not read",
-                        direntry->tdir_tag, direntry->tdir_tag, datasize,
-                        filesize);
-        return (TIFFReadDirEntryErrAlloc);
+        /* Before allocating a huge amount of memory for corrupted files, check
+         * if size of requested memory is not greater than file size.
+         */
+        const uint64_t filesize = TIFFGetFileSize(tif);
+        if (datasize > filesize)
+        {
+            TIFFWarningExtR(tif, "ReadDirEntryArray",
+                            "Requested memory size for tag %d (0x%x) %" PRIu32
+                            " is greater than filesize %" PRIu64
+                            ". Memory not allocated, tag not read",
+                            direntry->tdir_tag, direntry->tdir_tag, datasize,
+                            filesize);
+            return (TIFFReadDirEntryErrAlloc);
+        }
     }
 
 	if( isMapped(tif) && datasize > (uint64_t)tif->tif_size )
@@ -5113,18 +5116,22 @@ EstimateStripByteCounts(TIFF* tif, TIFFDirEntry* dir, uint16_t dircount)
         if( !_TIFFFillStrilesInternal( tif, 0 ) )
             return -1;
 
-    /* Before allocating a huge amount of memory for corrupted files, check if
-     * size of requested memory is not greater than file size. */
-    uint64_t filesize = TIFFGetFileSize(tif);
-    uint64_t allocsize = (uint64_t)td->td_nstrips * sizeof(uint64_t);
-    if (allocsize > filesize)
+    const uint64_t allocsize = (uint64_t)td->td_nstrips * sizeof(uint64_t);
+    uint64_t filesize = 0;
+    if (allocsize > 100 * 1024 * 1024)
     {
-        TIFFWarningExtR(tif, module,
-                        "Requested memory size for StripByteCounts of %" PRIu64
-                        " is greather than filesize %" PRIu64
-                        ". Memory not allocated",
-                        allocsize, filesize);
-        return -1;
+        /* Before allocating a huge amount of memory for corrupted files, check
+         * if size of requested memory is not greater than file size. */
+        filesize = TIFFGetFileSize(tif);
+        if (allocsize > filesize)
+        {
+            TIFFWarningExtR(
+                tif, module,
+                "Requested memory size for StripByteCounts of %" PRIu64
+                " is greater than filesize %" PRIu64 ". Memory not allocated",
+                allocsize, filesize);
+            return -1;
+        }
     }
 
 	if (td->td_stripbytecount_p)
@@ -5137,9 +5144,7 @@ EstimateStripByteCounts(TIFF* tif, TIFFDirEntry* dir, uint16_t dircount)
 
 	if (td->td_compression != COMPRESSION_NONE) {
 		uint64_t space;
-		uint64_t filesize;
 		uint16_t n;
-		filesize = TIFFGetFileSize(tif);
 		if (!(tif->tif_flags&TIFF_BIGTIFF))
 			space=sizeof(TIFFHeaderClassic)+2+dircount*12+4;
 		else
@@ -5173,6 +5178,8 @@ EstimateStripByteCounts(TIFF* tif, TIFFDirEntry* dir, uint16_t dircount)
                             return -1;
 			space+=datasize;
 		}
+        if (filesize == 0)
+            filesize = TIFFGetFileSize(tif);
 		if( filesize < space )
                     /* we should perhaps return in error ? */
                     space = filesize;
@@ -5655,7 +5662,7 @@ TIFFFetchDirectory(TIFF* tif, uint64_t diroff, TIFFDirEntry** pdir,
             TIFFWarningExtR(
                 tif, module,
                 "Requested memory size for TIFF directory of %" PRIu64
-                " is greather than filesize %" PRIu64
+                " is greater than filesize %" PRIu64
                 ". Memory not allocated, TIFF directory not read",
                 allocsize, filesize);
             return 0;
@@ -5772,7 +5779,7 @@ TIFFFetchDirectory(TIFF* tif, uint64_t diroff, TIFFDirEntry** pdir,
             TIFFWarningExtR(
                 tif, module,
                 "Requested memory size for TIFF directory of %" PRIu64
-                " is greather than filesize %" PRIu64
+                " is greater than filesize %" PRIu64
                 ". Memory not allocated, TIFF directory not read",
                 allocsize, filesize);
             return 0;
@@ -6937,19 +6944,24 @@ TIFFFetchStripThing(TIFF* tif, TIFFDirEntry* dir, uint32_t nstrips, uint64_t** l
 			return(0);
 		}
 
-        /* Before allocating a huge amount of memory for corrupted files, check
-         * if size of requested memory is not greater than file size. */
-        uint64_t filesize = TIFFGetFileSize(tif);
-        uint64_t allocsize = (uint64_t)nstrips * sizeof(uint64_t);
-        if (allocsize > filesize)
+        const uint64_t allocsize = (uint64_t)nstrips * sizeof(uint64_t);
+        if (allocsize > 100 * 1024 * 1024)
         {
-            TIFFWarningExtR(tif, module,
-                            "Requested memory size for StripArray of %" PRIu64
-                            " is greather than filesize %" PRIu64
-                            ". Memory not allocated",
-                            allocsize, filesize);
-            _TIFFfreeExt(tif, data);
-            return (0);
+            /* Before allocating a huge amount of memory for corrupted files,
+             * check if size of requested memory is not greater than file size.
+             */
+            const uint64_t filesize = TIFFGetFileSize(tif);
+            if (allocsize > filesize)
+            {
+                TIFFWarningExtR(
+                    tif, module,
+                    "Requested memory size for StripArray of %" PRIu64
+                    " is greater than filesize %" PRIu64
+                    ". Memory not allocated",
+                    allocsize, filesize);
+                _TIFFfreeExt(tif, data);
+                return (0);
+            }
         }
 		resizeddata=(uint64_t*)_TIFFCheckMalloc(tif, nstrips, sizeof(uint64_t), "for strip array");
 		if (resizeddata==0) {
@@ -7050,17 +7062,20 @@ static void allocChoppedUpStripArrays(TIFF* tif, uint32_t nstrips,
      * size of StripByteCount and StripOffset tags is not greater than
      * file size.
      */
-    uint64_t allocsize = (uint64_t)nstrips * sizeof(uint64_t) * 2;
-    uint64_t filesize = TIFFGetFileSize(tif);
-    if (allocsize > filesize)
+    const uint64_t allocsize = (uint64_t)nstrips * sizeof(uint64_t) * 2;
+    if (allocsize > 100 * 1024 * 1024)
     {
-        TIFFWarningExtR(tif, "allocChoppedUpStripArrays",
-                        "Requested memory size for StripByteCount and "
-                        "StripOffsets %" PRIu64
-                        " is greather than filesize %" PRIu64
-                        ". Memory not allocated",
-                        allocsize, filesize);
-        return;
+        const uint64_t filesize = TIFFGetFileSize(tif);
+        if (allocsize > filesize)
+        {
+            TIFFWarningExtR(tif, "allocChoppedUpStripArrays",
+                            "Requested memory size for StripByteCount and "
+                            "StripOffsets %" PRIu64
+                            " is greater than filesize %" PRIu64
+                            ". Memory not allocated",
+                            allocsize, filesize);
+            return;
+        }
     }
 
     newcounts = (uint64_t*) _TIFFCheckMalloc(tif, nstrips, sizeof (uint64_t),
