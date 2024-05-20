@@ -1081,16 +1081,17 @@ bad:
 
 typedef void biasFn (void *image, void *bias, uint32_t pixels);
 
-#define subtract(bits) \
-static void subtract##bits (void *i, void *b, uint32_t pixels)\
-{\
-   uint##bits##_t *image = i;\
-   uint##bits##_t *bias = b;\
-   while (pixels--) {\
-     *image = *image > *bias ? *image-*bias : 0;\
-     image++, bias++; \
-   } \
-}
+#define subtract(bits)                                                         \
+    static void subtract##bits(void *i, void *b, uint32_t pixels)              \
+    {                                                                          \
+        uint##bits##_t *image = i;                                             \
+        uint##bits##_t *biasx = b;                                             \
+        while (pixels--)                                                       \
+        {                                                                      \
+            *image = *image > *biasx ? *image - *biasx : 0;                    \
+            image++, biasx++;                                                  \
+        }                                                                      \
+    }
 
 subtract(8)
 subtract(16)
@@ -1695,7 +1696,7 @@ done:
 
 DECLAREwriteFunc(writeBufferToContigStrips)
 {
-	uint32_t row, rowsperstrip;
+    uint32_t row;
 	tstrip_t strip = 0;
 
 	(void) imagewidth; (void) spp;
@@ -1717,7 +1718,6 @@ DECLAREwriteFunc(writeBufferToContigStrips)
 DECLAREwriteFunc(writeBufferToSeparateStrips)
 {
 	uint32_t rowsize = imagewidth * spp;
-	uint32_t rowsperstrip;
 	tsize_t stripsize = TIFFStripSize(out);
 	tdata_t obuf;
 	tstrip_t strip = 0;
@@ -1748,7 +1748,7 @@ DECLAREwriteFunc(writeBufferToSeparateStrips)
 		for (row = 0; row < imagelength; row += rowsperstrip) {
 			uint32_t nrows = (row + rowsperstrip > imagelength) ?
 			    imagelength-row : rowsperstrip;
-			tsize_t stripsize = TIFFVStripSize(out, nrows);
+            stripsize = TIFFVStripSize(out, nrows);
 
 			cpContigBufToSeparateBuf(
 			    obuf, (uint8_t*) buf + row * rowsize + s,

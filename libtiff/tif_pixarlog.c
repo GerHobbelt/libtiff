@@ -591,8 +591,8 @@ PixarLogMakeTables(TIFF* tif, PixarLogState *sp)
     return 1;
 }
 
-#define DecoderState(tif)	((PixarLogState*) (tif)->tif_data)
-#define EncoderState(tif)	((PixarLogState*) (tif)->tif_data)
+#define PixarLogDecoderState(tif) ((PixarLogState *)(tif)->tif_data)
+#define PixarLogEncoderState(tif) ((PixarLogState *)(tif)->tif_data)
 
 static int PixarLogEncode(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s);
 static int PixarLogDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s);
@@ -665,7 +665,7 @@ PixarLogSetupDecode(TIFF* tif)
 {
 	static const char module[] = "PixarLogSetupDecode";
 	TIFFDirectory *td = &tif->tif_dir;
-	PixarLogState* sp = DecoderState(tif);
+    PixarLogState *sp = PixarLogDecoderState(tif);
 	tmsize_t tbuf_size;
         uint32_t strip_height;
 
@@ -730,7 +730,7 @@ static int
 PixarLogPreDecode(TIFF* tif, uint16_t s)
 {
 	static const char module[] = "PixarLogPreDecode";
-	PixarLogState* sp = DecoderState(tif);
+    PixarLogState *sp = PixarLogDecoderState(tif);
 
 	(void) s;
 	assert(sp != NULL);
@@ -753,7 +753,7 @@ PixarLogDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
 {
 	static const char module[] = "PixarLogDecode";
 	TIFFDirectory *td = &tif->tif_dir;
-	PixarLogState* sp = DecoderState(tif);
+    PixarLogState *sp = PixarLogDecoderState(tif);
 	tmsize_t i;
 	tmsize_t nsamples;
 	int llen;
@@ -898,7 +898,7 @@ PixarLogSetupEncode(TIFF* tif)
 {
 	static const char module[] = "PixarLogSetupEncode";
 	TIFFDirectory *td = &tif->tif_dir;
-	PixarLogState* sp = EncoderState(tif);
+    PixarLogState *sp = PixarLogEncoderState(tif);
 	tmsize_t tbuf_size;
 
 	assert(sp != NULL);
@@ -937,7 +937,7 @@ static int
 PixarLogPreEncode(TIFF* tif, uint16_t s)
 {
 	static const char module[] = "PixarLogPreEncode";
-	PixarLogState *sp = EncoderState(tif);
+    PixarLogState *sp = PixarLogEncoderState(tif);
 
 	(void) s;
 	assert(sp != NULL);
@@ -1117,7 +1117,7 @@ PixarLogEncode(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s)
 {
 	static const char module[] = "PixarLogEncode";
 	TIFFDirectory *td = &tif->tif_dir;
-	PixarLogState *sp = EncoderState(tif);
+    PixarLogState *sp = PixarLogEncoderState(tif);
 	tmsize_t i;
 	tmsize_t n;
 	int llen;
@@ -1218,7 +1218,7 @@ static int
 PixarLogPostEncode(TIFF* tif)
 {
 	static const char module[] = "PixarLogPostEncode";
-	PixarLogState *sp = EncoderState(tif);
+    PixarLogState *sp = PixarLogEncoderState(tif);
 	int state;
 
 	sp->stream.avail_in = 0;

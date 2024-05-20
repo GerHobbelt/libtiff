@@ -5087,9 +5087,7 @@ TIFFReadCustomDirectory(TIFF* tif, toff_t diroff,
 int
 TIFFReadEXIFDirectory(TIFF* tif, toff_t diroff)
 {
-	const TIFFFieldArray* exifFieldArray;
-	exifFieldArray = _TIFFGetExifFields();
-	return TIFFReadCustomDirectory(tif, diroff, exifFieldArray);  
+    return TIFFReadCustomDirectory(tif, diroff, _TIFFGetExifFields());
 }
 
 /*
@@ -5098,9 +5096,7 @@ TIFFReadEXIFDirectory(TIFF* tif, toff_t diroff)
 int
 TIFFReadGPSDirectory(TIFF* tif, toff_t diroff)
 {
-	const TIFFFieldArray* gpsFieldArray;
-	gpsFieldArray = _TIFFGetGpsFields();
-	return TIFFReadCustomDirectory(tif, diroff, gpsFieldArray);  
+    return TIFFReadCustomDirectory(tif, diroff, _TIFFGetGpsFields());
 }
 
 static int
