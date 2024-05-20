@@ -94,7 +94,7 @@ int TIFFJPEGIsFullStripRequired_12(TIFF *tif);
  * 16bit value?
  */
 
-/* HAVE_JPEGTURBO_DUAL_MODE_8_12 is defined for libjpeg-turbo >= 2.2 which
+/* HAVE_JPEGTURBO_DUAL_MODE_8_12 is defined for libjpeg-turbo >= 3.0 which
  * adds a dual-mode 8/12 bit API in the same library.
  */
 
@@ -102,9 +102,10 @@ int TIFFJPEGIsFullStripRequired_12(TIFF *tif);
 #  undef JPEG_DUAL_MODE_8_12
 #  define JPEG_DUAL_MODE_8_12
 /* Start by undefining BITS_IN_JSAMPLE which is always set to 8 in libjpeg-turbo >= 2.2
+ * >= 3.0 Cf
  * Cf https://github.com/libjpeg-turbo/libjpeg-turbo/commit/8b9bc4b9635a2a047fb23ebe70c9acd728d3f99b */
 #  undef BITS_IN_JSAMPLE
-/* libjpeg-turbo >= 2.2 adds J12xxxx datatypes for the 12-bit mode. */
+/* libjpeg-turbo >= 3.0 adds J12xxxx datatypes for the 12-bit mode. */
 # if defined(FROM_TIF_JPEG_12)
 #  define BITS_IN_JSAMPLE 12
 #  define TIFF_JSAMPLE    J12SAMPLE
@@ -1126,6 +1127,12 @@ int TIFFJPEGIsFullStripRequired(TIFF *tif) {
      * For PC 2, scale down the expected strip/tile size
      * to match a downsampled component
      */
+        if (sp->h_sampling == 0 || sp->v_sampling == 0)
+        {
+            TIFFErrorExtR(tif, module,
+                          "JPEG horizontal or vertical sampling is zero");
+            return (0);
+        }
     segment_width = TIFFhowmany_32(segment_width, sp->h_sampling);
     segment_height = TIFFhowmany_32(segment_height, sp->v_sampling);
   }
@@ -1977,6 +1984,12 @@ static int JPEGPreEncode(TIFF *tif, uint16_t s) {
     /* for PC 2, scale down the strip/tile size
      * to match a downsampled component
      */
+        if (sp->h_sampling == 0 || sp->v_sampling == 0)
+        {
+            TIFFErrorExtR(tif, module,
+                          "JPEG horizontal or vertical sampling is zero");
+            return (0);
+        }
     segment_width = TIFFhowmany_32(segment_width, sp->h_sampling);
     segment_height = TIFFhowmany_32(segment_height, sp->v_sampling);
   }

@@ -367,11 +367,13 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 #endif	/* -- ADDITIONAL_TAGS -- */
 
 /*================== Rational2Double Interface Check =====================*/
-	/*-- Check, if the TiffLibrary is compiled with the new interface with Rational2Double or still uses the old definitions. 
-	     For that, TIFF_RATIONAL tags with FIELD_CUSTOM are changed from TIFF_SETGET_DOUBLE to TIFF_SETGET_FLOAT for the 
-	     new interface in order to prevent the old reading behaviour.
-	     Tags to check: TIFFTAG_BESTQUALITYSCALE, TIFFTAG_BASELINENOISE, TIFFTAG_BASELINESHARPNESS
-	 */
+    /*-- Check, if the TiffLibrary is compiled with the new interface with
+       Rational2Double or still uses the old definitions. For that,
+       TIFF_RATIONAL tags with FIELD_CUSTOM are changed from TIFF_SETGET_DOUBLE
+       to TIFF_SETGET_FLOAT for the new interface in order to prevent the old
+       reading behavior. Tags to check: TIFFTAG_BESTQUALITYSCALE,
+       TIFFTAG_BASELINENOISE, TIFFTAG_BASELINESHARPNESS
+     */
 	fip = TIFFFindField(tif, TIFFTAG_BESTQUALITYSCALE, TIFF_ANY);
 	tSetFieldType = fip->set_field_type;
 	if (tSetFieldType == TIFF_SETGET_DOUBLE) {

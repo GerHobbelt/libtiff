@@ -139,9 +139,10 @@ static int nextSrcImage (TIFF *tif, char **imageSpec)
 				exit (EXIT_FAILURE);   /* syntax error */
 			}
 		}
-		if (TIFFSetDirectory (tif, nextImage)) return 1;
-		fprintf (stderr, "%s%c%"PRIu16" not found!\n",
-		    TIFFFileName(tif), comma, nextImage);
+        if (TIFFSetDirectory(tif, nextImage))
+            return 1;
+        fprintf(stderr, "%s%c%" PRIu32 " not found!\n", TIFFFileName(tif),
+                comma, nextImage);
 	}
 	return 0;
 }
@@ -208,7 +209,7 @@ main(int argc, char* argv[])
 
 	*mp++ = 'w';
 	*mp = '\0';
-    while ((c = getopt(argc, argv, "m:,:b:c:f:l:o:p:r:w:astBLMC8xh")) != -1)
+    while ((c = getopt(argc, argv, "m:,:b:c:f:l:o:p:r:w:aistBLMC8xh")) != -1)
 		switch (c) {
 		case 'm':
 			maxMalloc = (tmsize_t)strtoul(optarg, NULL, 0) << 20;
@@ -252,6 +253,9 @@ main(int argc, char* argv[])
 				deffillorder = FILLORDER_MSB2LSB;
 			else
 				usage(EXIT_FAILURE);
+                break;
+            case 'i': /* ignore errors */
+                ignore = TRUE;
 			break;
 		case 'l':   /* tile length */
 			outtiled = TRUE;
@@ -505,6 +509,7 @@ static const char usage_info[] =
 " -L              write little-endian instead of native byte order\n"
 " -M              disable use of memory-mapped files\n"
 " -C              disable strip chopping\n"
+" -i              ignore read errors\n"
 " -b file[,#]     bias (dark) monochrome image to be subtracted from all others\n"
 " -,=%            use % rather than , to separate image #'s (per Note below)\n"
 " -m size         set maximum memory allocation size (MiB). 0 to disable limit.\n"
@@ -1170,13 +1175,14 @@ bad:
 			}
 		}
 		TIFFError(TIFFFileName(in),
-		    "Bias image %s,%"PRIu16"\nis not the same size as %s,%"PRIu16"\n",
+                  "Bias image %s,%" PRIu32
+                  "\nis not the same size as %s,%" PRIu32 "\n",
 		    TIFFFileName(bias), TIFFCurrentDirectory(bias),
 		    TIFFFileName(in), TIFFCurrentDirectory(in));
 		return 0;
 	} else {
 		TIFFError(TIFFFileName(in),
-		    "Can't bias %s,%"PRIu16" as it has >1 Sample/Pixel\n",
+                  "Can't bias %s,%" PRIu32 " as it has >1 Sample/Pixel\n",
 		    TIFFFileName(in), TIFFCurrentDirectory(in));
 		return 0;
 	}

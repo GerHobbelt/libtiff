@@ -26,11 +26,12 @@
  * TIFF Library
  *
  * -- Module copied from custom_dir.c --
- *===========  Purpose ===================================================================================
- * Extended and amended version for testing the TIFFSetField() / and TIFFGetField()- interface 
- * for custom fields of type RATIONAL when the TIFFLib internal precision is updated from FLOAT to DOUBLE!
- * The external interface of already defined tags schould be kept.
- * This is verified for some of those tags with this test.
+ *===========  Purpose  =======================================================================
+ * Extended and amended version for testing the TIFFSetField() / and
+ *TIFFGetField()- interface for custom fields of type RATIONAL when the TIFFLib
+ *internal precision is updated from FLOAT to DOUBLE! The external interface of
+ *already defined tags should be kept. This is verified for some of those tags
+ *with this test.
  *
  */
 
@@ -108,7 +109,7 @@ tifFieldInfo[] = {
 
 #define	N(a)	(sizeof (a) / sizeof (a[0]))
 
-/*--- Add aditional Rational-Double Tags to TIFF 
+/*--- Add additional Rational-Double Tags to TIFF
 	  ref: html\addingtags.html but with new function _TIFFMergeFields(). 
 ---*/
 
@@ -174,7 +175,7 @@ main()
 	int				ret;
 	int				errorNo;
 
-	/*-- Initialize TIFF-Extender to add additonal TIFF-Tags --*/
+    /*-- Initialize TIFF-Extender to add additional TIFF-Tags --*/
 	_XTIFFInitialize();
 
 	fprintf(stderr, "==== Test if Set()/Get() interface for some custom rational tags behave as before change. ====\n");
@@ -494,7 +495,7 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 			goto failure;
 		}
 
-		/*- Varable Array:  TIFF_RATIONAL, 0, TIFF_SETGET_C16_FLOAT */
+        /*- Variable Array:  TIFF_RATIONAL, 0, TIFF_SETGET_C16_FLOAT */
 		if (!TIFFSetField(tif, TIFFTAG_BLACKLEVEL, 3, auxFloatArrayN1)) {				/* for TIFF_SETGET_C16_FLOAT */
 			fprintf(stderr, "Can't set TIFFTAG_BLACKLEVEL tag.\n");
 			goto failure;
@@ -571,9 +572,16 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 					case TIFF_SETGET_C32_DOUBLE:
 						/* _Cxx_ just defines the size of the count parameter for the array as C0=char, C16=short or C32=long */
 						/*-- Check, if it is a single parameter, a fixed array or a variable array */
-						if (tWriteCount == 1) {
-							fprintf(stderr, "WriteCount for .set_field_type %d should be -1 or greather than 1!  %s\n", tSetFieldType, tFieldArray->fields[i].field_name);
-						} else {
+                        if (tWriteCount == 1)
+                        {
+                            fprintf(stderr,
+                                    "WriteCount for .set_field_type %d should "
+                                    "be -1 or greater than 1!  %s\n",
+                                    tSetFieldType,
+                                    tFieldArray->fields[i].field_name);
+                        }
+                        else
+                        {
 							/*-- Either fix or variable array --*/
 							/* For arrays, distinguishing between float or double is essential, even for writing */
 							if (tSetFieldType == TIFF_SETGET_C0_FLOAT || tSetFieldType == TIFF_SETGET_C16_FLOAT || tSetFieldType == TIFF_SETGET_C32_FLOAT)
@@ -880,9 +888,11 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 								/* New interface allows also double precision for TIFF_RATIONAL */
 								auxDouble = auxDblUnion.dbl;
 							}
-							else {
-								/* Old interface reads TIFF_RATIONAL defined as TIFF_SETGET_DOUBLE alwasy as FLOAT */
-								auxDouble = (double)auxDblUnion.flt1;
+                            else
+                            {
+                                /* Old interface reads TIFF_RATIONAL defined as
+                                 * TIFF_SETGET_DOUBLE always as FLOAT */
+                                auxDouble = (double)auxDblUnion.flt1;
 							}
 						} else {
 							auxDouble = auxDblUnion.dbl;
@@ -907,10 +917,17 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 					case TIFF_SETGET_C32_DOUBLE:
 						/* _Cxx_ just defines the size of the count parameter for the array as C0=char, C16=short or C32=long */
 						/*-- Check, if it is a single parameter, a fixed array or a variable array */
-						if (tWriteCount == 1) {
-							fprintf(stderr, "Reading: WriteCount for .set_field_type %d should be -1 or greather than 1!  %s\n", tSetFieldType, tFieldArray->fields[i].field_name);
-							GOTOFAILURE
-						} else {
+                        if (tWriteCount == 1)
+                        {
+                            fprintf(stderr,
+                                    "Reading: WriteCount for .set_field_type "
+                                    "%d should be -1 or greater than 1!  %s\n",
+                                    tSetFieldType,
+                                    tFieldArray->fields[i].field_name);
+                            GOTOFAILURE
+                        }
+                        else
+                        {
 							/*-- Either fix or variable array --*/
 							/* For arrays, distinguishing between float or double is essential. */
 							/* Now decide between fixed or variable array */
