@@ -1006,16 +1006,7 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryFloat(TIFF* tif, TIFFDirEntry* d
 				err=TIFFReadDirEntryCheckedLong8(tif,direntry,&m);
 				if (err!=TIFFReadDirEntryErrOk)
 					return(err);
-#if defined(__WIN32__) && defined(_MSC_VER) && (_MSC_VER < 1500)
-				/*
-				 * XXX: MSVC 6.0 does not support conversion
-				 * of 64-bit integers into floating point
-				 * values.
-				 */
-				*value = _TIFFUInt64ToFloat(m);
-#else
 				*value=(float)m;
-#endif
 				return(TIFFReadDirEntryErrOk);
 			}
 		case TIFF_SLONG8:
@@ -1119,16 +1110,7 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryDouble(TIFF* tif, TIFFDirEntry* 
 				err=TIFFReadDirEntryCheckedLong8(tif,direntry,&m);
 				if (err!=TIFFReadDirEntryErrOk)
 					return(err);
-#if defined(__WIN32__) && defined(_MSC_VER) && (_MSC_VER < 1500)
-				/*
-				 * XXX: MSVC 6.0 does not support conversion
-				 * of 64-bit integers into floating point
-				 * values.
-				 */
-				*value = _TIFFUInt64ToDouble(m);
-#else
 				*value = (double)m;
-#endif
 				return(TIFFReadDirEntryErrOk);
 			}
 		case TIFF_SLONG8:
@@ -2869,16 +2851,7 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryFloatArray(TIFF* tif, TIFFDirEnt
 				{
 					if (tif->tif_flags&TIFF_SWAB)
 						TIFFSwabLong8(ma);
-#if defined(__WIN32__) && defined(_MSC_VER) && (_MSC_VER < 1500)
-					/*
-					 * XXX: MSVC 6.0 does not support
-					 * conversion of 64-bit integers into
-					 * floating point values.
-					 */
-					*mb++ = _TIFFUInt64ToFloat(*ma++);
-#else
 					*mb++ = (float)(*ma++);
-#endif
 				}
 			}
 			break;
@@ -3114,16 +3087,7 @@ TIFFReadDirEntryDoubleArray(TIFF* tif, TIFFDirEntry* direntry, double** value)
 				{
 					if (tif->tif_flags&TIFF_SWAB)
 						TIFFSwabLong8(ma);
-#if defined(__WIN32__) && defined(_MSC_VER) && (_MSC_VER < 1500)
-					/*
-					 * XXX: MSVC 6.0 does not support
-					 * conversion of 64-bit integers into
-					 * floating point values.
-					 */
-					*mb++ = _TIFFUInt64ToDouble(*ma++);
-#else
 					*mb++ = (double)(*ma++);
-#endif
 				}
 			}
 			break;
@@ -4186,17 +4150,16 @@ TIFFReadDirectory(TIFF* tif)
 				    dp->tdir_tag,dp->tdir_tag);
 				/* the following knowingly leaks the 
 				   anonymous field structure */
-				if (!_TIFFMergeFields(tif,
-					_TIFFCreateAnonField(tif,
-						dp->tdir_tag,
-						(TIFFDataType) dp->tdir_type),
-					1)) {
-					TIFFWarningExtR(tif,
-					    module,
-					    "Registering anonymous field with tag %"PRIu16" (0x%"PRIx16") failed",
-					    dp->tdir_tag,
-					    dp->tdir_tag);
-					dp->tdir_ignore = TRUE;
+                const TIFFField *fld = _TIFFCreateAnonField(
+                    tif, dp->tdir_tag, (TIFFDataType)dp->tdir_type);
+                if (fld == NULL || !_TIFFMergeFields(tif, fld, 1))
+                {
+                    TIFFWarningExtR(
+                        tif, module,
+                        "Registering anonymous field with tag %" PRIu16
+                        " (0x%" PRIx16 ") failed",
+                        dp->tdir_tag, dp->tdir_tag);
+                    dp->tdir_ignore = TRUE;
 				} else {
 					TIFFReadDirectoryFindFieldInfo(tif,dp->tdir_tag,&fii);
 					assert(fii != FAILED_FII);
@@ -4998,10 +4961,10 @@ TIFFReadCustomDirectory(TIFF* tif, toff_t diroff,
 			TIFFWarningExtR(tif, module,
 			    "Unknown field with tag %"PRIu16" (0x%"PRIx16") encountered",
 			    dp->tdir_tag, dp->tdir_tag);
-			if (!_TIFFMergeFields(tif, _TIFFCreateAnonField(tif,
-						dp->tdir_tag,
-						(TIFFDataType) dp->tdir_type),
-					     1)) {
+            const TIFFField *fld = _TIFFCreateAnonField(
+                tif, dp->tdir_tag, (TIFFDataType)dp->tdir_type);
+            if (fld == NULL || !_TIFFMergeFields(tif, fld, 1))
+            {
 				TIFFWarningExtR(tif, module,
 				    "Registering anonymous field with tag %"PRIu16" (0x%"PRIx16") failed",
 				    dp->tdir_tag, dp->tdir_tag);

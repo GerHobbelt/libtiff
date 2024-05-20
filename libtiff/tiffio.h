@@ -77,10 +77,6 @@ typedef tstrile_t ttile_t;      /* tile number */
 typedef tmsize_t tsize_t;       /* i/o size in bytes */
 typedef void* tdata_t;          /* image data ref */
 
-#if !defined(__WIN32__) && (defined(_WIN32) || defined(WIN32))
-#define __WIN32__
-#endif
-
 /*
  * On windows you should define USE_WIN32_FILEIO if you are using tif_win32.c
  * or AVOID_WIN32_FILEIO if you are using something else (like tif_unix.c).
@@ -88,7 +84,7 @@ typedef void* tdata_t;          /* image data ref */
  * By default tif_unix.c is assumed.
  */
 
-#if defined(_WINDOWS) || defined(__WIN32__) || defined(_Windows)
+#if defined(_WIN32)
 #  if !defined(__CYGWIN) && !defined(AVOID_WIN32_FILEIO) && !defined(USE_WIN32_FILEIO)
 #    define AVOID_WIN32_FILEIO
 #  endif
@@ -97,7 +93,7 @@ typedef void* tdata_t;          /* image data ref */
 #if defined(USE_WIN32_FILEIO)
 # define VC_EXTRALEAN
 # include <windows.h>
-# ifdef __WIN32__
+#ifdef _WIN32
 DECLARE_HANDLE(thandle_t);     /* Win32 file handle */
 # else
 typedef HFILE thandle_t;       /* client data handle */
@@ -300,14 +296,15 @@ extern TIFFCodec* TIFFGetConfiguredCODECs(void);
 /*
  * Auxiliary functions.
  */
-
-extern void* _TIFFmalloc(tmsize_t s);
-extern void* _TIFFcalloc(tmsize_t nmemb, tmsize_t siz);
-extern void* _TIFFrealloc(void* p, tmsize_t s);
+#ifndef TIFF_DO_NOT_USE_NON_EXT_ALLOC_FUNCTIONS
+    extern void *_TIFFmalloc(tmsize_t s);
+    extern void *_TIFFcalloc(tmsize_t nmemb, tmsize_t siz);
+    extern void *_TIFFrealloc(void *p, tmsize_t s);
+    extern void _TIFFfree(void *p);
+#endif
 extern void _TIFFmemset(void* p, int v, tmsize_t c);
 extern void _TIFFmemcpy(void* d, const void* s, tmsize_t c);
 extern int _TIFFmemcmp(const void* p1, const void* p2, tmsize_t c);
-extern void _TIFFfree(void* p);
 
 /*
 ** Stuff, related to tag handling and creating custom tags.
@@ -474,11 +471,12 @@ extern TIFFOpenOptions* TIFFOpenOptionsAlloc(void);
 extern void TIFFOpenOptionsFree(TIFFOpenOptions*);
 extern void TIFFOpenOptionsSetMaxSingleMemAlloc(TIFFOpenOptions* opts, tmsize_t max_single_mem_alloc);
 extern void TIFFOpenOptionsSetErrorHandlerExtR(TIFFOpenOptions* opts, TIFFErrorHandlerExtR handler, void* errorhandler_user_data);
+extern void TIFFOpenOptionsSetMaxCumulatedMemAlloc(TIFFOpenOptions *opts, tmsize_t max_cumulated_mem_alloc);
 extern void TIFFOpenOptionsSetWarningHandlerExtR(TIFFOpenOptions* opts, TIFFErrorHandlerExtR handler, void* warnhandler_user_data);
 
 extern TIFF* TIFFOpen(const char*, const char*);
 extern TIFF* TIFFOpenExt(const char*, const char*, TIFFOpenOptions* opts);
-# ifdef __WIN32__
+#ifdef _WIN32
 extern TIFF* TIFFOpenW(const wchar_t*, const char*);
 extern TIFF* TIFFOpenWExt(const wchar_t*, const char*, TIFFOpenOptions* opts);
 # endif /* __WIN32__ */
