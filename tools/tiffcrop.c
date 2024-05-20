@@ -486,13 +486,13 @@ static uint32_t rowsperstrip = 0;
 static uint32_t g3opts = 0;
 static int ignore = FALSE; /* if true, ignore read errors */
 static uint32_t defg3opts = (uint32_t)-1;
-static int quality = 100; /* JPEG quality */
-/* static int    jpegcolormode = -1;        was JPEGCOLORMODE_RGB;  */
-static int jpegcolormode = JPEGCOLORMODE_RGB;
+static int quality = 100;      /* JPEG quality */
+static int jpegcolormode = -1; /* means YCbCr or to not convert */
 static uint16_t defcompression = (uint16_t)-1;
 static uint16_t defpredictor = (uint16_t)-1;
 static int pageNum = 0;
 static int little_endian = 1;
+static tmsize_t check_buffsize = 0;
 
 /* Functions adapted from tiffcp with additions or significant modifications */
 static int readContigStripsIntoBuffer(TIFF *, uint8_t *);
@@ -755,10 +755,10 @@ static const char usage_info[] =
     " -c jpeg[:opts] Compress output with JPEG encoding\n"
     /* "    JPEG options:\n" */
     "    #        Set compression quality level (0-100, default 100)\n"
-    "    raw      Output color image as raw YCbCr (default)\n"
-    "    rgb      Output color image as RGB\n"
-    "    For example, -c jpeg:rgb:50 for JPEG-encoded RGB with 50% comp. "
-    "quality\n"
+    "    raw      Output same colorspace image as input\n"
+    "    rgb      Output color image as RGB (default is YCbCr)\n"
+    "    For example, -c jpeg:raw:50 for JPEG-encoded with 50% comp. "
+    "quality and the same colorspace\n"
 #endif
 #ifdef PACKBITS_SUPPORT
     " -c packbits Compress output with packbits encoding\n"
@@ -1366,7 +1366,7 @@ static int writeBufferToSeparateStrips(TIFF *out, uint8_t *buf, uint32_t length,
                   "bytes_per_sample * (width + 1)");
         return 1;
     }
-    rowstripsize = (tsize_t) rowsperstrip * bytes_per_sample * (width + 1);
+    rowstripsize = (tsize_t)rowsperstrip * bytes_per_sample * (width + 1);
 
     /* Add 3 padding bytes for extractContigSamples32bits */
     obuf = limitMalloc(rowstripsize + NUM_BUFF_OVERSIZE_BYTES);
@@ -1398,11 +1398,12 @@ static int writeBufferToSeparateStrips(TIFF *out, uint8_t *buf, uint32_t length,
                               "might be wrong.",
                               (uint64_t)scanlinesize);
                 }
-                dump_info(dump->outfile, dump->format, "",
-                          "Sample %2d, Strip: %2d, bytes: %4zd, Row %4d, bytes: "
-                          "%4d, Input offset: %6zd",
-                          s + 1, strip + 1, stripsize, row + 1,
-                          (uint32_t)scanlinesize, src - buf);
+                dump_info(
+                    dump->outfile, dump->format, "",
+                    "Sample %2d, Strip: %2d, bytes: %4zd, Row %4d, bytes: "
+                    "%4d, Input offset: %6zd",
+                    s + 1, strip + 1, stripsize, row + 1,
+                    (uint32_t)scanlinesize, src - buf);
                 dump_buffer(dump->outfile, dump->format, nrows,
                             (uint32_t)scanlinesize, row, obuf);
             }
@@ -2393,6 +2394,12 @@ void process_command_opts(int argc, char *argv[], char *mp, char *mode,
                     TIFFError(
                         "Limit for subdivisions, ie rows x columns, exceeded",
                         "%d", MAX_SECTIONS);
+                    exit(EXIT_FAILURE);
+                }
+                if ((page->cols * page->rows) < 1)
+                {
+                    TIFFError("No subdivisions", "%d",
+                              (page->cols * page->rows));
                     exit(EXIT_FAILURE);
                 }
                 page->mode |= PAGE_MODE_ROWSCOLS;
@@ -4935,7 +4942,7 @@ static int combineSeparateTileSamplesBytes(unsigned char *srcbuffs[],
         dst = out + (row * dst_rowsize);
         src_offset = row * src_rowsize;
 #ifdef DEVELMODE
-        TIFFError("", "Tile row %4d, Src offset %6d   Dst offset %6d", row,
+        TIFFError("", "Tile row %4d, Src offset %6d   Dst offset %6zd", row,
                   src_offset, dst - out);
 #endif
         for (col = 0; col < cols; col++)
@@ -5575,7 +5582,7 @@ static int readSeparateStripsIntoBuffer(TIFF *in, uint8_t *obuf,
             }
 #ifdef DEVELMODE
             TIFFError("",
-                      "Strip %2" PRIu32 ", read %5" PRId32
+                      "Strip %2" PRIu32 ", read %5zd"
                       " bytes for %4" PRIu32 " scanlines, shift width %d",
                       strip, bytes_read, rows_this_strip, shift_width);
 #endif
@@ -7067,7 +7074,6 @@ static int loadImage(TIFF *in, struct image_data *image, struct dump_opts *dump,
 
     if (input_compression == COMPRESSION_JPEG)
     { /* Force conversion to RGB */
-        jpegcolormode = JPEGCOLORMODE_RGB;
         TIFFSetField(in, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB);
     }
     /* The clause up to the read statement is taken from Tom Lane's tiffcp patch
@@ -7111,6 +7117,7 @@ static int loadImage(TIFF *in, struct image_data *image, struct dump_opts *dump,
         TIFFError("loadImage", "Unable to allocate read buffer");
         return (-1);
     }
+    check_buffsize = buffsize + NUM_BUFF_OVERSIZE_BYTES;
 
     read_buff[buffsize] = 0;
     read_buff[buffsize + 1] = 0;
@@ -7793,6 +7800,12 @@ static int extractImageSection(struct image_data *image,
             TIFFError("", "Src offset: %8" PRIu32 ", Dst offset: %8" PRIu32,
                       src_offset, dst_offset);
 #endif
+            if (src_offset + full_bytes >= check_buffsize)
+            {
+                printf(
+                    "Bad input. Preventing reading outside of input buffer.\n");
+                return (-1);
+            }
             _TIFFmemcpy(sect_buff + dst_offset, src_buff + src_offset,
                         full_bytes);
             dst_offset += full_bytes;
@@ -7839,6 +7852,12 @@ static int extractImageSection(struct image_data *image,
             bytebuff1 = bytebuff2 = 0;
             if (shift1 == 0) /* the region is byte and sample aligned */
             {
+                if (offset1 + full_bytes >= check_buffsize)
+                {
+                    printf("Bad input. Preventing reading outside of input "
+                           "buffer.\n");
+                    return (-1);
+                }
                 _TIFFmemcpy(sect_buff + dst_offset, src_buff + offset1,
                             full_bytes);
 
@@ -7866,6 +7885,12 @@ static int extractImageSection(struct image_data *image,
                 {
                     /* Only copy higher bits of samples and mask lower bits of
                      * not wanted column samples to zero */
+                    if (offset1 + full_bytes >= check_buffsize)
+                    {
+                        printf("Bad input. Preventing reading outside of input "
+                               "buffer.\n");
+                        return (-1);
+                    }
                     bytebuff2 = src_buff[offset1 + full_bytes] &
                                 ((unsigned char)255 << (8 - trailing_bits));
                     sect_buff[dst_offset] = bytebuff2;
@@ -7906,6 +7931,12 @@ static int extractImageSection(struct image_data *image,
                      * shift1 bits before save to destination.*/
                     /* Attention: src_buff size needs to be some bytes larger
                      * than image size, because could read behind image here. */
+                    if (offset1 + j + 1 >= check_buffsize)
+                    {
+                        printf("Bad input. Preventing reading outside of input "
+                               "buffer.\n");
+                        return (-1);
+                    }
                     bytebuff1 =
                         src_buff[offset1 + j] & ((unsigned char)255 >> shift1);
                     bytebuff2 = src_buff[offset1 + j + 1] &
@@ -8201,11 +8232,19 @@ static int writeSingleSection(TIFF *in, TIFF *out, struct image_data *image,
                                                                  : "mask");
             return (-1);
         }
-        if ((input_photometric == PHOTOMETRIC_RGB) &&
-            (jpegcolormode == JPEGCOLORMODE_RGB))
+        if (jpegcolormode == JPEGCOLORMODE_RGB &&
+            input_photometric == PHOTOMETRIC_YCBCR)
+        {
+            TIFFSetField(out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
+        }
+        else if (jpegcolormode == -1 && input_photometric == PHOTOMETRIC_RGB)
+        {
             TIFFSetField(out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_YCBCR);
+        }
         else
+        {
             TIFFSetField(out, TIFFTAG_PHOTOMETRIC, input_photometric);
+        }
     }
     else
     {
@@ -8968,11 +9007,19 @@ static int writeCroppedImage(TIFF *in, TIFF *out, struct image_data *image,
                                                                  : "mask");
             return (-1);
         }
-        if ((input_photometric == PHOTOMETRIC_RGB) &&
-            (jpegcolormode == JPEGCOLORMODE_RGB))
+        if (jpegcolormode == JPEGCOLORMODE_RGB &&
+            input_photometric == PHOTOMETRIC_YCBCR)
+        {
+            TIFFSetField(out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
+        }
+        else if (jpegcolormode == -1 && input_photometric == PHOTOMETRIC_RGB)
+        {
             TIFFSetField(out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_YCBCR);
+        }
         else
+        {
             TIFFSetField(out, TIFFTAG_PHOTOMETRIC, input_photometric);
+        }
     }
     else
     {

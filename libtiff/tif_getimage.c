@@ -959,7 +959,6 @@ gtStripContig(TIFFRGBAImage* img, uint32_t* raster, uint32_t w, uint32_t h)
         return (0);
     }
 
-
 	scanline = TIFFScanlineSize(tif);
 	fromskew = (w < imagewidth ? imagewidth - w : 0);
 	for (row = 0; row < h; row += nrow)
@@ -2972,7 +2971,8 @@ TIFFReadRGBATileExt(TIFF* tif, uint32_t col, uint32_t row, uint32_t * raster, in
     TIFFGetFieldDefaulted(tif, TIFFTAG_TILELENGTH, &tile_ysize);
     if (tile_xsize == 0 || tile_ysize == 0)
     {
-        TIFFErrorExtR(tif, TIFFFileName(tif), "tile_xsize or tile_ysize is zero");
+        TIFFErrorExtR(tif, TIFFFileName(tif),
+                      "tile_xsize or tile_ysize is zero");
         return (0);
     }
 

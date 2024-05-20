@@ -64,6 +64,7 @@ int verbose;
 int stretch;
 uint16_t badfaxrun;
 uint32_t badfaxlines;
+int compression_in;
 
 int copyFaxFile(TIFF *tifin, TIFF *tifout);
 static void usage(int code);
@@ -84,7 +85,7 @@ int main(int argc, char *argv[])
     TIFF *out = NULL;
     FAX_Client_Data client_data;
     TIFFErrorHandler whandler = NULL;
-    int compression_in = COMPRESSION_CCITTFAX3;
+    compression_in = COMPRESSION_CCITTFAX3;
     int compression_out = COMPRESSION_CCITTFAX3;
     int fillorder_in = FILLORDER_LSB2MSB;
     int fillorder_out = FILLORDER_LSB2MSB;
@@ -151,6 +152,13 @@ int main(int argc, char *argv[])
                 break;
             case 'X': /* input width */
                 xsize = (uint32_t)atoi(optarg);
+                if (xsize < 1 || xsize > 10000)
+                {
+                    fprintf(stderr,
+                            "%s: The input width %s is not reasonable\n",
+                            argv[0], optarg);
+                    return EXIT_FAILURE;
+                }
                 break;
 
                 /* output-related options */
@@ -401,8 +409,14 @@ int copyFaxFile(TIFF *tifin, TIFF *tifout)
     while (tifin->tif_rawcc > 0)
     {
         ok = (*tifin->tif_decoderow)(tifin, (tdata_t)rowbuf, linesize, 0);
-        if (!ok)
+        if (ok < 1)
         {
+            if (compression_in == COMPRESSION_CCITTFAX4)
+            {
+                /* This is proably EOFB, but if it's corrupt data, then we can't
+                 * continue, anyway. */
+                break;
+            }
             badfaxlines++;
             badrun++;
             /* regenerate line from previous good line */
@@ -455,7 +469,9 @@ static const char usage_info[] =
     " -M		input data has MSB2LSB bit order\n"
     " -L		input data has LSB2MSB bit order	[default]\n"
     " -B		input data has min 0 means black\n"
+    " -b		input data has min 0 means black (same as -B)\n"
     " -W		input data has min 0 means white	[default]\n"
+    " -w		input data has min 0 means white (same as -W)\n"
     " -R #		input data has # resolution (lines/inch) [default is "
     "196]\n"
     " -X #		input data has # width			[default is "

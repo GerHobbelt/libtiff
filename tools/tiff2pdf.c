@@ -583,7 +583,7 @@ printf	(-z: compress with Zip/Deflate (requires zlib configured with libtiff));
 #endif
     -q: compression quality
     -n: no compressed data passthrough
-    -d: do not compress (decompress)
+    -d: do not compress (decompress) - except monochrome to CCITT Group 4
     -i: invert colors
     -u: set distance unit, 'i' for inch, 'm' for centimeter
     -x: set x resolution default
@@ -902,7 +902,8 @@ static void usage_info(int code)
 #if defined(JPEG_SUPPORT) || defined(ZIP_SUPPORT)
         " -q: compression quality\n"
         " -n: no compressed data passthrough\n"
-        " -d: do not compress (decompress)\n"
+        " -d: do not compress (decompress) - except monochrome to CCITT Group "
+        "4\n"
 #endif
         " -i: invert colors\n"
         " -u: set distance unit, 'i' for inch, 'm' for centimeter\n"
@@ -1023,7 +1024,7 @@ T2P *t2p_init()
 
 void t2p_free(T2P *t2p)
 {
-    int i = 0;
+    unsigned int i = 0;
 
     if (t2p != NULL)
     {
@@ -4248,9 +4249,9 @@ tsize_t t2p_sample_rgba_to_rgb(tdata_t data, uint32_t samplecount)
     {
         sample = ((uint32_t *)data)[i];
         alpha = (uint8_t)((255 - ((sample >> 24) & 0xff)));
-        ((uint8_t *)data)[i * 3] = (uint8_t)((sample >> 16) & 0xff) + alpha;
+        ((uint8_t *)data)[i * 3 + 2] = (uint8_t)((sample >> 16) & 0xff) + alpha;
         ((uint8_t *)data)[i * 3 + 1] = (uint8_t)((sample >> 8) & 0xff) + alpha;
-        ((uint8_t *)data)[i * 3 + 2] = (uint8_t)(sample & 0xff) + alpha;
+        ((uint8_t *)data)[i * 3] = (uint8_t)(sample & 0xff) + alpha;
     }
 
     return (i * 3);
