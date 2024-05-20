@@ -175,7 +175,8 @@ countInkNamesString(TIFF *tif, uint32_t slen, const char *s)
 	}
 bad:
 	TIFFErrorExtR(tif, "TIFFSetField",
-		"%s: Invalid InkNames value; no NUL at given buffer end location %"PRIu32", after %"PRIu16" ink",
+                  "%s: Invalid InkNames value; no null at given buffer end "
+                  "location %" PRIu32 ", after %" PRIu16 " ink",
 		tif->tif_name, slen, i);
 	return (0);
 }
@@ -1981,8 +1982,9 @@ TIFFSetSubDirectory(TIFF* tif, uint64_t diroff)
         if (retval)
         {
             /* Reset IFD list to start new one for SubIFD chain and also start
-            * SubIFD chain with tif_curdir=0. */
-            _TIFFCleanupIFDOffsetAndNumberMaps(tif); /* invalidate IFD loop lists */
+             * SubIFD chain with tif_curdir=0. */
+            /* invalidate IFD loop lists */
+            _TIFFCleanupIFDOffsetAndNumberMaps(tif);
             tif->tif_curdir = 0; /* first directory of new chain */
             /* add this offset to new IFD list */
             _TIFFCheckDirNumberAndOffset(tif, tif->tif_curdir, diroff);
@@ -1990,7 +1992,7 @@ TIFFSetSubDirectory(TIFF* tif, uint64_t diroff)
         /* To be able to return from SubIFD or custom-IFD to main-IFD */
         tif->tif_setdirectory_force_absolute = TRUE;
     }
-    
+
     return (retval);
 }
 

@@ -5899,11 +5899,15 @@ TIFFFetchNormalTag(TIFF* tif, TIFFDirEntry* dp, int recover)
 						TIFFWarningExtR(tif,module,"ASCII value for tag \"%s\" contains null byte in value; value incorrectly truncated during reading due to implementation limitations",fip->field_name);
 					else if (mb+1>(uint32_t)dp->tdir_count)
 					{
-						uint8_t* o;
-						TIFFWarningExtR(tif,module,"ASCII value for tag \"%s\" does not end in null byte",fip->field_name);
-						/* TIFFReadDirEntryArrayWithLimit() ensures this can't be larger than MAX_SIZE_TAG_DATA */
-						assert((uint32_t)dp->tdir_count + 1 == dp->tdir_count + 1);
-						o=_TIFFmallocExt(tif, (uint32_t)dp->tdir_count + 1);
+                    TIFFWarningExtR(tif, module,
+                                    "ASCII value for tag \"%s\" does not end "
+                                    "in null byte. Forcing it to be null",
+                                    fip->field_name);
+                    /* TIFFReadDirEntryArrayWithLimit() ensures this can't be
+                     * larger than MAX_SIZE_TAG_DATA */
+                    assert((uint32_t)dp->tdir_count + 1 == dp->tdir_count + 1);
+                    uint8_t *o =
+                        _TIFFmallocExt(tif, (uint32_t)dp->tdir_count + 1);
 						if (o==NULL)
 						{
 							if (data!=NULL)
@@ -6367,8 +6371,29 @@ TIFFFetchNormalTag(TIFF* tif, TIFFDirEntry* dp, int recover)
 						int m;
 						if( data != 0 && dp->tdir_count > 0 && data[dp->tdir_count-1] != '\0' )
 						{
-						    TIFFWarningExtR(tif,module,"ASCII value for tag \"%s\" does not end in null byte. Forcing it to be null",fip->field_name);
-						    data[dp->tdir_count-1] = '\0';
+                        TIFFWarningExtR(tif, module,
+                                        "ASCII value for ASCII array tag "
+                                        "\"%s\" does not end in null "
+                                        "byte. Forcing it to be null",
+                                        fip->field_name);
+                        /* Enlarge buffer and add terminating null. */
+                        uint8_t *o =
+                            _TIFFmallocExt(tif, (uint32_t)dp->tdir_count + 1);
+                        if (o == NULL)
+                        {
+                            if (data != NULL)
+                                _TIFFfreeExt(tif, data);
+                            return (0);
+                        }
+                        if (dp->tdir_count > 0)
+                        {
+                            _TIFFmemcpy(o, data, (uint32_t)dp->tdir_count);
+                        }
+                        o[(uint32_t)dp->tdir_count] = 0;
+                        dp->tdir_count++; /* Increment for added null. */
+                        if (data != 0)
+                            _TIFFfreeExt(tif, data);
+                        data = o;
 						}
 						m=TIFFSetField(tif, dp->tdir_tag, (uint16_t)(dp->tdir_count), data);
 						if (data!=0)
@@ -6631,9 +6656,30 @@ TIFFFetchNormalTag(TIFF* tif, TIFFDirEntry* dp, int recover)
 				{
 					int m;
 					if( data != 0 && dp->tdir_count > 0 && data[dp->tdir_count-1] != '\0' )
-					{
-						TIFFWarningExtR(tif,module,"ASCII value for tag \"%s\" does not end in null byte. Forcing it to be null",fip->field_name);
-											data[dp->tdir_count-1] = '\0';
+                {
+                    TIFFWarningExtR(
+                        tif, module,
+                        "ASCII value for ASCII array tag \"%s\" does not end "
+                        "in null byte. Forcing it to be null",
+                        fip->field_name);
+                    /* Enlarge buffer and add terminating null. */
+                    uint8_t *o =
+                        _TIFFmallocExt(tif, (uint32_t)dp->tdir_count + 1);
+                    if (o == NULL)
+                    {
+                        if (data != NULL)
+                            _TIFFfreeExt(tif, data);
+                        return (0);
+                    }
+                    if (dp->tdir_count > 0)
+                    {
+                        _TIFFmemcpy(o, data, (uint32_t)dp->tdir_count);
+                    }
+                    o[(uint32_t)dp->tdir_count] = 0;
+                    dp->tdir_count++; /* Increment for added null. */
+                    if (data != 0)
+                        _TIFFfreeExt(tif, data);
+                    data = o;
 					}
 					m=TIFFSetField(tif, dp->tdir_tag, (uint32_t)(dp->tdir_count), data);
 					if (data!=0)
