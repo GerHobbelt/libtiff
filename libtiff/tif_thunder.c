@@ -106,16 +106,18 @@ ThunderDecode(TIFF* tif, uint8_t* op, tmsize_t maxpixels)
 			 * Replicate the last pixel n times,
 			 * where n is the lower-order 6 bits.
 			 */
+                if (n == 0)
+                    break;
 			if (npixels & 1) {
 				op[0] |= lastpixel;
 				lastpixel = *op++; npixels++; n--;
 			} else
 				lastpixel |= lastpixel << 4;
 			npixels += n;
-			if (npixels > maxpixels)
-				n -= npixels - maxpixels;
-			for (; n > 0; n -= 2)
-				*op++ = (uint8_t) lastpixel;
+                if (npixels > maxpixels)
+                    break;
+                for (; n > 0; n -= 2)
+                    *op++ = (uint8_t)lastpixel;
 			if (n == -1)
 				*--op &= 0xf0;
 			lastpixel &= 0xf;
