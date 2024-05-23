@@ -45,7 +45,7 @@ EXTRA_DIST = \
 
 # All of the tests to execute via 'make check'
 if TIFF_TESTS
-TESTS = $(check_PROGRAMS) $(TESTSCRIPTS)
+TESTS = $(check_PROGRAMS) $(TESTSCRIPTS_TO_RUN)
 endif
 
 # Tests which are expected to fail
@@ -54,18 +54,34 @@ XFAIL_TESTS =
 # Extra files which should be cleaned by 'make clean'
 CLEANFILES = test_packbits.tif o-*
 
-if HAVE_JPEG
-if TIFF_TOOLS
-JPEG_DEPENDENT_CHECK_PROG=raw_decode
 JPEG_DEPENDENT_TESTSCRIPTS=\
 	tiff2rgba-quad-tile.jpg.sh \
 	tiff2rgba-ojpeg_zackthecat_subsamp22_single_strip.sh \
 	tiff2rgba-ojpeg_chewey_subsamp21_multi_strip.sh \
-	tiff2rgba-ojpeg_single_strip_no_rowsperstrip.sh
+	tiff2rgba-ojpeg_single_strip_no_rowsperstrip.sh \
+	tiff2rgba-32bpp-None-jpeg.sh \
+	tiffcp-32bpp-None-jpeg.sh \
+	tiffcrop-32bpp-None-jpeg.sh
+
+if HAVE_JPEG
+if TIFF_TOOLS
+JPEG_DEPENDENT_CHECK_PROG=raw_decode
+JPEG_DEPENDENT_TESTSCRIPTS_TO_RUN=$(JPEG_DEPENDENT_TESTSCRIPTS)
 endif
 else
 JPEG_DEPENDENT_CHECK_PROG=
-JPEG_DEPENDENT_TESTSCRIPTS=
+JPEG_DEPENDENT_TESTSCRIPTS_TO_RUN=
+endif
+
+JBIG_DEPENDENT_TESTSCRIPTS=\
+	tiffcp-lzw-single-strip-jbig.sh
+
+if HAVE_JBIG
+if TIFF_TOOLS
+JBIG_DEPENDENT_TESTSCRIPTS_TO_RUN=$(JBIG_DEPENDENT_TESTSCRIPTS)
+endif
+else
+JBIG_DEPENDENT_TESTSCRIPTS_TO_RUN=
 endif
 
 if BUILD_STATIC
@@ -81,8 +97,7 @@ check_PROGRAMS = \
 endif
 
 # Test scripts to execute
-if TIFF_TOOLS
-TESTSCRIPTS = \
+BASE_TESTSCRIPTS = \
 	ppm2tiff_pbm.sh \
 	ppm2tiff_pgm.sh \
 	ppm2tiff_ppm.sh \
@@ -161,10 +176,18 @@ TESTSCRIPTS = \
 	tiff2rgba-rgb-3c-8b.sh \
 	testfax4.sh \
 	testfax3_bug_513.sh \
-	testdeflatelaststripextradata.sh \
-	$(JPEG_DEPENDENT_TESTSCRIPTS)
+	testdeflatelaststripextradata.sh
+
+TESTSCRIPTS =$(BASE_TESTSCRIPTS) \
+	$(JPEG_DEPENDENT_TESTSCRIPTS) \
+	$(JBIG_DEPENDENT_TESTSCRIPTS)
+
+if TIFF_TOOLS
+TESTSCRIPTS_TO_RUN=$(BASE_TESTSCRIPTS) \
+	$(JPEG_DEPENDENT_TESTSCRIPTS_TO_RUN) \
+	$(JBIG_DEPENDENT_TESTSCRIPTS_TO_RUN)
 else
-TESTSCRIPTS=
+TESTSCRIPTS_TO_RUN=
 endif
 
 # This list should contain the references files
@@ -201,7 +224,8 @@ TIFFIMAGES = \
 	images/testfax4.tiff \
 	images/deflate-last-strip-extra-data.tiff \
 	images/custom_dir_EXIF_GPS.tiff \
-	images/testfax3_bug_513.tiff
+	images/testfax3_bug_513.tiff \
+	images/32bpp-None.tiff
 
 PNMIMAGES = \
 	images/minisblack-1c-8b.pgm \
