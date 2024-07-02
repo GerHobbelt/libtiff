@@ -83,13 +83,14 @@ ThunderSetupDecode(TIFF* tif)
 }
 
 static int
-ThunderDecode(TIFF* tif, uint8_t* op, tmsize_t maxpixels)
+ThunderDecode(TIFF *tif, uint8_t * op0, tmsize_t maxpixels)
 {
 	static const char module[] = "ThunderDecode";
 	register unsigned char *bp;
 	register tmsize_t cc;
 	unsigned int lastpixel;
 	tmsize_t npixels;
+    uint8_t *op = op0;
 
 	bp = (unsigned char *)tif->tif_rawcp;
 	cc = tif->tif_rawcc;
@@ -144,6 +145,8 @@ ThunderDecode(TIFF* tif, uint8_t* op, tmsize_t maxpixels)
 	tif->tif_rawcp = (uint8_t*) bp;
 	tif->tif_rawcc = cc;
 	if (npixels != maxpixels) {
+        uint8_t *op_end = op0 + (maxpixels + 1) / 2;
+        memset(op, 0, (size_t)(op_end - op));
 		TIFFErrorExtR(tif, module,
 			     "%s data at scanline %lu (%"PRIu64" != %"PRIu64")",
 			     npixels < maxpixels ? "Not enough" : "Too much",

@@ -1336,7 +1336,10 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
   sp->src.bytes_in_buffer = (size_t)tif->tif_rawcc;
 
   if (sp->bytesperline == 0)
+    {
+        memset(buf, 0, (size_t)cc);
     return 0;
+    }
 
   nrows = cc / sp->bytesperline;
   if (cc % sp->bytesperline)
@@ -1356,7 +1359,10 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
       JSAMPROW bufptr = (JSAMPROW)buf;
 
       if (TIFFjpeg_read_scanlines(sp, &bufptr, 1) != 1)
+            {
+                memset(buf, 0, (size_t)cc);
         return (0);
+            }
 
       ++tif->tif_row;
       buf += sp->bytesperline;
@@ -1389,7 +1395,10 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
   sp->src.bytes_in_buffer = (size_t)tif->tif_rawcc;
 
   if (sp->bytesperline == 0)
+    {
+        memset(buf, 0, (size_t)cc);
     return 0;
+    }
 
   nrows = cc / sp->bytesperline;
   if (cc % sp->bytesperline)
@@ -1423,7 +1432,10 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s) {
          * for 12bit data, which we need to repack.
          */
         if (TIFFjpeg_read_scanlines(sp, &line_work_buf, 1) != 1)
+                {
+                    memset(buf, 0, (size_t)cc);
           return (0);
+                }
 
         if (sp->cinfo.d.data_precision == 12) {
           int value_pairs =
