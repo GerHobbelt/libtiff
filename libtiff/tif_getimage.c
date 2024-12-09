@@ -528,7 +528,8 @@ TIFFReadRGBAImageOriented(TIFF* tif,
     TIFFRGBAImage img;
     int ok;
 
-	if (TIFFRGBAImageOK(tif, emsg) && TIFFRGBAImageBegin(&img, tif, stop, emsg)) {
+    if (TIFFRGBAImageBegin(&img, tif, stop, emsg))
+    {
 		img.req_orientation = (uint16_t)orientation;
 		/* XXX verify rwidth and rheight against width and height */
 		ok = TIFFRGBAImageGet(&img, raster+(rheight-img.height)*rwidth,
@@ -2903,7 +2904,8 @@ TIFFReadRGBAStripExt(TIFF* tif, uint32_t row, uint32_t * raster, int stop_on_err
 		return (0);
     }
 
-    if (TIFFRGBAImageOK(tif, emsg) && TIFFRGBAImageBegin(&img, tif, stop_on_error, emsg)) {
+    if (TIFFRGBAImageBegin(&img, tif, stop_on_error, emsg))
+    {
         if (row >= img.height)
         {
             TIFFErrorExtR(tif, TIFFFileName(tif),
@@ -2987,9 +2989,9 @@ TIFFReadRGBATileExt(TIFF* tif, uint32_t col, uint32_t row, uint32_t * raster, in
     /*
      * Setup the RGBA reader.
      */
-    
-    if (!TIFFRGBAImageOK(tif, emsg) 
-	|| !TIFFRGBAImageBegin(&img, tif, stop_on_error, emsg)) {
+
+    if (!TIFFRGBAImageBegin(&img, tif, stop_on_error, emsg))
+    {
 	    TIFFErrorExtR(tif, TIFFFileName(tif), "%s", emsg);
 	    return( 0 );
     }
