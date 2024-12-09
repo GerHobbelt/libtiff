@@ -44,7 +44,7 @@
  * State block for each open TIFF
  * file using WEBP compression/decompression.
  */
-typedef struct 
+typedef struct
 {
   TIFFPredictorState predict;
     uint16_t nSamples; /* number of samples per pixel */

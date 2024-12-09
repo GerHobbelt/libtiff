@@ -50,7 +50,7 @@ void dumparray(char *name, unsigned char runs[256])
     printf("\n};\n");
 }
 
-int main()
+int main(void)
 {
     unsigned char runs[2][256];
 

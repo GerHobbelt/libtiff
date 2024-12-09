@@ -23,7 +23,7 @@
  */
 
 #ifndef _TIFFIOP_
-#define	_TIFFIOP_
+#define _TIFFIOP_
 /*
  * ``Library-private'' definitions.
  */
@@ -67,11 +67,12 @@
 #define    strneq(a,b,n)   (strncmp(a,b,n) == 0)
 
 #ifndef TRUE
-#define	TRUE	1
-#define	FALSE	0
+#define TRUE 1
+#define FALSE 0
 #endif
 
-typedef struct client_info {
+typedef struct client_info
+{
     struct client_info *next;
     void *data;
     char *name;
@@ -81,17 +82,18 @@ typedef struct client_info {
  * Typedefs for ``method pointers'' used internally.
  * these are deprecated and provided only for backwards compatibility.
  */
-typedef unsigned char tidataval_t;    /* internal image data value type */
-typedef tidataval_t* tidata_t;        /* reference to internal image data */
+typedef unsigned char tidataval_t; /* internal image data value type */
+typedef tidataval_t *tidata_t;     /* reference to internal image data */
 
-typedef void (*TIFFVoidMethod)(TIFF*);
-typedef int (*TIFFBoolMethod)(TIFF*);
-typedef int (*TIFFPreMethod)(TIFF*, uint16_t);
-typedef int (*TIFFCodeMethod)(TIFF* tif, uint8_t* buf, tmsize_t size, uint16_t sample);
-typedef int (*TIFFSeekMethod)(TIFF*, uint32_t);
-typedef void (*TIFFPostMethod)(TIFF* tif, uint8_t* buf, tmsize_t size);
-typedef uint32_t (*TIFFStripMethod)(TIFF*, uint32_t);
-typedef void (*TIFFTileMethod)(TIFF*, uint32_t*, uint32_t*);
+typedef void (*TIFFVoidMethod)(TIFF *);
+typedef int (*TIFFBoolMethod)(TIFF *);
+typedef int (*TIFFPreMethod)(TIFF *, uint16_t);
+typedef int (*TIFFCodeMethod)(TIFF *tif, uint8_t *buf, tmsize_t size,
+                              uint16_t sample);
+typedef int (*TIFFSeekMethod)(TIFF *, uint32_t);
+typedef void (*TIFFPostMethod)(TIFF *tif, uint8_t *buf, tmsize_t size);
+typedef uint32_t (*TIFFStripMethod)(TIFF *, uint32_t);
+typedef void (*TIFFTileMethod)(TIFF *, uint32_t *, uint32_t *);
 
 struct TIFFOffsetAndDirNumber
 {

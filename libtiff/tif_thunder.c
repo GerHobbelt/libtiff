@@ -2,23 +2,23 @@
  * Copyright (c) 1988-1997 Sam Leffler
  * Copyright (c) 1991-1997 Silicon Graphics, Inc.
  *
- * Permission to use, copy, modify, distribute, and sell this software and 
+ * Permission to use, copy, modify, distribute, and sell this software and
  * its documentation for any purpose is hereby granted without fee, provided
  * that (i) the above copyright notices and this permission notice appear in
  * all copies of the software and related documentation, and (ii) the names of
  * Sam Leffler and Silicon Graphics may not be used in any advertising or
  * publicity relating to the software without the specific, prior written
  * permission of Sam Leffler and Silicon Graphics.
- * 
- * THE SOFTWARE IS PROVIDED "AS-IS" AND WITHOUT WARRANTY OF ANY KIND, 
- * EXPRESS, IMPLIED OR OTHERWISE, INCLUDING WITHOUT LIMITATION, ANY 
- * WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.  
- * 
+ *
+ * THE SOFTWARE IS PROVIDED "AS-IS" AND WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS, IMPLIED OR OTHERWISE, INCLUDING WITHOUT LIMITATION, ANY
+ * WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+ *
  * IN NO EVENT SHALL SAM LEFFLER OR SILICON GRAPHICS BE LIABLE FOR
  * ANY SPECIAL, INCIDENTAL, INDIRECT OR CONSEQUENTIAL DAMAGES OF ANY KIND,
  * OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
- * WHETHER OR NOT ADVISED OF THE POSSIBILITY OF DAMAGE, AND ON ANY THEORY OF 
- * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE 
+ * WHETHER OR NOT ADVISED OF THE POSSIBILITY OF DAMAGE, AND ON ANY THEORY OF
+ * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
  * OF THIS SOFTWARE.
  */
 
@@ -65,39 +65,38 @@ static const int threebitdeltas[8] = { 0, 1, 2, 3, 0, -3, -2, -1 };
         }                                     \
 }
 
-static int
-ThunderSetupDecode(TIFF* tif)
+static int ThunderSetupDecode(TIFF *tif)
 {
-	static const char module[] = "ThunderSetupDecode";
+    static const char module[] = "ThunderSetupDecode";
 
-        if( tif->tif_dir.td_bitspersample != 4 )
-        {
-                TIFFErrorExtR(tif, module,
-                             "Wrong bitspersample value (%d), Thunder decoder only supports 4bits per sample.",
-                             (int) tif->tif_dir.td_bitspersample );
-                return 0;
-        }
-        
+    if (tif->tif_dir.td_bitspersample != 4)
+    {
+        TIFFErrorExtR(tif, module,
+                      "Wrong bitspersample value (%d), Thunder decoder only "
+                      "supports 4bits per sample.",
+                      (int)tif->tif_dir.td_bitspersample);
+        return 0;
+    }
 
-	return (1);
+    return (1);
 }
 
-static int
-ThunderDecode(TIFF *tif, uint8_t * op0, tmsize_t maxpixels)
+static int ThunderDecode(TIFF *tif, uint8_t *op0, tmsize_t maxpixels)
 {
-	static const char module[] = "ThunderDecode";
-	register unsigned char *bp;
-	register tmsize_t cc;
-	unsigned int lastpixel;
-	tmsize_t npixels;
+    static const char module[] = "ThunderDecode";
+    register unsigned char *bp;
+    register tmsize_t cc;
+    unsigned int lastpixel;
+    tmsize_t npixels;
     uint8_t *op = op0;
 
-	bp = (unsigned char *)tif->tif_rawcp;
-	cc = tif->tif_rawcc;
-	lastpixel = 0;
-	npixels = 0;
-	while (cc > 0 && npixels < maxpixels) {
-		int n, delta;
+    bp = (unsigned char *)tif->tif_rawcp;
+    cc = tif->tif_rawcc;
+    lastpixel = 0;
+    npixels = 0;
+    while (cc > 0 && npixels < maxpixels)
+    {
+        int n, delta;
 
 		n = *bp++;
 		cc--;

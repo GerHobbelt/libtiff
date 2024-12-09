@@ -41,25 +41,26 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define FAILED_FII    ((uint32_t) -1)
+#define FAILED_FII ((uint32_t)-1)
 
 #ifdef HAVE_IEEEFP
-# define TIFFCvtIEEEFloatToNative(tif, n, fp)
-# define TIFFCvtIEEEDoubleToNative(tif, n, dp)
+#define TIFFCvtIEEEFloatToNative(tif, n, fp)
+#define TIFFCvtIEEEDoubleToNative(tif, n, dp)
 #else
-extern void TIFFCvtIEEEFloatToNative(TIFF*, uint32_t, float*);
-extern void TIFFCvtIEEEDoubleToNative(TIFF*, uint32_t, double*);
+extern void TIFFCvtIEEEFloatToNative(TIFF *, uint32_t, float *);
+extern void TIFFCvtIEEEDoubleToNative(TIFF *, uint32_t, double *);
 #endif
 
-enum TIFFReadDirEntryErr {
-	TIFFReadDirEntryErrOk = 0,
-	TIFFReadDirEntryErrCount = 1,
-	TIFFReadDirEntryErrType = 2,
-	TIFFReadDirEntryErrIo = 3,
-	TIFFReadDirEntryErrRange = 4,
-	TIFFReadDirEntryErrPsdif = 5,
-	TIFFReadDirEntryErrSizesan = 6,
-	TIFFReadDirEntryErrAlloc = 7,
+enum TIFFReadDirEntryErr
+{
+    TIFFReadDirEntryErrOk = 0,
+    TIFFReadDirEntryErrCount = 1,
+    TIFFReadDirEntryErrType = 2,
+    TIFFReadDirEntryErrIo = 3,
+    TIFFReadDirEntryErrRange = 4,
+    TIFFReadDirEntryErrPsdif = 5,
+    TIFFReadDirEntryErrSizesan = 6,
+    TIFFReadDirEntryErrAlloc = 7,
 };
 
 static enum TIFFReadDirEntryErr
@@ -261,15 +262,15 @@ static void TryChopUpUncompressedBigTiff(TIFF *);
 static uint64_t TIFFReadUInt64(const uint8_t *value);
 static int _TIFFGetMaxColorChannels(uint16_t photometric);
 
-static int _TIFFFillStrilesInternal( TIFF *tif, int loadStripByteCount );
+static int _TIFFFillStrilesInternal(TIFF *tif, int loadStripByteCount);
 
 typedef union _UInt64Aligned_t
 {
-        double d;
-	uint64_t l;
-	uint32_t i[2];
-	uint16_t s[4];
-	uint8_t  c[8];
+    double d;
+    uint64_t l;
+    uint32_t i[2];
+    uint16_t s[4];
+    uint8_t c[8];
 } UInt64Aligned_t;
 
 /*
@@ -277,21 +278,22 @@ typedef union _UInt64Aligned_t
 */
 static uint64_t TIFFReadUInt64(const uint8_t *value)
 {
-	UInt64Aligned_t result;
+    UInt64Aligned_t result;
 
-	result.c[0]=value[0];
-	result.c[1]=value[1];
-	result.c[2]=value[2];
-	result.c[3]=value[3];
-	result.c[4]=value[4];
-	result.c[5]=value[5];
-	result.c[6]=value[6];
-	result.c[7]=value[7];
+    result.c[0] = value[0];
+    result.c[1] = value[1];
+    result.c[2] = value[2];
+    result.c[3] = value[3];
+    result.c[4] = value[4];
+    result.c[5] = value[5];
+    result.c[6] = value[6];
+    result.c[7] = value[7];
 
-	return result.l;
+    return result.l;
 }
 
-static enum TIFFReadDirEntryErr TIFFReadDirEntryByte(TIFF* tif, TIFFDirEntry* direntry, uint8_t* value)
+static enum TIFFReadDirEntryErr
+TIFFReadDirEntryByte(TIFF *tif, TIFFDirEntry *direntry, uint8_t *value)
 {
 	enum TIFFReadDirEntryErr err;
 	if (direntry->tdir_count!=1)

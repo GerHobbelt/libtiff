@@ -47,23 +47,24 @@
 /* Settings that are independent of libjpeg ABI. Used when reinitializing the */
 /* JPEGState from libjpegs 8 bit to libjpeg 12 bits, which have potentially */
 /* different ABI */
-typedef struct {
-  TIFFVGetMethod vgetparent;  /* super-class method */
-  TIFFVSetMethod vsetparent;  /* super-class method */
-  TIFFPrintMethod printdir;   /* super-class method */
-  TIFFStripMethod defsparent; /* super-class method */
-  TIFFTileMethod deftparent;  /* super-class method */
+typedef struct
+{
+    TIFFVGetMethod vgetparent;  /* super-class method */
+    TIFFVSetMethod vsetparent;  /* super-class method */
+    TIFFPrintMethod printdir;   /* super-class method */
+    TIFFStripMethod defsparent; /* super-class method */
+    TIFFTileMethod deftparent;  /* super-class method */
 
-  /* pseudo-tag fields */
-  void *jpegtables;           /* JPEGTables tag value, or NULL */
-  uint32_t jpegtables_length; /* number of bytes in same */
-  int jpegquality;            /* Compression quality level */
-  int jpegcolormode;          /* Auto RGB<=>YCbCr convert? */
-  int jpegtablesmode;         /* What to put in JPEGTables */
+    /* pseudo-tag fields */
+    void *jpegtables;           /* JPEGTables tag value, or NULL */
+    uint32_t jpegtables_length; /* number of bytes in same */
+    int jpegquality;            /* Compression quality level */
+    int jpegcolormode;          /* Auto RGB<=>YCbCr convert? */
+    int jpegtablesmode;         /* What to put in JPEGTables */
 
-  int ycbcrsampling_fetched;
-  int max_allowed_scan_number;
-  int has_warned_about_progressive_mode;
+    int ycbcrsampling_fetched;
+    int max_allowed_scan_number;
+    int has_warned_about_progressive_mode;
 } JPEGOtherSettings;
 
 int TIFFFillStrip(TIFF *tif, uint32_t strip);

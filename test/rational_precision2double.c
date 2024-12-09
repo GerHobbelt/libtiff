@@ -2,23 +2,23 @@
 /*
  * Copyright (c) 2012, Frank Warmerdam <warmerdam@pobox.com>
  *
- * Permission to use, copy, modify, distribute, and sell this software and 
+ * Permission to use, copy, modify, distribute, and sell this software and
  * its documentation for any purpose is hereby granted without fee, provided
  * that (i) the above copyright notices and this permission notice appear in
  * all copies of the software and related documentation, and (ii) the names of
  * Sam Leffler and Silicon Graphics may not be used in any advertising or
  * publicity relating to the software without the specific, prior written
  * permission of Sam Leffler and Silicon Graphics.
- * 
- * THE SOFTWARE IS PROVIDED "AS-IS" AND WITHOUT WARRANTY OF ANY KIND, 
- * EXPRESS, IMPLIED OR OTHERWISE, INCLUDING WITHOUT LIMITATION, ANY 
- * WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.  
- * 
+ *
+ * THE SOFTWARE IS PROVIDED "AS-IS" AND WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS, IMPLIED OR OTHERWISE, INCLUDING WITHOUT LIMITATION, ANY
+ * WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+ *
  * IN NO EVENT SHALL SAM LEFFLER OR SILICON GRAPHICS BE LIABLE FOR
  * ANY SPECIAL, INCIDENTAL, INDIRECT OR CONSEQUENTIAL DAMAGES OF ANY KIND,
  * OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
- * WHETHER OR NOT ADVISED OF THE POSSIBILITY OF DAMAGE, AND ON ANY THEORY OF 
- * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE 
+ * WHETHER OR NOT ADVISED OF THE POSSIBILITY OF DAMAGE, AND ON ANY THEORY OF
+ * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
  * OF THIS SOFTWARE.
  */
 
@@ -42,13 +42,13 @@
     a.) delete any written testfiles when test passed (otherwise autotest will fail)
 	b.) goto failure, if any failure is detected, which is not necessary when test is initiated manually for debugging
 */
-#define GOTOFAILURE	goto failure;
+#define GOTOFAILURE goto failure;
 #else
 #define GOTOFAILURE
 #endif
 
 #ifdef _MSC_VER
-#pragma warning( disable : 4101)
+#pragma warning(disable : 4101)
 #endif
 
 #include "tif_config.h"
@@ -70,19 +70,19 @@
 int write_test_tiff(TIFF *tif, const char *filenameRead, int blnAllCustomTags);
 int addTags(TIFF *tif);
 
-#define	SPP	3		/* Samples per pixel */
-const uint16_t	width = 1;
-const uint16_t	length = 1;
-const uint16_t	bps = 8;
-const uint16_t	photometric = PHOTOMETRIC_RGB;
-const uint16_t	rows_per_strip = 1;
-const uint16_t	planarconfig = PLANARCONFIG_CONTIG;
+#define SPP 3 /* Samples per pixel */
+const uint16_t width = 1;
+const uint16_t length = 1;
+const uint16_t bps = 8;
+const uint16_t photometric = PHOTOMETRIC_RGB;
+const uint16_t rows_per_strip = 1;
+const uint16_t planarconfig = PLANARCONFIG_CONTIG;
 
 /*-- Additional custom TIFF tags for testing of Rational2Double precision --*/
-#define TIFFTAG_RATIONAL_DOUBLE		60000
-#define TIFFTAG_SRATIONAL_DOUBLE		60001
-#define TIFFTAG_RATIONAL_C0_DOUBLE		60002
-#define TIFFTAG_SRATIONAL_C16_DOUBLE		60003
+#define TIFFTAG_RATIONAL_DOUBLE 60000
+#define TIFFTAG_SRATIONAL_DOUBLE 60001
+#define TIFFTAG_RATIONAL_C0_DOUBLE 60002
+#define TIFFTAG_SRATIONAL_C16_DOUBLE 60003
 
 
 /*--- TIFFField Definition ---

@@ -23,7 +23,7 @@
  */
 
 #ifndef _TIFFIO_
-#define	_TIFFIO_
+#define _TIFFIO_
 
 /*
  * TIFF I/O Library Definitions.
@@ -65,17 +65,17 @@ typedef struct tiff TIFF;
 typedef TIFF_SSIZE_T tmsize_t;
 #define TIFF_TMSIZE_T_MAX (tmsize_t)(SIZE_MAX >> 1)
 
-typedef uint64_t toff_t;          /* file offset */
+typedef uint64_t toff_t; /* file offset */
 /* the following are deprecated and should be replaced by their defining
    counterparts */
-typedef uint32_t ttag_t;          /* directory tag */
+typedef uint32_t ttag_t;    /* directory tag */
 typedef uint32_t tdir_t;    /* directory index */
-typedef uint16_t tsample_t;       /* sample number */
-typedef uint32_t tstrile_t;       /* strip or tile number */
-typedef tstrile_t tstrip_t;     /* strip number */
-typedef tstrile_t ttile_t;      /* tile number */
-typedef tmsize_t tsize_t;       /* i/o size in bytes */
-typedef void* tdata_t;          /* image data ref */
+typedef uint16_t tsample_t; /* sample number */
+typedef uint32_t tstrile_t; /* strip or tile number */
+typedef tstrile_t tstrip_t; /* strip number */
+typedef tstrile_t ttile_t;  /* tile number */
+typedef tmsize_t tsize_t;   /* i/o size in bytes */
+typedef void *tdata_t;      /* image data ref */
 
 /*
  * On windows you should define USE_WIN32_FILEIO if you are using tif_win32.c
@@ -116,7 +116,7 @@ typedef void* thandle_t;       /* client data handle */
 #define TIFFPRINT_JPEGACTABLES 0x200  /* JPEG AC tables */
 #define TIFFPRINT_JPEGDCTABLES 0x200  /* JPEG DC tables */
 
-/* 
+/*
  * Colour conversion stuff
  */
 
