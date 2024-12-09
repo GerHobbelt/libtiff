@@ -472,6 +472,7 @@ extern void TIFFOpenOptionsFree(TIFFOpenOptions*);
 extern void TIFFOpenOptionsSetMaxSingleMemAlloc(TIFFOpenOptions* opts, tmsize_t max_single_mem_alloc);
 extern void TIFFOpenOptionsSetErrorHandlerExtR(TIFFOpenOptions* opts, TIFFErrorHandlerExtR handler, void* errorhandler_user_data);
 extern void TIFFOpenOptionsSetMaxCumulatedMemAlloc(TIFFOpenOptions *opts, tmsize_t max_cumulated_mem_alloc);
+extern void TIFFOpenOptionsSetWarnAboutUnknownTags(TIFFOpenOptions *opts, int warn_about_unknown_tags);
 extern void TIFFOpenOptionsSetWarningHandlerExtR(TIFFOpenOptions* opts, TIFFErrorHandlerExtR handler, void* warnhandler_user_data);
 
 extern TIFF* TIFFOpen(const char*, const char*);
