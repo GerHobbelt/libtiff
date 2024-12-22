@@ -535,6 +535,13 @@ static int Fax3SetupState(TIFF *tif)
                       "Bits/sample must be 1 for Group 3/4 encoding/decoding");
         return (0);
     }
+    if (td->td_samplesperpixel != 1)
+    {
+        TIFFWarningExtR(
+            tif, module,
+            "Samples/pixel shall be 1 for Group 3/4 encoding/decoding. "
+            "Probably wrong encoding/decoding result");
+    }
     /*
      * Calculate the scanline/tile widths.
      */
