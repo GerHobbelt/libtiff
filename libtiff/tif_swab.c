@@ -78,18 +78,18 @@ void TIFFSwabLong8(uint64_t *lp)
 #endif
 
 #if defined(DISABLE_CHECK_TIFFSWABMACROS) || !defined(TIFFSwabArrayOfShort)
-void TIFFSwabArrayOfShort(register uint16_t *wp, tmsize_t n)
+#if defined(__GNUC__) && __GNUC__ >= 9 && !defined(__clang__)
+__attribute__((optimize("tree-vectorize")))
+#endif
+void TIFFSwabArrayOfShort(uint16_t *wp, tmsize_t n)
 {
-    register unsigned char *cp;
-    register unsigned char t;
-    assert(sizeof(uint16_t) == 2);
-    /* XXX unroll loop some */
+#if defined(__clang__) && __clang_major__ < 12
+#pragma clang loop vectorize(disable)
+#endif
     while (n-- > 0)
     {
-        cp = (unsigned char *)wp;
-        t = cp[1];
-        cp[1] = cp[0];
-        cp[0] = t;
+        uint16_t v = *wp;
+        *wp = (v >> 8) | (v << 8);
         wp++;
     }
 }
@@ -114,48 +114,33 @@ void TIFFSwabArrayOfTriples(register uint8_t *tp, tmsize_t n)
 #endif
 
 #if defined(DISABLE_CHECK_TIFFSWABMACROS) || !defined(TIFFSwabArrayOfLong)
-void TIFFSwabArrayOfLong(register uint32_t *lp, tmsize_t n)
+void TIFFSwabArrayOfLong(uint32_t *lp, tmsize_t n)
 {
-    register unsigned char *cp;
-    register unsigned char t;
-    assert(sizeof(uint32_t) == 4);
-    /* XXX unroll loop some */
+#if defined(__clang__)
+#pragma clang loop vectorize(disable)
+#endif
     while (n-- > 0)
     {
-        cp = (unsigned char *)lp;
-        t = cp[3];
-        cp[3] = cp[0];
-        cp[0] = t;
-        t = cp[2];
-        cp[2] = cp[1];
-        cp[1] = t;
+        uint32_t v = *lp;
+        *lp = ((v & 0x000000ffU) << 24) | ((v & 0x0000ff00U) << 8) |
+              ((v & 0x00ff0000U) >> 8) | ((v & 0xff000000U) >> 24);
         lp++;
     }
 }
 #endif
 
 #if defined(DISABLE_CHECK_TIFFSWABMACROS) || !defined(TIFFSwabArrayOfLong8)
-void TIFFSwabArrayOfLong8(register uint64_t *lp, tmsize_t n)
+void TIFFSwabArrayOfLong8(uint64_t *lp, tmsize_t n)
 {
-    register unsigned char *cp;
-    register unsigned char t;
-    assert(sizeof(uint64_t) == 8);
-    /* XXX unroll loop some */
     while (n-- > 0)
     {
-        cp = (unsigned char *)lp;
-        t = cp[7];
-        cp[7] = cp[0];
-        cp[0] = t;
-        t = cp[6];
-        cp[6] = cp[1];
-        cp[1] = t;
-        t = cp[5];
-        cp[5] = cp[2];
-        cp[2] = t;
-        t = cp[4];
-        cp[4] = cp[3];
-        cp[3] = t;
+        uint64_t v = *lp;
+        *lp = ((v & 0x000000ffU) << 56) | ((v & 0x0000ff00U) << 40) |
+              ((v & 0x00ff0000U) << 24) | ((v & 0xff000000U) << 8) |
+              ((v & 0x000000ff00000000ULL) >> 8) |
+              ((v & 0x0000ff0000000000ULL) >> 24) |
+              ((v & 0x00ff000000000000ULL) >> 40) |
+              ((v & 0xff00000000000000ULL) >> 56);
         lp++;
     }
 }
@@ -177,23 +162,12 @@ void TIFFSwabFloat(float *fp)
 #endif
 
 #if defined(DISABLE_CHECK_TIFFSWABMACROS) || !defined(TIFFSwabArrayOfFloat)
-void TIFFSwabArrayOfFloat(register float *fp, tmsize_t n)
+void TIFFSwabArrayOfFloat(float *fp, tmsize_t n)
 {
-    register unsigned char *cp;
-    register unsigned char t;
     assert(sizeof(float) == 4);
-    /* XXX unroll loop some */
-    while (n-- > 0)
-    {
-        cp = (unsigned char *)fp;
-        t = cp[3];
-        cp[3] = cp[0];
-        cp[0] = t;
-        t = cp[2];
-        cp[2] = cp[1];
-        cp[1] = t;
-        fp++;
-    }
+    uint32_t *lp;
+    memcpy(&lp, &fp, sizeof(lp));
+    TIFFSwabArrayOfLong(lp, n);
 }
 #endif
 
@@ -221,27 +195,10 @@ void TIFFSwabDouble(double *dp)
 #if defined(DISABLE_CHECK_TIFFSWABMACROS) || !defined(TIFFSwabArrayOfDouble)
 void TIFFSwabArrayOfDouble(double *dp, tmsize_t n)
 {
-    register unsigned char *cp;
-    register unsigned char t;
     assert(sizeof(double) == 8);
-    /* XXX unroll loop some */
-    while (n-- > 0)
-    {
-        cp = (unsigned char *)dp;
-        t = cp[7];
-        cp[7] = cp[0];
-        cp[0] = t;
-        t = cp[6];
-        cp[6] = cp[1];
-        cp[1] = t;
-        t = cp[5];
-        cp[5] = cp[2];
-        cp[2] = t;
-        t = cp[4];
-        cp[4] = cp[3];
-        cp[3] = t;
-        dp++;
-    }
+    uint64_t *lp;
+    memcpy(&lp, &dp, sizeof(lp));
+    TIFFSwabArrayOfLong8(lp, n);
 }
 #endif
 
