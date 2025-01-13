@@ -169,15 +169,6 @@ _tiffSizeProc(thandle_t fd)
 		return(0);
 }
 
-static int
-_tiffDummyMapProc(thandle_t fd, void** pbase, toff_t* psize)
-{
-	(void) fd;
-	(void) pbase;
-	(void) psize;
-	return (0);
-}
-
 /*
  * From "Hermann Josef Hill" <lhill@rhein-zeitung.de>:
  *
@@ -212,14 +203,6 @@ _tiffMapProc(thandle_t fd, void** pbase, toff_t* psize)
 		return (0);
 	*psize = size;
 	return(1);
-}
-
-static void
-_tiffDummyUnmapProc(thandle_t fd, void* base, toff_t size)
-{
-	(void) fd;
-	(void) base;
-	(void) size;
 }
 
 static void

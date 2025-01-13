@@ -386,6 +386,8 @@ typedef size_t TIFFIOSize_t;
 #if defined(__cplusplus)
 extern "C" {
 #endif
+extern int _tiffDummyMapProc(thandle_t fd, void **pbase, toff_t *psize);
+extern void _tiffDummyUnmapProc(thandle_t fd, void *base, toff_t size);
 extern int _TIFFgetMode(TIFFOpenOptions* opts, thandle_t clientdata, const char* mode, const char* module);
 extern int _TIFFNoRowEncode(TIFF* tif, uint8_t* pp, tmsize_t cc, uint16_t s);
 extern int _TIFFNoStripEncode(TIFF* tif, uint8_t* pp, tmsize_t cc, uint16_t s);

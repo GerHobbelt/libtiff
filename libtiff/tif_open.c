@@ -37,14 +37,14 @@
 /*
  * Dummy functions to fill the omitted client procedures.
  */
-static int
+int
 _tiffDummyMapProc(thandle_t fd, void** pbase, toff_t* psize)
 {
 	(void) fd; (void) pbase; (void) psize;
 	return (0);
 }
 
-static void
+void
 _tiffDummyUnmapProc(thandle_t fd, void* base, toff_t size)
 {
 	(void) fd; (void) base; (void) size;
