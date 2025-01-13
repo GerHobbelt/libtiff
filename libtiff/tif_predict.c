@@ -186,15 +186,11 @@ PredictorSetupDecode(TIFF* tif)
 		/*
 		 * The data should not be swapped outside of the floating
 		 * point predictor, the accumulation routine should return
-		 * byres in the native order.
+         * bytes in the native order.
 		 */
 		if (tif->tif_flags & TIFF_SWAB) {
 			tif->tif_postdecode = _TIFFNoPostDecode;
 		}
-		/*
-		 * Allocate buffer to keep the decoded bytes before
-		 * rearranging in the right order
-		 */
 	}
 
 	return 1;
@@ -257,15 +253,24 @@ PredictorSetupEncode(TIFF* tif)
 		 * Override default encoding method with one that does the
 		 * predictor stuff.
 		 */
-                if( tif->tif_encoderow != PredictorEncodeRow )
-                {
-                    sp->encoderow = tif->tif_encoderow;
-                    tif->tif_encoderow = PredictorEncodeRow;
-                    sp->encodestrip = tif->tif_encodestrip;
-                    tif->tif_encodestrip = PredictorEncodeTile;
-                    sp->encodetile = tif->tif_encodetile;
-                    tif->tif_encodetile = PredictorEncodeTile;
-                }
+            if( tif->tif_encoderow != PredictorEncodeRow )
+            {
+                sp->encoderow = tif->tif_encoderow;
+                tif->tif_encoderow = PredictorEncodeRow;
+                sp->encodestrip = tif->tif_encodestrip;
+                tif->tif_encodestrip = PredictorEncodeTile;
+                sp->encodetile = tif->tif_encodetile;
+                tif->tif_encodetile = PredictorEncodeTile;
+            }
+        /*
+         * The data should not be swapped outside of the floating
+         * point predictor, the differentiation routine should return
+         * bytes in the native order.
+         */
+        if (tif->tif_flags & TIFF_SWAB)
+        {
+            tif->tif_postdecode = _TIFFNoPostDecode;
+        }
 	}
 
 	return 1;
