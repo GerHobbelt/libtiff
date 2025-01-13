@@ -86,25 +86,47 @@ const uint16_t planarconfig = PLANARCONFIG_CONTIG;
 
 
 /*--- TIFFField Definition ---
-	field_tag: the tag number. For instance 277 for the SamplesPerPixel tag. Builtin tags will generally have a #define in tiff.h for each known tag.
-	field_readcount: The number of values which should be read. The special value TIFF_VARIABLE (-1) indicates that a variable number of values may be read. The special value TIFFTAG_SPP (-2) indicates that there should be one value for each sample as defined by TIFFTAG_SAMPLESPERPIXEL. The special value TIFF_VARIABLE2 (-3) is presumably similar to TIFF_VARIABLE though I am not sure what the distinction in behaviour is. This field is TIFF_VARIABLE for variable length ascii fields.
-	field_writecount: The number of values which should be written. Generally the same as field_readcount. A few built-in exceptions exist, but I haven't analysed why they differ.
-	field_type: Type of the field. One of TIFF_BYTE, TIFF_ASCII, TIFF_SHORT, TIFF_LONG, TIFF_RATIONAL, TIFF_SBYTE, TIFF_UNDEFINED, TIFF_SSHORT, TIFF_SLONG, TIFF_SRATIONAL, TIFF_FLOAT, TIFF_DOUBLE or TIFF_IFD. Note that some fields can support more than one type (for instance short and long). These fields should have multiple TIFFFieldInfos.
-	reserved:
-	set_field_type: TIFF_SETGET_DOUBLE
-	get_field_type: - not used -
-	field_bit: Built-in tags stored in special fields in the TIFF structure have assigned field numbers to distinguish them (ie. FIELD_SAMPLESPERPIXEL). New tags should generally just use FIELD_CUSTOM indicating they are stored in the generic tag list.
-	field_oktochange: TRUE if it is OK to change this tag value while an image is being written. FALSE for stuff that must be set once and then left unchanged (like ImageWidth, or PhotometricInterpretation for instance).
-	field_passcount: If TRUE, then the count value must be passed in TIFFSetField(), and TIFFGetField(), otherwise the count is not required. This should generally be TRUE for non-ascii variable count tags unless the count is implicit (such as with the colormap).
-	field_name: A name for the tag. Normally mixed case (studly caps) like "StripByteCounts" and relatively short.
+        field_tag: the tag number. For instance 277 for the SamplesPerPixel tag.
+   Builtin tags will generally have a #define in tiff.h for each known tag.
+        field_readcount: The number of values which should be read. The special
+   value TIFF_VARIABLE (-1) indicates that a variable number of values may be
+   read. The special value TIFFTAG_SPP (-2) indicates that there should be one
+   value for each sample as defined by TIFFTAG_SAMPLESPERPIXEL. The special
+   value TIFF_VARIABLE2 (-3) is presumably similar to TIFF_VARIABLE though I am
+   not sure what the distinction in behaviour is. This field is TIFF_VARIABLE
+   for variable length ascii fields. field_writecount: The number of values
+   which should be written. Generally the same as field_readcount. A few
+   built-in exceptions exist, but I haven't analysed why they differ.
+        field_type: Type of the field. One of TIFF_BYTE, TIFF_ASCII, TIFF_SHORT,
+   TIFF_LONG, TIFF_RATIONAL, TIFF_SBYTE, TIFF_UNDEFINED, TIFF_SSHORT,
+   TIFF_SLONG, TIFF_SRATIONAL, TIFF_FLOAT, TIFF_DOUBLE or TIFF_IFD. Note that
+   some fields can support more than one type (for instance short and long).
+   These fields should have multiple TIFFFieldInfos. reserved:
+   set_get_field_type: TIFF_SETGET_DOUBLE get_field_type: - not used -
+   field_bit: Built-in tags stored in special fields in the TIFF structure have
+   assigned field numbers to distinguish them (ie. FIELD_SAMPLESPERPIXEL). New
+   tags should generally just use FIELD_CUSTOM indicating they are stored in the
+   generic tag list. field_oktochange: TRUE if it is OK to change this tag value
+   while an image is being written. FALSE for stuff that must be set once and
+   then left unchanged (like ImageWidth, or PhotometricInterpretation for
+   instance). field_passcount: If TRUE, then the count value must be passed in
+   TIFFSetField(), and TIFFGetField(), otherwise the count is not required. This
+   should generally be TRUE for non-ascii variable count tags unless the count
+   is implicit (such as with the colormap). field_name: A name for the tag.
+   Normally mixed case (studly caps) like "StripByteCounts" and relatively
+   short.
 */
 
 static const TIFFField
 tifFieldInfo[] = {
-	{ TIFFTAG_RATIONAL_DOUBLE, 1, 1, TIFF_RATIONAL, 0, TIFF_SETGET_DOUBLE, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "Rational2Double_U_Double", NULL },
-	{ TIFFTAG_SRATIONAL_DOUBLE, 1, 1, TIFF_SRATIONAL, 0, TIFF_SETGET_DOUBLE, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "Rational2Double_S_Double", NULL },
-	{ TIFFTAG_RATIONAL_C0_DOUBLE, 3, 3, TIFF_RATIONAL, 0, TIFF_SETGET_C0_DOUBLE, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "Rational2Double_C0", NULL },
-	{ TIFFTAG_SRATIONAL_C16_DOUBLE, -1, -1, TIFF_SRATIONAL, 0, TIFF_SETGET_C16_DOUBLE, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "Rational2Double_S_C16", NULL },
+    {TIFFTAG_RATIONAL_DOUBLE, 1, 1, TIFF_RATIONAL, 0, TIFF_SETGET_DOUBLE,
+     FIELD_CUSTOM, 0, 0, "Rational2Double_U_Double", NULL},
+    {TIFFTAG_SRATIONAL_DOUBLE, 1, 1, TIFF_SRATIONAL, 0, TIFF_SETGET_DOUBLE,
+     FIELD_CUSTOM, 0, 0, "Rational2Double_S_Double", NULL},
+    {TIFFTAG_RATIONAL_C0_DOUBLE, 3, 3, TIFF_RATIONAL, 0, TIFF_SETGET_C0_DOUBLE,
+     FIELD_CUSTOM, 0, 0, "Rational2Double_C0", NULL},
+    {TIFFTAG_SRATIONAL_C16_DOUBLE, -1, -1, TIFF_SRATIONAL, 0,
+     TIFF_SETGET_C16_DOUBLE, FIELD_CUSTOM, 0, 1, "Rational2Double_S_C16", NULL},
 };
 
 #define	N(a)	(sizeof (a) / sizeof (a[0]))
@@ -504,7 +526,7 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 		/*-- Check, if the TiffLibrary is compiled with the new interface with Rational2Double or still uses the old definitions. */
 		/*   tags to check: TIFFTAG_BESTQUALITYSCALE, TIFFTAG_BASELINENOISE, TIFFTAG_BASELINESHARPNESS, */
 		fip = TIFFFindField(tif, TIFFTAG_BESTQUALITYSCALE, TIFF_ANY);
-		tSetFieldType = fip->set_field_type;
+        tSetFieldType = fip->set_get_field_type;
 		if (tSetFieldType == TIFF_SETGET_DOUBLE)
 			blnIsRational2Double = FALSE;
 		else
@@ -544,13 +566,15 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 			tTag = tFieldArray->fields[i].field_tag;
 			tType = tFieldArray->fields[i].field_type;				/* e.g. TIFF_RATIONAL */
 			tWriteCount = tFieldArray->fields[i].field_writecount;
-			tSetFieldType = tFieldArray->fields[i].set_field_type;	/* e.g. TIFF_SETGET_C0_FLOAT */
+            tSetFieldType =
+                tFieldArray->fields[i]
+                    .set_get_field_type; /* e.g. TIFF_SETGET_C0_FLOAT */
 			tFieldBit = tFieldArray->fields[i].field_bit;
 			tFieldName = tFieldArray->fields[i].field_name;
 			pVoid = NULL;
 
 			if ((tType == TIFF_RATIONAL || tType == TIFF_SRATIONAL) && tFieldBit == FIELD_CUSTOM) {
-				/*-- dependent on set_field_type write value --*/
+                /*-- dependent on set_get_field_type write value --*/
 				switch (tSetFieldType) {
 					case TIFF_SETGET_FLOAT:
 					case TIFF_SETGET_DOUBLE:
@@ -562,6 +586,12 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 							}
 						} else {
 							fprintf(stderr, "WriteCount for .set_field_type %d should be 1!  %s\n", tSetFieldType, tFieldArray->fields[i].field_name);
+                            fprintf(
+                                stderr,
+                                "WriteCount for .set_get_field_type %d should "
+                                "be 1!  %s\n",
+                                tSetFieldType,
+                                tFieldArray->fields[i].field_name);
 						}
 						break;
 					case TIFF_SETGET_C0_FLOAT:
@@ -574,11 +604,12 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 						/*-- Check, if it is a single parameter, a fixed array or a variable array */
                         if (tWriteCount == 1)
                         {
-                            fprintf(stderr,
-                                    "WriteCount for .set_field_type %d should "
-                                    "be -1 or greater than 1!  %s\n",
-                                    tSetFieldType,
-                                    tFieldArray->fields[i].field_name);
+                            fprintf(
+                                stderr,
+                                "WriteCount for .set_get_field_type %d should "
+                                "be -1 or greater than 1!  %s\n",
+                                tSetFieldType,
+                                tFieldArray->fields[i].field_name);
                         }
                         else
                         {
@@ -705,7 +736,7 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 	/*-- Check, if the TiffLibrary is compiled with the new interface with Rational2Double or still uses the old definitions. */
 	/*   tags to check: TIFFTAG_BESTQUALITYSCALE, TIFFTAG_BASELINENOISE, TIFFTAG_BASELINESHARPNESS, */
 	fip = TIFFFindField(tif, TIFFTAG_BESTQUALITYSCALE, TIFF_ANY);
-	tSetFieldType = fip->set_field_type;
+    tSetFieldType = fip->set_get_field_type;
 	if (tSetFieldType == TIFF_SETGET_DOUBLE)
 		blnIsRational2Double = FALSE;
 	else
@@ -840,14 +871,16 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 			tTag = tFieldArray->fields[i].field_tag;
 			tType = tFieldArray->fields[i].field_type;				/* e.g. TIFF_RATIONAL */
 			tWriteCount = tFieldArray->fields[i].field_writecount;
-			tSetFieldType = tFieldArray->fields[i].set_field_type;	/* e.g. TIFF_SETGET_C0_FLOAT */
+            tSetFieldType =
+                tFieldArray->fields[i]
+                    .set_get_field_type; /* e.g. TIFF_SETGET_C0_FLOAT */
 			tFieldBit = tFieldArray->fields[i].field_bit;
 			tFieldName = tFieldArray->fields[i].field_name;
 			pVoid = NULL;
 			auxDblUnion.dbl = 0;
 
 			if ((tType == TIFF_RATIONAL || tType == TIFF_SRATIONAL) && tFieldBit == FIELD_CUSTOM) {
-				/*-- dependent on set_field_type read value --*/
+                /*-- dependent on set_get_field_type read value --*/
 				switch (tSetFieldType) {
 					case TIFF_SETGET_FLOAT:
 						if (!TIFFGetField(tif, tTag, &auxFloat)) {
@@ -919,11 +952,12 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 						/*-- Check, if it is a single parameter, a fixed array or a variable array */
                         if (tWriteCount == 1)
                         {
-                            fprintf(stderr,
-                                    "Reading: WriteCount for .set_field_type "
-                                    "%d should be -1 or greater than 1!  %s\n",
-                                    tSetFieldType,
-                                    tFieldArray->fields[i].field_name);
+                            fprintf(
+                                stderr,
+                                "Reading: WriteCount for .set_get_field_type "
+                                "%d should be -1 or greater than 1!  %s\n",
+                                tSetFieldType,
+                                tFieldArray->fields[i].field_name);
                             GOTOFAILURE
                         }
                         else

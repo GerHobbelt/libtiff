@@ -6102,16 +6102,21 @@ TIFFFetchNormalTag(TIFF* tif, TIFFDirEntry* dp, int recover)
             return 0;
         }
 	fip=tif->tif_fields[fii];
-	assert(fip != NULL); /* should not happen */
-	assert(fip->set_field_type!=TIFF_SETGET_OTHER);  /* if so, we shouldn't arrive here but deal with this in specialized code */
-	assert(fip->set_field_type!=TIFF_SETGET_INT);    /* if so, we shouldn't arrive here as this is only the case for pseudo-tags */
-	err=TIFFReadDirEntryErrOk;
-	switch (fip->set_field_type)
+    assert(fip != NULL); /* should not happen */
+    assert(fip->set_get_field_type !=
+           TIFF_SETGET_OTHER); /* if so, we shouldn't arrive here but deal with
+                                  this in specialized code */
+    assert(fip->set_get_field_type !=
+           TIFF_SETGET_INT); /* if so, we shouldn't arrive here as this is only
+                                the case for pseudo-tags */
+    err = TIFFReadDirEntryErrOk;
+    switch (fip->set_get_field_type)
 	{
 		case TIFF_SETGET_UNDEFINED:
 				TIFFErrorExtR(tif, "TIFFFetchNormalTag",
-					"Defined set_field_type of custom tag %u (%s) is TIFF_SETGET_UNDEFINED and thus tag is not read from file",
-					fip->field_tag, fip->field_name);
+                "Defined set_get_field_type of custom tag %u (%s) is "
+                "TIFF_SETGET_UNDEFINED and thus tag is not read from file",
+                fip->field_tag, fip->field_name);
 			break;
 		case TIFF_SETGET_ASCII:
 			{

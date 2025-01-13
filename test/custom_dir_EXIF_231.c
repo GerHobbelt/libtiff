@@ -375,7 +375,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
        TIFFTAG_BASELINENOISE, TIFFTAG_BASELINESHARPNESS
      */
 	fip = TIFFFindField(tif, TIFFTAG_BESTQUALITYSCALE, TIFF_ANY);
-	tSetFieldType = fip->set_field_type;
+    tSetFieldType = fip->set_get_field_type;
 	if (tSetFieldType == TIFF_SETGET_DOUBLE) {
 		blnIsRational2Double = FALSE;
 	} else {
@@ -624,11 +624,12 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 		tTag = tFieldArray->fields[i].field_tag;
 		tType = tFieldArray->fields[i].field_type;				/* e.g. TIFF_RATIONAL */
 		tWriteCount = tFieldArray->fields[i].field_writecount;
-		tSetFieldType = tFieldArray->fields[i].set_field_type;	/* e.g. TIFF_SETGET_C0_FLOAT */
+        tSetFieldType = tFieldArray->fields[i]
+                            .set_get_field_type; /* e.g. TIFF_SETGET_C0_FLOAT */
 		tFieldName = tFieldArray->fields[i].field_name;		
 		pVoid = NULL;
 
-		/*-- dependent on set_field_type write value --*/
+        /*-- dependent on set_get_field_type write value --*/
 		switch (tSetFieldType)
 		{
 			case TIFF_SETGET_ASCII:
@@ -672,7 +673,11 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 						goto failure;
 					}	
 				} else {
-					fprintf (stderr, "WriteCount for .set_field_type %d should be 1!  %s\n", tSetFieldType, tFieldArray->fields[i].field_name);
+                {
+                    fprintf(stderr,
+                            "WriteCount for .set_get_field_type %d should be "
+                            "1!  %s\n",
+                            tSetFieldType, tFieldArray->fields[i].field_name);
 				}
 				break;
 			case TIFF_SETGET_C0_FLOAT:
@@ -685,6 +690,11 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 				/*-- Check, if it is a single parameter, a fixed array or a variable array */
 				if (tWriteCount == 1) {
 					fprintf (stderr, "WriteCount for .set_field_type %d should be -1 or greater than 1!  %s\n", tSetFieldType, tFieldArray->fields[i].field_name);
+                    fprintf(
+                        stderr,
+                        "WriteCount for .set_get_field_type %d should be -1 or "
+                        "greater than 1!  %s\n",
+                        tSetFieldType, tFieldArray->fields[i].field_name);
 				} else {
 					/*-- Either fix or variable array --*/
 					/* For arrays, distinguishing between float or double is essential, even for writing */
@@ -743,8 +753,10 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 			/* _Cxx_ just defines the size of the count parameter for the array as C0=char, C16=short or C32=long */
 			/*-- Check, if it is a single parameter, a fixed array or a variable array */
 			if (tWriteCount == 1) {
-				fprintf(stderr, "WriteCount for .set_field_type %d should be -1 or greater than 1!  %s\n",
-						tSetFieldType, tFieldArray->fields[i].field_name);
+                fprintf(stderr,
+                        "WriteCount for .set_get_field_type %d should be -1 or "
+                        "greater than 1!  %s\n",
+                        tSetFieldType, tFieldArray->fields[i].field_name);
 			} else {
 				/*-- Either fix or variable array --*/
 				/* Now decide between fixed or variable array */
@@ -1102,7 +1114,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	/*-- Check, if the TiffLibrary is compiled with the new interface with Rational2Double or still uses the old definitions. */
 	/* tif points to EXIF tags, so TIFFFindField() can only access the EXIF tag fields */
 	fip = TIFFFindField(tif, EXIFTAG_EXPOSURETIME, TIFF_ANY);
-	tSetFieldType = fip->set_field_type;
+    tSetFieldType = fip->set_get_field_type;
 	if (tSetFieldType == TIFF_SETGET_DOUBLE) {
 		blnIsRational2Double = FALSE;
 		fprintf(stderr, "-- EXIF tags read with standard --\n");
@@ -1116,10 +1128,11 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 		tTag = tFieldArray->fields[i].field_tag;
 		tType = tFieldArray->fields[i].field_type;				/* e.g. TIFF_RATIONAL */
 		tWriteCount = tFieldArray->fields[i].field_writecount;
-		tSetFieldType = tFieldArray->fields[i].set_field_type;	/* e.g. TIFF_SETGET_C0_FLOAT */
+        tSetFieldType = tFieldArray->fields[i]
+                            .set_get_field_type; /* e.g. TIFF_SETGET_C0_FLOAT */
 		tFieldName = tFieldArray->fields[i].field_name;		
 
-		/*-- dependent on set_field_type read value --*/
+        /*-- dependent on set_get_field_type read value --*/
 		switch (tSetFieldType)
 		{
 			case TIFF_SETGET_ASCII:
@@ -1256,6 +1269,11 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 				/*-- Check, if it is a single parameter, a fixed array or a variable array */
 				if (tWriteCount == 1) {
 					fprintf (stderr, "Reading: WriteCount for .set_field_type %d should be -1 or greater than 1!  %s\n", tSetFieldType, tFieldArray->fields[i].field_name);
+                    fprintf(
+                        stderr,
+                        "Reading: WriteCount for .set_get_field_type %d should "
+                        "be -1 or greater than 1!  %s\n",
+                        tSetFieldType, tFieldArray->fields[i].field_name);
 				} else {
 					/*-- Either fix or variable array --*/
 					/* For arrays, distinguishing between float or double is essential. */
@@ -1343,8 +1361,10 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 			/* _Cxx_ just defines the size of the count parameter for the array as C0=char, C16=short or C32=long */
 			/*-- Check, if it is a single parameter, a fixed array or a variable array */
 			if (tWriteCount == 1) {
-				fprintf(stderr, "WriteCount for .set_field_type %d should be -1 or greater than 1!  %s\n",
-						tSetFieldType, tFieldArray->fields[i].field_name);
+                fprintf(stderr,
+                        "WriteCount for .set_get_field_type %d should be -1 or "
+                        "greater than 1!  %s\n",
+                        tSetFieldType, tFieldArray->fields[i].field_name);
 			} else {
 				/*-- Either fix or variable array --*/
 				/* Now decide between fixed or variable array */
