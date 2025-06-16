@@ -4222,7 +4222,6 @@ TIFFReadDirectory(TIFF* tif)
 	tif->tif_flags &= ~TIFF_CHOPPEDUPARRAYS;
 
 	/* free any old stuff and reinit */
-    (*tif->tif_cleanup)(tif); /* cleanup any previous compression state */
 	TIFFFreeDirectory(tif);
 	TIFFDefaultDirectory(tif);
 
@@ -5163,7 +5162,6 @@ TIFFReadCustomDirectory(TIFF* tif, toff_t diroff,
     }
 
     /* Free any old stuff and reinit. */
-    (*tif->tif_cleanup)(tif); /* cleanup any previous compression state */
 	TIFFFreeDirectory(tif);
     /* Even if custom directories do not need the default settings of a standard
      * IFD, the pointer to the TIFFSetField() and TIFFGetField() (i.e.
