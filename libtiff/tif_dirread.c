@@ -47,6 +47,9 @@
 #define TIFFCvtIEEEFloatToNative(tif, n, fp)
 #define TIFFCvtIEEEDoubleToNative(tif, n, dp)
 #else
+/* If your machine does not support IEEE floating point then you will need to
+ * add support to tif_machdep.c to convert between the native format and
+ * IEEE format. */
 extern void TIFFCvtIEEEFloatToNative(TIFF *, uint32_t, float *);
 extern void TIFFCvtIEEEDoubleToNative(TIFF *, uint32_t, double *);
 #endif
@@ -2748,7 +2751,7 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryFloatArray(TIFF* tif, TIFFDirEnt
 		case TIFF_FLOAT:
 			if (tif->tif_flags&TIFF_SWAB)
 				TIFFSwabArrayOfLong((uint32_t*)origdata, count);
-			TIFFCvtIEEEDoubleToNative(tif,count,(float*)origdata);
+            TIFFCvtIEEEFloatToNative(tif, count, (float *)origdata);
 			*value=(float*)origdata;
 			return(TIFFReadDirEntryErrOk);
 	}
