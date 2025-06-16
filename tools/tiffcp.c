@@ -1539,7 +1539,7 @@ bad:
 }
 
 static void cpStripToTile(uint8_t *out, uint8_t *in, uint32_t rows,
-                          uint32_t cols, int outskew, int64_t inskew)
+                          uint32_t cols, int64_t outskew, int64_t inskew)
 {
     while (rows-- > 0)
     {
@@ -1701,13 +1701,40 @@ done:
     return status;
 }
 
+/* This is a helper function. */
+static uint32_t _TIFFCastSSizeToUInt32(tmsize_t val, const char *module)
+{
+    if (val < 0)
+    {
+        TIFFError(module, "Unsigned integer underflow (negative)");
+        return 0;
+    }
+    /* sizeof(tmsize_t) is determined by SIZEOF_SIZE_T */
+#ifdef SIZEOF_SIZE_T
+#if SIZEOF_SIZE_T > 4
+    if (val > UINT32_MAX)
+    {
+        TIFFError(module, "Integer overflow");
+        return 0;
+    }
+#endif
+#else
+#pragma message(                                                               \
+    "---- Error: SIZEOF_SIZE_T not defined. Generate a compile error. ----")
+    SIZEOF_SIZE_T
+#endif
+    return (uint32_t)val;
+}
+
 DECLAREreadFunc(readContigTilesIntoBuffer)
 {
     int status = 1;
     tsize_t tilesize = TIFFTileSize(in);
     tdata_t tilebuf;
-    uint32_t imagew = TIFFScanlineSize(in);
-    uint32_t tilew = TIFFTileRowSize(in);
+    uint32_t imagew = _TIFFCastSSizeToUInt32(TIFFScanlineSize(in),
+                                             "readContigTilesIntoBuffer");
+    uint32_t tilew = _TIFFCastSSizeToUInt32(TIFFTileRowSize(in),
+                                            "readContigTilesIntoBuffer");
     int64_t iskew = (int64_t)imagew - (int64_t)tilew;
     uint8_t *bufp = (uint8_t *)buf;
     uint32_t tw, tl;
@@ -1758,8 +1785,10 @@ done:
 DECLAREreadFunc(readSeparateTilesIntoBuffer)
 {
     int status = 1;
-    uint32_t imagew = TIFFRasterScanlineSize(in);
-    uint32_t tilew = TIFFTileRowSize(in);
+    uint32_t imagew = _TIFFCastSSizeToUInt32(TIFFRasterScanlineSize(in),
+                                             "readSeparateTilesIntoBuffer");
+    uint32_t tilew = _TIFFCastSSizeToUInt32(TIFFTileRowSize(in),
+                                            "readSeparateTilesIntoBuffer");
     int iskew;
     tsize_t tilesize = TIFFTileSize(in);
     tdata_t tilebuf;
@@ -1938,8 +1967,10 @@ DECLAREwriteFunc(writeBufferToSeparateStrips)
 
 DECLAREwriteFunc(writeBufferToContigTiles)
 {
-    uint32_t imagew = TIFFScanlineSize(out);
-    uint32_t tilew = TIFFTileRowSize(out);
+    uint32_t imagew = _TIFFCastSSizeToUInt32(TIFFScanlineSize(out),
+                                             "writeBufferToContigTiles");
+    uint32_t tilew = _TIFFCastSSizeToUInt32(TIFFTileRowSize(out),
+                                            "writeBufferToContigTiles");
     int iskew = imagew - tilew;
     tsize_t tilesize = TIFFTileSize(out);
     tdata_t obuf;
@@ -1994,9 +2025,12 @@ DECLAREwriteFunc(writeBufferToContigTiles)
 
 DECLAREwriteFunc(writeBufferToSeparateTiles)
 {
-    uint32_t imagew = TIFFScanlineSize(out);
-    tsize_t tilew = TIFFTileRowSize(out);
-    uint32_t iimagew = TIFFRasterScanlineSize(out);
+    uint32_t imagew = _TIFFCastSSizeToUInt32(TIFFScanlineSize(out),
+                                             "writeBufferToSeparateTiles");
+    uint32_t tilew = _TIFFCastSSizeToUInt32(TIFFTileRowSize(out),
+                                            "writeBufferToSeparateTiles");
+    uint32_t iimagew = _TIFFCastSSizeToUInt32(TIFFRasterScanlineSize(out),
+                                              "writeBufferToSeparateTiles");
     int iskew = iimagew - tilew * spp;
     tsize_t tilesize = TIFFTileSize(out);
     tdata_t obuf;

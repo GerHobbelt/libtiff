@@ -124,6 +124,16 @@ ZIPSetupDecode(TIFF* tif)
 	}
 }
 
+static inline uint64_t TIFF_MIN_UINT64(uint64_t a, uint64_t b)
+{
+    return a < b ? a : b;
+}
+
+static inline uInt TIFF_CLAMP_UINT64_TO_INT32_MAX(uint64_t v)
+{
+    return (uInt)TIFF_MIN_UINT64(v, INT32_MAX);
+}
+
 /*
  * Setup state for decoding a strip.
  */
@@ -146,7 +156,7 @@ ZIPPreDecode(TIFF* tif, uint16_t s)
 	    we need to simplify this code to reflect a ZLib that is likely updated
 	    to deal with 8byte memory sizes, though this code will respond
 	    appropriately even before we simplify it */
-	sp->stream.avail_in = (uint64_t)tif->tif_rawcc < 0xFFFFFFFFU ? (uInt) tif->tif_rawcc : 0xFFFFFFFFU;
+    sp->stream.avail_in = TIFF_CLAMP_UINT64_TO_INT32_MAX(tif->tif_rawcc);
     if (zng_inflateReset(&sp->stream) == Z_OK)
     {
         sp->read_error = 0;
@@ -256,20 +266,18 @@ ZIPDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
 	    to deal with 8byte memory sizes, though this code will respond
 	    appropriately even before we simplify it */
 	do {
-                int state;
-                uInt avail_in_before = (uint64_t)tif->tif_rawcc <= 0xFFFFFFFFU ? (uInt)tif->tif_rawcc : 0xFFFFFFFFU;
-                uInt avail_out_before = (uint64_t)occ < 0xFFFFFFFFU ? (uInt) occ : 0xFFFFFFFFU;
-                sp->stream.avail_in = avail_in_before;
-                sp->stream.avail_out = avail_out_before;
-		/* coverity[overrun-buffer-arg] */
+        int state;
+        uInt avail_in_before = TIFF_CLAMP_UINT64_TO_INT32_MAX(tif->tif_rawcc);
+        uInt avail_out_before = TIFF_CLAMP_UINT64_TO_INT32_MAX(occ);
+        sp->stream.avail_in = avail_in_before;
+        sp->stream.avail_out = avail_out_before;
 		state = zng_inflate(&sp->stream, Z_PARTIAL_FLUSH);
 		tif->tif_rawcc -= (avail_in_before - sp->stream.avail_in);
                 occ -= (avail_out_before - sp->stream.avail_out);
 		if (state == Z_STREAM_END)
 			break;
 		if (state == Z_DATA_ERROR) {
-            /* coverity[overrun-buffer-arg:SUPPRESS] */
-            memset(sp->stream.next_out, 0, sp->stream.avail_out);
+            memset(sp->stream.next_out, 0, (size_t)occ);
 			TIFFErrorExtR(tif, module,
 			    "Decoding error at scanline %lu, %s",
 			     (unsigned long) tif->tif_row, SAFE_MSG(sp));
@@ -277,7 +285,7 @@ ZIPDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
 			return (0);
 		}
 		if (state != Z_OK) {
-            memset(sp->stream.next_out, 0, sp->stream.avail_out);
+            memset(sp->stream.next_out, 0, (size_t)occ);
 			TIFFErrorExtR(tif, module, 
 				     "ZLib error: %s", SAFE_MSG(sp));
             sp->read_error = 1;
@@ -288,7 +296,7 @@ ZIPDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
 		TIFFErrorExtR(tif, module,
 		    "Not enough data at scanline %lu (short %" PRIu64 " bytes)",
 		    (unsigned long) tif->tif_row, (uint64_t) occ);
-        memset(sp->stream.next_out, 0, sp->stream.avail_out);
+        memset(sp->stream.next_out, 0, (size_t)occ);
         sp->read_error = 1;
 		return (0);
 	}
@@ -460,31 +468,32 @@ ZIPEncode(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s)
         sp->libdeflate_state = 0;
 #endif /* LIBDEFLATE_SUPPORT */
 
-	sp->stream.next_in = bp;
-	assert(sizeof(sp->stream.avail_in)==4);  /* if this assert gets raised,
-	    we need to simplify this code to reflect a ZLib that is likely updated
-	    to deal with 8byte memory sizes, though this code will respond
-	    appropriately even before we simplify it */
-	do {
-                uInt avail_in_before = (uint64_t)cc <= 0xFFFFFFFFU ? (uInt)cc : 0xFFFFFFFFU;
-                sp->stream.avail_in = avail_in_before;
-		/* coverity[overrun-buffer-arg] */
-		if (zng_deflate(&sp->stream, Z_NO_FLUSH) != Z_OK) {
-			TIFFErrorExtR(tif, module, 
-				     "Encoder error: %s",
-				     SAFE_MSG(sp));
-			return (0);
-		}
-		if (sp->stream.avail_out == 0) {
-			tif->tif_rawcc = tif->tif_rawdatasize;
-			if (!TIFFFlushData1(tif))
-				return 0;
-			sp->stream.next_out = tif->tif_rawdata;
-			sp->stream.avail_out = (uint64_t)tif->tif_rawdatasize <= 0xFFFFFFFFU ? (uInt)tif->tif_rawdatasize : 0xFFFFFFFFU;
-		}
-		cc -= (avail_in_before - sp->stream.avail_in);
-	} while (cc > 0);
-	return (1);
+    sp->stream.next_in = bp;
+    assert(sizeof(sp->stream.avail_in) == 4); /* if this assert gets raised,
+         we need to simplify this code to reflect a ZLib that is likely updated
+         to deal with 8byte memory sizes, though this code will respond
+         appropriately even before we simplify it */
+    do
+    {
+        uInt avail_in_before = TIFF_CLAMP_UINT64_TO_INT32_MAX(cc);
+        sp->stream.avail_in = avail_in_before;
+        if (deflate(&sp->stream, Z_NO_FLUSH) != Z_OK)
+        {
+            TIFFErrorExtR(tif, module, "Encoder error: %s", SAFE_MSG(sp));
+            return (0);
+        }
+        if (sp->stream.avail_out == 0)
+        {
+            tif->tif_rawcc = tif->tif_rawdatasize;
+            if (!TIFFFlushData1(tif))
+                return 0;
+            sp->stream.next_out = tif->tif_rawdata;
+            sp->stream.avail_out =
+                TIFF_CLAMP_UINT64_TO_INT32_MAX(tif->tif_rawdatasize);
+        }
+        cc -= (avail_in_before - sp->stream.avail_in);
+    } while (cc > 0);
+    return (1);
 }
 
 /*

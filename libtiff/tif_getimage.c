@@ -512,6 +512,22 @@ TIFFRGBAImageGet(TIFFRGBAImage* img, uint32_t* raster, uint32_t w, uint32_t h)
 		"No \"put\" routine setupl; probably can not handle image format");
 		return (0);
     }
+    /* Verify raster width and height against image width and height. */
+    if (h > img->height)
+    {
+        /* Adapt parameters to read only available lines and put image at
+         * the bottom of the raster. */
+        raster += (size_t)(h - img->height) * w;
+        h = img->height;
+    }
+    if (w > img->width)
+    {
+        TIFFWarningExtR(img->tif, TIFFFileName(img->tif),
+                        "Raster width of %d shall not be larger than image "
+                        "width of %d -> raster width adapted for reading",
+                        w, img->width);
+        w = img->width;
+    }
     return (*img->get)(img, raster, w, h);
 }
 
@@ -531,9 +547,7 @@ TIFFReadRGBAImageOriented(TIFF* tif,
     if (TIFFRGBAImageBegin(&img, tif, stop, emsg))
     {
 		img.req_orientation = (uint16_t)orientation;
-		/* XXX verify rwidth and rheight against width and height */
-		ok = TIFFRGBAImageGet(&img, raster+(rheight-img.height)*rwidth,
-			rwidth, img.height);
+        ok = TIFFRGBAImageGet(&img, raster, rwidth, rheight);
 		TIFFRGBAImageEnd(&img);
 	} else {
 		TIFFErrorExtR(tif, TIFFFileName(tif), "%s", emsg);
