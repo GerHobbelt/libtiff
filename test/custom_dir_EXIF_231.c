@@ -97,7 +97,7 @@ const uint16_t planarconfig = PLANARCONFIG_CONTIG;
 
 
 int
-main()
+main(void)
 {
 	TIFF			*tif;
 	int				ret, ret1, ret2;
@@ -165,7 +165,8 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 	double			auxDouble = 0.0;
 	char			auxChar = 0;
 	uint32_t			auxUint32 = 0;
-	short			auxShort=0;
+	short			auxShort = 0;
+	long			auxLong = 0;
     int32_t auxInt32 = 0;
 	void			*pVoid;
 	int				blnIsRational2Double;
@@ -325,7 +326,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 
 	/*- TIFFTAG_YCBCRPOSITIONING is a SHORT parameter */
     auxInt32 = auxShort = 5;
-    if (!TIFFSetField(tif, TIFFTAG_YCBCRPOSITIONING, auxLong))
+    if (!TIFFSetField(tif, TIFFTAG_YCBCRPOSITIONING, auxLong)) {
 		fprintf (stderr, "Can't set TIFFTAG_YCBCRPOSITIONING tag.\n");
 		goto failure;
 	}
@@ -650,7 +651,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 			case TIFF_SETGET_IFD8:
 			case TIFF_SETGET_INT:
 				/*-- All those can be written with char, short or long parameter. Only value range should be in line. */
-                if (!TIFFSetField(tif, tTag, auxLongArrayW[i]))
+                if (!TIFFSetField(tif, tTag, auxLongArrayW[i])) {
 					fprintf (stderr, "Can't write %s\n", tFieldArray->fields[i].field_name);
 					goto failure;
 				}		
@@ -659,7 +660,7 @@ write_test_tiff(TIFF *tif, const char *filenameRead)
 			case TIFF_SETGET_SINT16:
 			case TIFF_SETGET_SINT32:
 				/*-- All those can be written with char, short or long parameter. Only value range should be in line. */
-                if (!TIFFSetField(tif, tTag, -1.0 * auxLongArrayW[i]))
+                if (!TIFFSetField(tif, tTag, -1.0 * auxLongArrayW[i])) {
 					fprintf (stderr, "Can't write %s\n", tFieldArray->fields[i].field_name);
 					goto failure;
 				}		

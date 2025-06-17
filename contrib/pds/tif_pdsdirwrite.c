@@ -263,7 +263,7 @@ toff_t TIFFWritePrivateDataSubDirectory(
         for (dir = (TIFFDirEntry *)data; dircount; dir++, dircount--)
         {
             TIFFSwabArrayOfShort(&dir->tdir_tag, 2);
-            TIFFSwabArrayOfLong(&dir->tdir_count, 2);
+            TIFFSwabArrayOfLong8(&dir->tdir_count, 2);
         }
         dircount = (uint16_t)nfields;
         TIFFSwabShort(&dircount);
@@ -657,7 +657,7 @@ static int TIFFWriteShortArray(TIFF *tif, TIFFDataType type, ttag_t tag,
     dir->tdir_count = n;
     if (n <= 2)
     {
-        if (tif->tif_header.tiff_magic == TIFF_BIGENDIAN)
+        if (tif->tif_header.common.tiff_magic == TIFF_BIGENDIAN)
         {
             dir->tdir_offset = (uint32_t)((long)v[0] << 16);
             if (n == 2)

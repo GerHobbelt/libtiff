@@ -41,7 +41,7 @@
         return 1;                                                              \
     }
 
-int main()
+int main(void)
 {
     CHECK_TYPE(int8_t, 1)
     CHECK_TYPE(int16_t, 2)

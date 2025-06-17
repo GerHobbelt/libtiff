@@ -2283,7 +2283,7 @@ failure:
     return 1;
 } /*-- test_solitary_custom_directory() --*/
 
-int main()
+int main(void)
 {
 
     unsigned int openModeMax =

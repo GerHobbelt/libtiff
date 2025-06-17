@@ -1,6 +1,6 @@
 #include "tiffio.h"
 
-int main()
+int main(void)
 {
     TIFFGetVersion();
     return 0;

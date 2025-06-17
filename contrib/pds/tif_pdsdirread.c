@@ -211,7 +211,7 @@ int TIFFReadPrivateDataSubDirectory(TIFF *tif, toff_t pdir_offset,
         if (tif->tif_flags & TIFF_SWAB)
         {
             TIFFSwabArrayOfShort(&dp->tdir_tag, 2);
-            TIFFSwabArrayOfLong(&dp->tdir_count, 2);
+            TIFFSwabArrayOfLong8(&dp->tdir_count, 2);
         }
         /*
          * Find the field information entry for this tag.
@@ -523,7 +523,7 @@ static int TIFFFetchByteArray(TIFF *tif, TIFFDirEntry *dir, uint16_t *v)
         /*
          * Extract data from offset field.
          */
-        if (tif->tif_header.tiff_magic == TIFF_BIGENDIAN)
+        if (tif->tif_header.common.tiff_magic == TIFF_BIGENDIAN)
         {
             switch (dir->tdir_count)
             {

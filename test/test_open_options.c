@@ -471,7 +471,7 @@ int test_TIFFheader_swapping(void)
     return ret;
 }
 
-int main()
+int main(void)
 {
     int ret = 0;
     fprintf(stderr, "=== test_open_options .... ===\n");

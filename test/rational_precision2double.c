@@ -188,7 +188,7 @@ _XTIFFDefaultDirectory(TIFF *tif)
 
 
 int
-main()
+main(void)
 {
 	static const char filenameClassicTiff[] = "rationalPrecision2Double.tif";
 	static const char filenameBigTiff[] = "rationalPrecision2Double_Big.tif";
@@ -472,7 +472,7 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 			- Any signed or unsigned char, short, enumerated type, or bit field is converted to either a signed or an unsigned int
 			  using integral promotion.
 			- Any argument of class type is passed by value as a data structure; the copy is created by binary copying instead
-			  of by invoking the class’s copy constructor (if one exists).
+			  of by invoking the classâ€™s copy constructor (if one exists).
 			So, if your argument types are of float type, you should expect the argument retrieved to be of type double
 			and it is char or short, you should expect it to be signed or unsigned int. Otherwise, the code will give you wrong results.
 		*/
@@ -978,6 +978,7 @@ write_test_tiff(TIFF* tif, const char* filenameRead, int blnAllCustomTags) {
 								/* Special treatment of variable array. */
 								/* Dependent on Cxx, the count parameter is char, short or long. Therefore use unionLong! */
                                 if (!TIFFGetField(tif, tTag, &auxLongUnion,
+									xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 									fprintf(stderr, "Can't read %s\n", tFieldArray->fields[i].field_name);
 									GOTOFAILURE
 									break;

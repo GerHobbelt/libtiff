@@ -59,16 +59,17 @@
 //#include <math.h>
 #include <float.h>
 #include <limits.h>
+#include <stdint.h>
 
 /* Defines from  tif_dirwrite.c */
-void DoubleToRational(double f, uint32 *num, uint32 *denom);
-void DoubleToSrational(double f, int32 *num, int32 *denom);
+void DoubleToRational(double f, uint32_t *num, uint32_t *denom);
+void DoubleToSrational(double f, int32_t *num, int32_t *denom);
 void DoubleToRational_direct(double value, unsigned long *num, unsigned long *denom);
 void DoubleToSrational_direct(double value, long *num, long *denom);
 
 /* Defines from original functions at end of this module */
-void DoubleToRational2(double f, uint32 *num, uint32 *denom);
-void DoubleToSrational2(double f, int32 *num, int32 *denom);
+void DoubleToRational2(double f, uint32_t *num, uint32_t *denom);
+void DoubleToSrational2(double f, int32_t *num, int32_t *denom);
 void DoubleToRationalOld(double f, unsigned long *num, unsigned long *denom);
 void DoubleToSrationalOld(double f, long *num, long *denom);
 
@@ -95,7 +96,7 @@ void printFile(FILE* fpFile, double dblIn, long long uNum, long long uDenom, lon
 }
 
 int
-main()
+main(void)
 {
 	static const char filename[] = "DoubleToRational_Test.txt";
 	FILE *			fpFile;
@@ -107,12 +108,12 @@ main()
 	double			auxDouble = 0.0;
 	double			auxDoubleOld = 0.0;
 
-	uint32			uNum, uDenom;
-	int32			sNum, sDenom;
-	uint32			uNumOld, uDenomOld;
-	int32			sNumOld, sDenomOld;
-	uint32			uNum3, uDenom3;
-	int32			sNum3, sDenom3;
+	uint32_t			uNum, uDenom;
+	int32_t			sNum, sDenom;
+	uint32_t			uNumOld, uDenomOld;
+	int32_t			sNumOld, sDenomOld;
+	uint32_t			uNum3, uDenom3;
+	int32_t			sNum3, sDenom3;
 
 #define N_SIZE  1000
 
@@ -161,7 +162,7 @@ main()
 		dblDiffToDouble = auxDouble - dblIn;
 		dblDiffToDoubleOld = auxDoubleOld - dblIn;
 		//if (uNum != uNumOld || uDenom != uDenomOld || fabs(dblDiff) > RATIONAL_EPS || _isnan(dblDiff)) {
-		//	printf("DoubleToRational unterschied für %f (%f): New= %d / %d; Old = %d / %d", auxDoubleArrayW[i], dblDiff, uNum, uDenom, uNumOld, uDenomOld);
+		//	printf("DoubleToRational unterschied fÃ¼r %f (%f): New= %d / %d; Old = %d / %d", auxDoubleArrayW[i], dblDiff, uNum, uDenom, uNumOld, uDenomOld);
 		//}
 		printFile(fpFile, dblIn, uNum, uDenom, uNumOld, uDenomOld, uNum3, uDenom3);
 		dblIn = 1.0 / auxDoubleArrayW[i];
@@ -174,7 +175,7 @@ main()
 		dblDiffToDouble = auxDouble - dblIn;
 		dblDiffToDoubleOld = auxDoubleOld - dblIn;
 		//if (uNum != uNumOld || uDenom != uDenomOld || fabs(dblDiff) > RATIONAL_EPS || _isnan(dblDiff)) {
-		//	printf("DoubleToRational unterschied für %f (%f): New= %d / %d; Old = %d / %d", dblIn, dblDiff, uNum, uDenom, uNumOld, uDenomOld);
+		//	printf("DoubleToRational unterschied fÃ¼r %f (%f): New= %d / %d; Old = %d / %d", dblIn, dblDiff, uNum, uDenom, uNumOld, uDenomOld);
 		//}
 		printFile(fpFile, dblIn, uNum, uDenom, uNumOld, uDenomOld, uNum3, uDenom3);
 
@@ -189,7 +190,7 @@ main()
 		dblDiffToDouble = auxDouble - dblIn;
 		dblDiffToDoubleOld = auxDoubleOld - dblIn;
 		//if (sNum != sNumOld || sDenom != sDenomOld || fabs(dblDiff) > RATIONAL_EPS || _isnan(dblDiff)) {
-		//	printf("DoubleToRational unterschied für %f (%f): New= %d / %d; Old = %d / %d", dblIn, dblDiff, sNum, sDenom, sNumOld, sDenomOld);
+		//	printf("DoubleToRational unterschied fÃ¼r %f (%f): New= %d / %d; Old = %d / %d", dblIn, dblDiff, sNum, sDenom, sNumOld, sDenomOld);
 		//}
 		printFile(fpFile, dblIn, sNum, sDenom, sNumOld, sDenomOld, sNum3, sDenom3);
 		/*-- Signed - Inverse --*/
@@ -203,7 +204,7 @@ main()
 		dblDiffToDouble = auxDouble - dblIn;
 		dblDiffToDoubleOld = auxDoubleOld - dblIn;
 		//if (sNum != sNumOld || sDenom != sDenomOld || fabs(dblDiff) > RATIONAL_EPS || _isnan(dblDiff)) {
-		//	printf("DoubleToRational unterschied für %f (%f): New= %d / %d; Old = %d / %d", dblIn, dblDiff, sNum, sDenom, sNumOld, sDenomOld);
+		//	printf("DoubleToRational unterschied fÃ¼r %f (%f): New= %d / %d; Old = %d / %d", dblIn, dblDiff, sNum, sDenom, sNumOld, sDenomOld);
 		//}
 		printFile(fpFile, dblIn, sNum, sDenom, sNumOld, sDenomOld, sNum3, sDenom3);
 	}
@@ -332,7 +333,7 @@ void ToRationalEuclideanGCD(double value, int blnUseSignedRange, int blnUseSmall
    *  (ref. e.g. https://de.wikipedia.org/wiki/Kettenbruch or https://en.wikipedia.org/wiki/Continued_fraction
    *             https://en.wikipedia.org/wiki/Euclidean_algorithm)
    */
-void DoubleToRational2(double value, uint32 *num, uint32 *denom)
+void DoubleToRational2(double value, uint32_t *num, uint32_t *denom)
 {
 	/*---- UN-SIGNED RATIONAL ---- */
 	/* Internally, the integer variables can be bigger than the external ones,
@@ -436,7 +437,7 @@ void DoubleToRational2(double value, uint32 *num, uint32 *denom)
 }  /*-- DoubleToRational2() -------------- */
 
 
-void DoubleToSrational2(double value, int32 *num, int32 *denom)
+void DoubleToSrational2(double value, int32_t *num, int32_t *denom)
 {
 	/*---- SIGNED RATIONAL ----*/
 	/*-- Internally, the integer variables can be bigger than the external ones,

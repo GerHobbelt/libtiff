@@ -287,7 +287,7 @@ static void _XTIFFDefaultDirectory(TIFF *tif)
 
 static void _XTIFFInitialize(void)
 {
-    static first_time = 1;
+    static int first_time = 1;
 
     if (!first_time)
         return; /* Been there. Done that. */

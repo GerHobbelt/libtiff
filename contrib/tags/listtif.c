@@ -5,9 +5,9 @@
 #include "xtiffio.h"
 #include <stdlib.h>
 
-void main(int argc, char *argv[])
+int main(int argc, const char **argv)
 {
-    char *fname = "newtif.tif";
+    const char *fname = "newtif.tif";
     int flags;
 
     TIFF *tif = (TIFF *)0; /* TIFF-level descriptor */
@@ -24,11 +24,11 @@ void main(int argc, char *argv[])
 
     TIFFPrintDirectory(tif, stdout, flags);
     XTIFFClose(tif);
-    exit(0);
+    return 0;
 
 failure:
     printf("failure in listtif\n");
     if (tif)
         XTIFFClose(tif);
-    exit(-1);
+    return 1;
 }

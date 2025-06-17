@@ -30,7 +30,7 @@
 #define WIDTH 512
 #define HEIGHT WIDTH
 
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
     int i;
     unsigned char *scan_line;
