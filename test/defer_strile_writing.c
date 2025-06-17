@@ -39,7 +39,7 @@
 
 #include "tiffio.h"
 
-int test(const char *mode, int tiled, int height)
+static int test(const char *mode, int tiled, int height)
 {
     const char *filename = "defer_strile_writing.tif";
     TIFF *tif;
@@ -219,7 +219,7 @@ int test(const char *mode, int tiled, int height)
     return 0;
 }
 
-int main()
+int main(void)
 {
     int tiled;
     for (tiled = 0; tiled <= 1; tiled++)

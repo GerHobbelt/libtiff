@@ -36,6 +36,10 @@
 
 #include "tiffio.h"
 
+#ifndef SOURCE_DIR
+#define SOURCE_DIR "."
+#endif
+
 /* Compare 'requested_dir_number' with number written in PageName tag
  * into the IFD to identify that IFD.  */
 int is_requested_directory(TIFF *tif, int requested_dir_number,

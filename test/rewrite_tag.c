@@ -39,10 +39,9 @@
 #include "tiffio.h"
 #include "tiffiop.h"
 
-const uint32_t rows_per_strip = 1;
+static const uint32_t rows_per_strip = 1;
 
-int test_packbits()
-
+static int test_packbits(void)
 {
     TIFF *tif;
     int i;
@@ -144,7 +143,7 @@ failure:
 /************************************************************************/
 /*                            rewrite_test()                            */
 /************************************************************************/
-int rewrite_test(const char *filename, uint32_t width, int length, int bigtiff,
+static int rewrite_test(const char *filename, uint32_t width, int length, int bigtiff,
                  uint64_t base_value)
 
 {

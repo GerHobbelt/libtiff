@@ -50,7 +50,7 @@ public:
 	Tatl();
 	void TatlReset();
 	void TatlSetMark(const TCHAR* srcFile, int srcLine, const TCHAR* message);
-void Tatl::TatlPrintAnalysis(TCHAR* strReturn, int nStrMax);
+	void TatlPrintAnalysis(TCHAR* strReturn, int nStrMax);
 }; //-- class Tatl --
 
 //-- Global Trace Analysis object --
