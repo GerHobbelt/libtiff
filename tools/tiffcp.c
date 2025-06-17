@@ -659,7 +659,10 @@ static const char usage_info[] =
 #ifdef LOGLUV_SUPPORT
 " -c sgilog       compress output with SGILOG encoding\n"
 #endif
-#if defined(LZW_SUPPORT) || defined(ZIP_SUPPORT) || defined(LZMA_SUPPORT) || defined(ZSTD_SUPPORT) || defined(WEBP_SUPPORT) || defined(JPEG_SUPPORT) || defined(JBIG_SUPPORT) || defined(PACKBITS_SUPPORT) || defined(CCITT_SUPPORT) || defined(LOGLUV_SUPPORT) || defined(LERC_SUPPORT)
+#if defined(LZW_SUPPORT) || defined(ZIP_SUPPORT) || defined(LZMA_SUPPORT) ||   \
+    defined(ZSTD_SUPPORT) || defined(WEBP_SUPPORT) || defined(JPEG_SUPPORT) || \
+    defined(JBIG_SUPPORT) || defined(PACKBITS_SUPPORT) ||                      \
+    defined(CCITT_SUPPORT) || defined(LOGLUV_SUPPORT) || defined(LERC_SUPPORT)
 " -c none         use no compression algorithm on output\n"
 #endif
 "\n"
@@ -678,14 +681,30 @@ static void usage(int code)
     exit(code);
 }
 
-#define	CopyField(tag, v) \
-    do { if (TIFFGetField(in, tag, &v)) TIFFSetField(out, tag, v); } while(0)
-#define	CopyField2(tag, v1, v2) \
-    do { if (TIFFGetField(in, tag, &v1, &v2)) TIFFSetField(out, tag, v1, v2); } while(0)
-#define	CopyField3(tag, v1, v2, v3) \
-    do { if (TIFFGetField(in, tag, &v1, &v2, &v3)) TIFFSetField(out, tag, v1, v2, v3); } while(0)
-#define	CopyField4(tag, v1, v2, v3, v4) \
-    do { if (TIFFGetField(in, tag, &v1, &v2, &v3, &v4)) TIFFSetField(out, tag, v1, v2, v3, v4); } while(0)
+#define CopyField(tag, v)                                                      \
+    do                                                                         \
+    {                                                                          \
+        if (TIFFGetField(in, tag, &v))                                         \
+            TIFFSetField(out, tag, v);                                         \
+    } while (0)
+#define CopyField2(tag, v1, v2)                                                \
+    do                                                                         \
+    {                                                                          \
+        if (TIFFGetField(in, tag, &v1, &v2))                                   \
+            TIFFSetField(out, tag, v1, v2);                                    \
+    } while (0)
+#define CopyField3(tag, v1, v2, v3)                                            \
+    do                                                                         \
+    {                                                                          \
+        if (TIFFGetField(in, tag, &v1, &v2, &v3))                              \
+            TIFFSetField(out, tag, v1, v2, v3);                                \
+    } while (0)
+#define CopyField4(tag, v1, v2, v3, v4)                                        \
+    do                                                                         \
+    {                                                                          \
+        if (TIFFGetField(in, tag, &v1, &v2, &v3, &v4))                         \
+            TIFFSetField(out, tag, v1, v2, v3, v4);                            \
+    } while (0)
 
 static void cpTag(TIFF *in, TIFF *out, uint16_t tag, uint16_t count,
                   TIFFDataType type)
@@ -1132,26 +1151,26 @@ static int tiffcp(TIFF *in, TIFF *out)
         CopyTag(p->tag, p->count, p->type);
     }
 
-	cf = pickCopyFunc(in, out, bitspersample, samplesperpixel);
-	return (cf ? (*cf)(in, out, length, width, samplesperpixel) : FALSE);
+    cf = pickCopyFunc(in, out, bitspersample, samplesperpixel);
+    return (cf ? (*cf)(in, out, length, width, samplesperpixel) : FALSE);
 }
 
 /*
  * Copy Functions.
  */
-#define	DECLAREcpFunc(x) \
-static int x(TIFF* in, TIFF* out, \
-    uint32_t imagelength, uint32_t imagewidth, tsample_t spp)
+#define DECLAREcpFunc(x)                                                       \
+    static int x(TIFF *in, TIFF *out, uint32_t imagelength,                    \
+                 uint32_t imagewidth, tsample_t spp)
 
-#define	DECLAREreadFunc(x) \
-static int x(TIFF* in, \
-    uint8_t* buf, uint32_t imagelength, uint32_t imagewidth, tsample_t spp)
-typedef int (*readFunc)(TIFF*, uint8_t*, uint32_t, uint32_t, tsample_t);
+#define DECLAREreadFunc(x)                                                     \
+    static int x(TIFF *in, uint8_t *buf, uint32_t imagelength,                 \
+                 uint32_t imagewidth, tsample_t spp)
+typedef int (*readFunc)(TIFF *, uint8_t *, uint32_t, uint32_t, tsample_t);
 
-#define	DECLAREwriteFunc(x) \
-static int x(TIFF* out, \
-    uint8_t* buf, uint32_t imagelength, uint32_t imagewidth, tsample_t spp)
-typedef int (*writeFunc)(TIFF*, uint8_t*, uint32_t, uint32_t, tsample_t);
+#define DECLAREwriteFunc(x)                                                    \
+    static int x(TIFF *out, uint8_t *buf, uint32_t imagelength,                \
+                 uint32_t imagewidth, tsample_t spp)
+typedef int (*writeFunc)(TIFF *, uint8_t *, uint32_t, uint32_t, tsample_t);
 
 /*
  * Contig -> contig by scanline for rows/strip change.
@@ -2054,54 +2073,59 @@ DECLAREwriteFunc(writeBufferToSeparateTiles)
     }
     if ((bps % 8) != 0)
     {
-            TIFFError(TIFFFileName(out), "Error, cannot handle BitsPerSample that is not a multiple of 8");
-            _TIFFfree(obuf);
-            return 0;
+        TIFFError(
+            TIFFFileName(out),
+            "Error, cannot handle BitsPerSample that is not a multiple of 8");
+        _TIFFfree(obuf);
+        return 0;
+    }
+    bytes_per_sample = bps / 8;
+
+    for (row = 0; row < imagelength; row += tl)
+    {
+        uint32_t nrow = (row + tl > imagelength) ? imagelength - row : tl;
+        uint32_t colb = 0;
+        uint32_t col;
+
+        for (col = 0; col < imagewidth; col += tw)
+        {
+            tsample_t s;
+            for (s = 0; s < spp; s++)
+            {
+                /*
+                 * Tile is clipped horizontally.  Calculate
+                 * visible portion and skewing factors.
+                 */
+                if (colb + tilew > imagew)
+                {
+                    uint32_t width = (imagew - colb);
+                    int oskew = tilew - width;
+
+                    cpContigBufToSeparateBuf(obuf, bufp + (colb * spp) + s,
+                                             nrow, width / bytes_per_sample,
+                                             oskew, (oskew * spp) + iskew, spp,
+                                             bytes_per_sample);
+                }
+                else
+                    cpContigBufToSeparateBuf(obuf, bufp + (colb * spp) + s,
+                                             nrow, tilewidth, 0, iskew, spp,
+                                             bytes_per_sample);
+                if (TIFFWriteTile(out, obuf, col, row, 0, s) < 0)
+                {
+                    TIFFError(TIFFFileName(out),
+                              "Error, can't write tile at %" PRIu32 " %" PRIu32
+                              " sample %" PRIu16,
+                              col, row, s);
+                    _TIFFfree(obuf);
+                    return 0;
+                }
+            }
+            colb += tilew;
         }
-	bytes_per_sample = bps/8;
-
-	for (row = 0; row < imagelength; row += tl) {
-		uint32_t nrow = (row + tl > imagelength) ? imagelength - row : tl;
-		uint32_t colb = 0;
-		uint32_t col;
-
-		for (col = 0; col < imagewidth; col += tw) {
-			tsample_t s;
-			for (s = 0; s < spp; s++) {
-				/*
-				 * Tile is clipped horizontally.  Calculate
-				 * visible portion and skewing factors.
-				 */
-				if (colb + tilew > imagew) {
-					uint32_t width = (imagew - colb);
-					int oskew = tilew - width;
-
-					cpContigBufToSeparateBuf(obuf,
-					    bufp + (colb*spp) + s,
-					    nrow, width/bytes_per_sample,
-					    oskew, (oskew*spp)+iskew, spp,
-					    bytes_per_sample);
-				} else
-					cpContigBufToSeparateBuf(obuf,
-					    bufp + (colb*spp) + s,
-					    nrow, tilewidth,
-					    0, iskew, spp,
-					    bytes_per_sample);
-				if (TIFFWriteTile(out, obuf, col, row, 0, s) < 0) {
-					TIFFError(TIFFFileName(out),
-					    "Error, can't write tile at %"PRIu32" %"PRIu32
-					    " sample %"PRIu16,
-					    col, row, s);
-					_TIFFfree(obuf);
-					return 0;
-				}
-			}
-			colb += tilew;
-		}
-		bufp += nrow * iimagew;
-	}
-	_TIFFfree(obuf);
-	return 1;
+        bufp += nrow * iimagew;
+    }
+    _TIFFfree(obuf);
+    return 1;
 }
 
 /*
@@ -2109,10 +2133,8 @@ DECLAREwriteFunc(writeBufferToSeparateTiles)
  */
 DECLAREcpFunc(cpContigStrips2ContigTiles)
 {
-	return cpImage(in, out,
-	    readContigStripsIntoBuffer,
-	    writeBufferToContigTiles,
-	    imagelength, imagewidth, spp);
+    return cpImage(in, out, readContigStripsIntoBuffer,
+                   writeBufferToContigTiles, imagelength, imagewidth, spp);
 }
 
 /*
@@ -2120,10 +2142,8 @@ DECLAREcpFunc(cpContigStrips2ContigTiles)
  */
 DECLAREcpFunc(cpContigStrips2SeparateTiles)
 {
-	return cpImage(in, out,
-	    readContigStripsIntoBuffer,
-	    writeBufferToSeparateTiles,
-	    imagelength, imagewidth, spp);
+    return cpImage(in, out, readContigStripsIntoBuffer,
+                   writeBufferToSeparateTiles, imagelength, imagewidth, spp);
 }
 
 /*
@@ -2131,10 +2151,8 @@ DECLAREcpFunc(cpContigStrips2SeparateTiles)
  */
 DECLAREcpFunc(cpSeparateStrips2ContigTiles)
 {
-	return cpImage(in, out,
-	    readSeparateStripsIntoBuffer,
-	    writeBufferToContigTiles,
-	    imagelength, imagewidth, spp);
+    return cpImage(in, out, readSeparateStripsIntoBuffer,
+                   writeBufferToContigTiles, imagelength, imagewidth, spp);
 }
 
 /*
@@ -2142,10 +2160,8 @@ DECLAREcpFunc(cpSeparateStrips2ContigTiles)
  */
 DECLAREcpFunc(cpSeparateStrips2SeparateTiles)
 {
-	return cpImage(in, out,
-	    readSeparateStripsIntoBuffer,
-	    writeBufferToSeparateTiles,
-	    imagelength, imagewidth, spp);
+    return cpImage(in, out, readSeparateStripsIntoBuffer,
+                   writeBufferToSeparateTiles, imagelength, imagewidth, spp);
 }
 
 /*
@@ -2153,10 +2169,8 @@ DECLAREcpFunc(cpSeparateStrips2SeparateTiles)
  */
 DECLAREcpFunc(cpContigTiles2ContigTiles)
 {
-	return cpImage(in, out,
-	    readContigTilesIntoBuffer,
-	    writeBufferToContigTiles,
-	    imagelength, imagewidth, spp);
+    return cpImage(in, out, readContigTilesIntoBuffer, writeBufferToContigTiles,
+                   imagelength, imagewidth, spp);
 }
 
 /*
@@ -2164,10 +2178,8 @@ DECLAREcpFunc(cpContigTiles2ContigTiles)
  */
 DECLAREcpFunc(cpContigTiles2SeparateTiles)
 {
-	return cpImage(in, out,
-	    readContigTilesIntoBuffer,
-	    writeBufferToSeparateTiles,
-	    imagelength, imagewidth, spp);
+    return cpImage(in, out, readContigTilesIntoBuffer,
+                   writeBufferToSeparateTiles, imagelength, imagewidth, spp);
 }
 
 /*
@@ -2175,10 +2187,8 @@ DECLAREcpFunc(cpContigTiles2SeparateTiles)
  */
 DECLAREcpFunc(cpSeparateTiles2ContigTiles)
 {
-	return cpImage(in, out,
-	    readSeparateTilesIntoBuffer,
-	    writeBufferToContigTiles,
-	    imagelength, imagewidth, spp);
+    return cpImage(in, out, readSeparateTilesIntoBuffer,
+                   writeBufferToContigTiles, imagelength, imagewidth, spp);
 }
 
 /*
@@ -2186,10 +2196,8 @@ DECLAREcpFunc(cpSeparateTiles2ContigTiles)
  */
 DECLAREcpFunc(cpSeparateTiles2SeparateTiles)
 {
-	return cpImage(in, out,
-	    readSeparateTilesIntoBuffer,
-	    writeBufferToSeparateTiles,
-	    imagelength, imagewidth, spp);
+    return cpImage(in, out, readSeparateTilesIntoBuffer,
+                   writeBufferToSeparateTiles, imagelength, imagewidth, spp);
 }
 
 /*
@@ -2197,10 +2205,8 @@ DECLAREcpFunc(cpSeparateTiles2SeparateTiles)
  */
 DECLAREcpFunc(cpContigTiles2ContigStrips)
 {
-	return cpImage(in, out,
-	    readContigTilesIntoBuffer,
-	    writeBufferToContigStrips,
-	    imagelength, imagewidth, spp);
+    return cpImage(in, out, readContigTilesIntoBuffer,
+                   writeBufferToContigStrips, imagelength, imagewidth, spp);
 }
 
 /*
@@ -2208,10 +2214,8 @@ DECLAREcpFunc(cpContigTiles2ContigStrips)
  */
 DECLAREcpFunc(cpContigTiles2SeparateStrips)
 {
-	return cpImage(in, out,
-	    readContigTilesIntoBuffer,
-	    writeBufferToSeparateStrips,
-	    imagelength, imagewidth, spp);
+    return cpImage(in, out, readContigTilesIntoBuffer,
+                   writeBufferToSeparateStrips, imagelength, imagewidth, spp);
 }
 
 /*
@@ -2219,10 +2223,8 @@ DECLAREcpFunc(cpContigTiles2SeparateStrips)
  */
 DECLAREcpFunc(cpSeparateTiles2ContigStrips)
 {
-	return cpImage(in, out,
-	    readSeparateTilesIntoBuffer,
-	    writeBufferToContigStrips,
-	    imagelength, imagewidth, spp);
+    return cpImage(in, out, readSeparateTilesIntoBuffer,
+                   writeBufferToContigStrips, imagelength, imagewidth, spp);
 }
 
 /*
@@ -2230,55 +2232,62 @@ DECLAREcpFunc(cpSeparateTiles2ContigStrips)
  */
 DECLAREcpFunc(cpSeparateTiles2SeparateStrips)
 {
-	return cpImage(in, out,
-	    readSeparateTilesIntoBuffer,
-	    writeBufferToSeparateStrips,
-	    imagelength, imagewidth, spp);
+    return cpImage(in, out, readSeparateTilesIntoBuffer,
+                   writeBufferToSeparateStrips, imagelength, imagewidth, spp);
 }
 
 /*
  * Select the appropriate copy function to use.
  */
-static copyFunc
-pickCopyFunc(TIFF* in, TIFF* out, uint16_t bitspersample, uint16_t samplesperpixel)
+static copyFunc pickCopyFunc(TIFF *in, TIFF *out, uint16_t bitspersample,
+                             uint16_t samplesperpixel)
 {
-	uint16_t shortv;
-	uint32_t w, l, tw, tl;
-	int bychunk;
+    uint16_t shortv;
+    uint32_t w, l, tw, tl;
+    int bychunk;
 
-	(void) TIFFGetFieldDefaulted(in, TIFFTAG_PLANARCONFIG, &shortv);
-	if (shortv != config && bitspersample != 8 && samplesperpixel > 1) {
-		fprintf(stderr,
-		    "%s: Cannot handle different planar configuration with bits/sample != 8\n",
-		    TIFFFileName(in));
-		return (NULL);
-	}
-	TIFFGetField(in, TIFFTAG_IMAGEWIDTH, &w);
-	TIFFGetField(in, TIFFTAG_IMAGELENGTH, &l);
-	if (!(TIFFIsTiled(out) || TIFFIsTiled(in))) {
-		uint32_t irps = (uint32_t) -1L;
-		TIFFGetField(in, TIFFTAG_ROWSPERSTRIP, &irps);
-		/* if biased, force decoded copying to allow image subtraction */
-		bychunk = !bias && (rowsperstrip == irps);
-	} else {  /* either in or out is tiled */
-		if (bias) {
-			fprintf(stderr,
-			    "%s: Cannot handle tiled configuration w/bias image\n",
-			TIFFFileName(in));
-			return (NULL);
-		}
-		if (TIFFIsTiled(out)) {
-			if (!TIFFGetField(in, TIFFTAG_TILEWIDTH, &tw))
-				tw = w;
-			if (!TIFFGetField(in, TIFFTAG_TILELENGTH, &tl))
-				tl = l;
-			bychunk = (tw == tilewidth && tl == tilelength);
-		} else {  /* out's not, so in must be tiled */
-			TIFFGetField(in, TIFFTAG_TILEWIDTH, &tw);
-			TIFFGetField(in, TIFFTAG_TILELENGTH, &tl);
-			bychunk = (tw == w && tl == rowsperstrip);
-		}
-	}
+    (void)TIFFGetFieldDefaulted(in, TIFFTAG_PLANARCONFIG, &shortv);
+    if (shortv != config && bitspersample != 8 && samplesperpixel > 1)
+    {
+        fprintf(stderr,
+                "%s: Cannot handle different planar configuration w/ "
+                "bits/sample != 8\n",
+                TIFFFileName(in));
+        return (NULL);
+    }
+    TIFFGetField(in, TIFFTAG_IMAGEWIDTH, &w);
+    TIFFGetField(in, TIFFTAG_IMAGELENGTH, &l);
+    if (!(TIFFIsTiled(out) || TIFFIsTiled(in)))
+    {
+        uint32_t irps = (uint32_t)-1L;
+        TIFFGetField(in, TIFFTAG_ROWSPERSTRIP, &irps);
+        /* if biased, force decoded copying to allow image subtraction */
+        bychunk = !bias && (rowsperstrip == irps);
+    }
+    else
+    { /* either in or out is tiled */
+        if (bias)
+        {
+            fprintf(stderr,
+                    "%s: Cannot handle tiled configuration w/bias image\n",
+                    TIFFFileName(in));
+            return (NULL);
+        }
+        if (TIFFIsTiled(out))
+        {
+            if (!TIFFGetField(in, TIFFTAG_TILEWIDTH, &tw))
+                tw = w;
+            if (!TIFFGetField(in, TIFFTAG_TILELENGTH, &tl))
+                tl = l;
+            bychunk = (tw == tilewidth && tl == tilelength);
+        }
+        else
+        { /* out's not, so in must be tiled */
+            TIFFGetField(in, TIFFTAG_TILEWIDTH, &tw);
+            TIFFGetField(in, TIFFTAG_TILELENGTH, &tl);
+            bychunk = (tw == w && tl == rowsperstrip);
+        }
+    }
 #define T 1
 #define F 0
 #define pack(a, b, c, d, e)                                                    \

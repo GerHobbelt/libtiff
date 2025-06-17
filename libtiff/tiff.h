@@ -106,23 +106,25 @@ typedef int uint16_vap;
 /*
  * TIFF header.
  */
-typedef struct {
-	uint16_t tiff_magic;      /* magic number (defines byte order) */
-	uint16_t tiff_version;    /* TIFF version number */
+typedef struct
+{
+    uint16_t tiff_magic;   /* magic number (defines byte order) */
+    uint16_t tiff_version; /* TIFF version number */
 } TIFFHeaderCommon;
-typedef struct {
-	uint16_t tiff_magic;      /* magic number (defines byte order) */
-	uint16_t tiff_version;    /* TIFF version number */
-	uint32_t tiff_diroff;     /* byte offset to first directory */
+typedef struct
+{
+    uint16_t tiff_magic;   /* magic number (defines byte order) */
+    uint16_t tiff_version; /* TIFF version number */
+    uint32_t tiff_diroff;  /* byte offset to first directory */
 } TIFFHeaderClassic;
-typedef struct {
-	uint16_t tiff_magic;      /* magic number (defines byte order) */
-	uint16_t tiff_version;    /* TIFF version number */
-	uint16_t tiff_offsetsize; /* size of offsets, should be 8 */
-	uint16_t tiff_unused;     /* unused word, should be 0 */
-	uint64_t tiff_diroff;     /* byte offset to first directory */
+typedef struct
+{
+    uint16_t tiff_magic;      /* magic number (defines byte order) */
+    uint16_t tiff_version;    /* TIFF version number */
+    uint16_t tiff_offsetsize; /* size of offsets, should be 8 */
+    uint16_t tiff_unused;     /* unused word, should be 0 */
+    uint64_t tiff_diroff;     /* byte offset to first directory */
 } TIFFHeaderBig;
-
 
 /*
  * NB: In the comments below,
@@ -138,29 +140,31 @@ typedef struct {
  *
  * Note: RATIONALs are the ratio of two 32-bit integer values.
  *--:
- * Note2: TIFF_IFD8 data type is used in tiffFields[]-tag definition in order to distinguish the write-handling 
-          of those tags between ClassicTIFF and BigTiff:
-		  For ClassicTIFF libtiff writes a 32-bit value and the TIFF_IFD type-id into the file
-		  For BigTIFF     libtiff writes a 64-bit value and the TIFF_IFD8 type-id into the file
+ * Note2: TIFF_IFD8 data type is used in tiffFields[]-tag definition in order to
+ distinguish the write-handling of those tags between ClassicTIFF and BigTiff:
+                  For ClassicTIFF libtiff writes a 32-bit value and the TIFF_IFD
+ type-id into the file For BigTIFF     libtiff writes a 64-bit value and the
+ TIFF_IFD8 type-id into the file
  */
-typedef enum {
-	TIFF_NOTYPE = 0,      /* placeholder */
-	TIFF_BYTE = 1,        /* 8-bit unsigned integer */
-	TIFF_ASCII = 2,       /* 8-bit bytes w/ last byte null */
-	TIFF_SHORT = 3,       /* 16-bit unsigned integer */
-	TIFF_LONG = 4,        /* 32-bit unsigned integer */
-	TIFF_RATIONAL = 5,    /* 64-bit unsigned fraction */
-	TIFF_SBYTE = 6,       /* !8-bit signed integer */
-	TIFF_UNDEFINED = 7,   /* !8-bit untyped data */
-	TIFF_SSHORT = 8,      /* !16-bit signed integer */
-	TIFF_SLONG = 9,       /* !32-bit signed integer */
-	TIFF_SRATIONAL = 10,  /* !64-bit signed fraction */
-	TIFF_FLOAT = 11,      /* !32-bit IEEE floating point */
-	TIFF_DOUBLE = 12,     /* !64-bit IEEE floating point */
-	TIFF_IFD = 13,        /* %32-bit unsigned integer (offset) */
-	TIFF_LONG8 = 16,      /* BigTIFF 64-bit unsigned integer */
-	TIFF_SLONG8 = 17,     /* BigTIFF 64-bit signed integer */
-	TIFF_IFD8 = 18        /* BigTIFF 64-bit unsigned integer (offset) */
+typedef enum
+{
+    TIFF_NOTYPE = 0,     /* placeholder */
+    TIFF_BYTE = 1,       /* 8-bit unsigned integer */
+    TIFF_ASCII = 2,      /* 8-bit bytes w/ last byte null */
+    TIFF_SHORT = 3,      /* 16-bit unsigned integer */
+    TIFF_LONG = 4,       /* 32-bit unsigned integer */
+    TIFF_RATIONAL = 5,   /* 64-bit unsigned fraction */
+    TIFF_SBYTE = 6,      /* !8-bit signed integer */
+    TIFF_UNDEFINED = 7,  /* !8-bit untyped data */
+    TIFF_SSHORT = 8,     /* !16-bit signed integer */
+    TIFF_SLONG = 9,      /* !32-bit signed integer */
+    TIFF_SRATIONAL = 10, /* !64-bit signed fraction */
+    TIFF_FLOAT = 11,     /* !32-bit IEEE floating point */
+    TIFF_DOUBLE = 12,    /* !64-bit IEEE floating point */
+    TIFF_IFD = 13,       /* %32-bit unsigned integer (offset) */
+    TIFF_LONG8 = 16,     /* BigTIFF 64-bit unsigned integer */
+    TIFF_SLONG8 = 17,    /* BigTIFF 64-bit signed integer */
+    TIFF_IFD8 = 18       /* BigTIFF 64-bit unsigned integer (offset) */
 } TIFFDataType;
 
 /*
