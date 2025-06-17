@@ -33,7 +33,8 @@
 #define WIDTH 512
 #define HEIGHT WIDTH
 
-static char *programName = NULL;
+static const char *programName = NULL;
+
 static void Usage(void);
 
 int main(int argc, const char **argv)
@@ -138,5 +139,5 @@ int main(int argc, const char **argv)
 static void Usage(void)
 {
     fprintf(stderr, "Usage: %s -depth (8 | 4 | 2) tiff-image\n", programName);
-    exit(0);
+    exit(1);
 }

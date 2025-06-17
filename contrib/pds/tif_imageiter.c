@@ -560,5 +560,7 @@ int main(int argc, const char **argv)
             TIFFErrorExtR(tif, TIFFFileName(tif), emsg);
         }
     }
+	
+	return 0;
 }
 #endif

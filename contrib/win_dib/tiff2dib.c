@@ -161,7 +161,8 @@ HDIB LoadTIFFinDIB(LPSTR lpFileName)
 
         // read the tiff lines and save them in the DIB
         // with RGB mode, we have to change the order of the 3 samples RGB
-        <=> BGR for (row = 0; row < imageLength; row += RowsPerStrip)
+        // <=> BGR
+		for (row = 0; row < imageLength; row += RowsPerStrip)
         {
             nrow = (row + RowsPerStrip > imageLength ? imageLength - row
                                                      : RowsPerStrip);
@@ -178,11 +179,11 @@ HDIB LoadTIFFinDIB(LPSTR lpFileName)
                         for (i = 0; i < (int)(imageWidth); i++)
                         {
                             lpBits[i * SamplePerPixel + 0] =
-                                buf[l * LineSize + i * Sample PerPixel + 2];
+                                buf[l * LineSize + i * Sample_PerPixel + 2];
                             lpBits[i * SamplePerPixel + 1] =
-                                buf[l * LineSize + i * Sample PerPixel + 1];
+                                buf[l * LineSize + i * Sample_PerPixel + 1];
                             lpBits[i * SamplePerPixel + 2] =
-                                buf[l * LineSize + i * Sample PerPixel + 0];
+                                buf[l * LineSize + i * Sample_PerPixel + 0];
                         }
                     else
                         memcpy(lpBits, &buf[(int)(l * LineSize)],
@@ -263,7 +264,8 @@ HDIB CreateDIB(DWORD dwWidth, DWORD dwHeight, WORD wBitCount)
     bi.biCompression = BI_RGB;
     bi.biSizeImage =
         (dwWidth * dwHeight * wBitCount) / 8; // 0;           // 0's here
-    mean "default" bi.biXPelsPerMeter = 2834; // 0;
+    // mean "default"
+	bi.biXPelsPerMeter = 2834;                // 0;
     bi.biYPelsPerMeter = 2834;                // 0;
     bi.biClrUsed = 0;
     bi.biClrImportant = 0;

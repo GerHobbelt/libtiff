@@ -91,7 +91,7 @@ int main(int argc, const char **argv)
     if ((tif = TIFFOpen(input_file, "w")) == NULL)
     {
         fprintf(stderr, "can't open %s as a TIFF file\n", input_file);
-        exit(0);
+        return 1;
     }
 
     TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, WIDTH);
@@ -207,11 +207,11 @@ int main(int argc, const char **argv)
 
     free(scan_line);
     TIFFClose(tif);
-    exit(0);
+    return 0;
 }
 
 static void Usage(void)
 {
     fprintf(stderr, "Usage: %s -gamma gamma tiff-image\n", programName);
-    exit(0);
+    exit(1);
 }

@@ -12,11 +12,16 @@ static void WriteImage(TIFF *tif);
 #define WIDTH 20
 #define HEIGHT 20
 
-void main(void)
+int main(int argc, const char **argv)
 {
+    const char *fname = "newtif.tif";
+
     TIFF *tif = (TIFF *)0; /* TIFF-level descriptor */
 
-    tif = XTIFFOpen("newtif.tif", "w");
+    if (argc > 1)
+        fname = argv[1];
+
+    tif = XTIFFOpen(fname, "w");
     if (!tif)
         goto failure;
 
@@ -24,13 +29,13 @@ void main(void)
     WriteImage(tif);
 
     XTIFFClose(tif);
-    exit(0);
+    return 0;
 
 failure:
     printf("failure in maketif\n");
     if (tif)
         XTIFFClose(tif);
-    exit(-1);
+    return 1;
 }
 
 static void SetUpTIFFDirectory(TIFF *tif)
