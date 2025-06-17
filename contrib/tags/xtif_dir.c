@@ -75,7 +75,7 @@ static void _XTIFFPrintDirectory(TIFF *tif, FILE *fd, long flags)
 
     if (TIFFFieldSet(tif, FIELD_EXAMPLE_SINGLE))
     {
-        fprintf(fd, "  My Single Long Tag:  %lu\n", xd->xd_example_single);
+        fprintf(fd, "  My Single Long Tag:  %lu\n", (unsigned long)xd->xd_example_single);
     }
 
     if (TIFFFieldSet(tif, FIELD_EXAMPLE_ASCII))

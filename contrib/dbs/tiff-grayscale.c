@@ -33,10 +33,10 @@
 #define WIDTH 512
 #define HEIGHT WIDTH
 
-char *programName;
-void Usage();
+static char *programName = NULL;
+static void Usage(void);
 
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
     int bits_per_pixel = 8, cmsize, i, j, k, gray_index, chunk_size = 32,
         nchunks = 16;
@@ -135,7 +135,7 @@ int main(int argc, char **argv)
     return 0;
 }
 
-void Usage()
+static void Usage(void)
 {
     fprintf(stderr, "Usage: %s -depth (8 | 4 | 2) tiff-image\n", programName);
     exit(0);

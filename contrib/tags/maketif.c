@@ -6,13 +6,13 @@
 #include "xtiffio.h"
 #include <stdlib.h>
 
-void SetUpTIFFDirectory(TIFF *tif);
-void WriteImage(TIFF *tif);
+static void SetUpTIFFDirectory(TIFF *tif);
+static void WriteImage(TIFF *tif);
 
 #define WIDTH 20
 #define HEIGHT 20
 
-void main()
+void main(void)
 {
     TIFF *tif = (TIFF *)0; /* TIFF-level descriptor */
 
@@ -33,7 +33,7 @@ failure:
     exit(-1);
 }
 
-void SetUpTIFFDirectory(TIFF *tif)
+static void SetUpTIFFDirectory(TIFF *tif)
 {
     double mymulti[6] = {0.0, 1.0, 2.0, 3.1415926, 5.0, 1.0};
     uint32_t mysingle = 3456;
@@ -53,7 +53,7 @@ void SetUpTIFFDirectory(TIFF *tif)
     TIFFSetField(tif, TIFFTAG_EXAMPLE_ASCII, ascii);
 }
 
-void WriteImage(TIFF *tif)
+static void WriteImage(TIFF *tif)
 {
     int i;
     char buffer[WIDTH];

@@ -240,7 +240,7 @@ int TIFFImageIterGet(TIFFImageIter *img, void *udata, uint32_t w, uint32_t h)
     return (*img->get)(img, udata, w, h);
 }
 
-TIFFImageIterEnd(TIFFImageIter *img)
+void TIFFImageIterEnd(TIFFImageIter *img)
 { /* Nothing to free... ? */
 }
 
@@ -516,7 +516,7 @@ DECLARESepCallbackFunc(TestSepCallback)
 }
 
 #ifdef MAIN
-main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
     char emsg[1024];
     TIFFImageIter img;

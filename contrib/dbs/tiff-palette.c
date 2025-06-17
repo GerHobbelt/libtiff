@@ -32,10 +32,10 @@
 #define HEIGHT WIDTH
 #define SCALE(x) ((x)*257L)
 
-char *programName;
-void Usage();
+static char *programName = NULL;
+static void Usage(void);
 
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
     int bits_per_pixel = 8, cmsize, i, j, k, cmap_index, chunk_size = 32,
         nchunks = 16;
@@ -279,7 +279,7 @@ int main(int argc, char **argv)
     return 0;
 }
 
-void Usage()
+static void Usage(void)
 {
     fprintf(stderr, "Usage: %s -depth (8 | 4 | 2 | 1) tiff-image\n",
             programName);
