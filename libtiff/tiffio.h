@@ -94,7 +94,7 @@ typedef void *tdata_t;      /* image data ref */
 #endif
 
 #if defined(USE_WIN32_FILEIO)
-# define VC_EXTRALEAN
+# include <winsock2.h>  // [GHo] fixes issues elsewhere, e.g. OpenImageIO, when this header file is loaded before another, which loads winsock2.h: you'll get clashes in preprocessor defines in ws2def.h vs. winsock2.h  :-((
 # include <windows.h>
 #ifdef _WIN32
 DECLARE_HANDLE(thandle_t);     /* Win32 file handle */

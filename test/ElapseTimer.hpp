@@ -9,6 +9,7 @@
 #ifndef ELAPSETIMER_H
 #define ELAPSETIMER_H
 
+#include <winsock2.h>   // [GHo] fixes issues elsewhere, e.g. OpenImageIO, when this header file is loaded before another, which loads winsock2.h: you'll get clashes in preprocessor defines in ws2def.h vs. winsock2.h  :-((
 #include <windows.h>	//for LARGE_INTEGER, and QueryPerformanceFrequency() etc.
 #include <time.h>	//for clock()
 #include <tchar.h>		//for Tatl strings
