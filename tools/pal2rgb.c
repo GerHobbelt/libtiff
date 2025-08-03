@@ -70,7 +70,7 @@ static uint16_t compression = (uint16_t)-1;
 static uint16_t predictor = 0;
 static int quality = 75; /* JPEG quality */
 static int jpegcolormode = JPEGCOLORMODE_RGB;
-static int processCompressOptions(char *);
+static int processCompressOptions(const char *);
 
 
 #if defined(BUILD_MONOLITHIC)
@@ -267,7 +267,7 @@ done:
     return (EXIT_SUCCESS);
 }
 
-static int processCompressOptions(char *opt)
+static int processCompressOptions(const char *opt)
 {
     if (streq(opt, "none"))
         compression = COMPRESSION_NONE;

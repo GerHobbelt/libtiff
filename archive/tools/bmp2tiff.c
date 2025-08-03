@@ -220,7 +220,7 @@ static int quality = 75; /* JPEG quality */
 static uint16_t predictor = 0;
 
 static void usage(void);
-static int processCompressOptions(char *);
+static int processCompressOptions(const char *);
 static void rearrangePixels(char *, uint32_t, uint32_t);
 
 #if defined(BUILD_MONOLITHIC)
@@ -236,7 +236,7 @@ int main(int argc, const char **argv)
     uint16_t photometric = PHOTOMETRIC_MINISBLACK;
     int fd = 0;
     _TIFF_stat_s instat;
-    char *outfilename = NULL, *infilename = NULL;
+    const char *outfilename = NULL, *infilename = NULL;
     TIFF *out = NULL;
 
     BMPFileHeader file_hdr;
@@ -922,7 +922,7 @@ static void rearrangePixels(char *buf, uint32_t width, uint32_t bit_count)
     }
 }
 
-static int processCompressOptions(char *opt)
+static int processCompressOptions(const char *opt)
 {
     if (strcmp(opt, "none") == 0)
         compression = COMPRESSION_NONE;

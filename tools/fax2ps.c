@@ -303,7 +303,7 @@ int findPage(TIFF *tif, uint16_t pageNumber)
         return (TIFFSetDirectory(tif, (tdir_t)(pageNumber - 1)));
 }
 
-void fax2ps(TIFF *tif, uint16_t npages, uint16_t *pages, char *filename)
+void fax2ps(TIFF *tif, uint16_t npages, uint16_t *pages, const char *filename)
 {
     if (npages > 0)
     {

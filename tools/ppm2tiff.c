@@ -62,7 +62,7 @@ static int jpegcolormode = JPEGCOLORMODE_RGB;
 static uint32_t g3opts;
 
 static void usage(int code);
-static int processCompressOptions(char *);
+static int processCompressOptions(const char *);
 
 static void pack_none(unsigned char *buf, unsigned int smpls, uint16_t bps)
 {
@@ -161,7 +161,7 @@ static void pack_words(unsigned char *buf, unsigned int smpls, uint16_t bps)
     }
 }
 
-static void BadPPM(char *file)
+static void BadPPM(const char *file)
 {
     fprintf(stderr, "%s: Not a PPM file.\n", file);
     exit(EXIT_FAILURE);
@@ -193,7 +193,7 @@ int main(int argc, const char **argv)
     TIFF *out;
     FILE *in;
     unsigned int w, h, prec, row;
-    char *infile;
+    const char *infile;
     int c;
     tmsize_t scanline_size;
 
@@ -454,7 +454,7 @@ int main(int argc, const char **argv)
     return (EXIT_SUCCESS);
 }
 
-static void processG3Options(char *cp)
+static void processG3Options(const char *cp)
 {
     g3opts = 0;
     if ((cp = strchr(cp, ':')))
@@ -474,7 +474,7 @@ static void processG3Options(char *cp)
     }
 }
 
-static int processCompressOptions(char *opt)
+static int processCompressOptions(const char *opt)
 {
     if (streq(opt, "none"))
         compression = COMPRESSION_NONE;
@@ -482,7 +482,7 @@ static int processCompressOptions(char *opt)
         compression = COMPRESSION_PACKBITS;
     else if (strneq(opt, "jpeg", 4))
     {
-        char *cp = strchr(opt, ':');
+        const char *cp = strchr(opt, ':');
 
         compression = COMPRESSION_JPEG;
         while (cp)
@@ -508,14 +508,14 @@ static int processCompressOptions(char *opt)
     }
     else if (strneq(opt, "lzw", 3))
     {
-        char *cp = strchr(opt, ':');
+        const char *cp = strchr(opt, ':');
         if (cp)
             predictor = atoi(cp + 1);
         compression = COMPRESSION_LZW;
     }
     else if (strneq(opt, "zip", 3))
     {
-        char *cp = strchr(opt, ':');
+        const char *cp = strchr(opt, ':');
         if (cp)
             predictor = atoi(cp + 1);
         compression = COMPRESSION_ADOBE_DEFLATE;

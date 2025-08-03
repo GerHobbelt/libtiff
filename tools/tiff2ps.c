@@ -182,65 +182,65 @@
  * disabled when set to 0 */
 static tmsize_t maxMalloc = DEFAULT_MAX_MALLOC;
 
-int ascii85_g = FALSE;      /* use ASCII85 encoding */
-int interpolate = TRUE;     /* interpolate level2 image */
-int level2 = FALSE;         /* generate PostScript level 2 */
-int level3 = FALSE;         /* generate PostScript level 3 */
-int printAll = FALSE;       /* print all images in file */
-int generateEPSF = TRUE;    /* generate Encapsulated PostScript */
-int PSduplex = FALSE;       /* enable duplex printing */
-int PStumble = FALSE;       /* enable top edge binding */
-int PSavoiddeadzone = TRUE; /* enable avoiding printer deadzone */
-double maxPageHeight =
+static int ascii85_g = FALSE; /* use ASCII85 encoding */
+static int interpolate = TRUE; /* interpolate level2 image */
+static int level2 = FALSE;     /* generate PostScript level 2 */
+static int level3 = FALSE;     /* generate PostScript level 3 */
+static int printAll = FALSE;   /* print all images in file */
+static int generateEPSF = TRUE; /* generate Encapsulated PostScript */
+static int PSduplex = FALSE;    /* enable duplex printing */
+static int PStumble = FALSE;    /* enable top edge binding */
+static int PSavoiddeadzone = TRUE; /* enable avoiding printer deadzone */
+static double maxPageHeight =
     0; /* maximum height to select from image and print per page */
-double maxPageWidth =
+static double maxPageWidth =
     0; /* maximum width  to select from image and print per page */
-double splitOverlap = 0;  /* amount for split pages to overlag */
-int rotation_g = 0;       /* optional value for rotation angle */
-int auto_rotate_g = 0;    /* rotate image for best fit on the page */
-char *filename = NULL;    /* input filename */
-char *title = NULL;       /* optional document title string */
-char *creator = NULL;     /* optional document creator string */
-char pageOrientation[12]; /* set optional PageOrientation DSC to Landscape or
+static double splitOverlap = 0; /* amount for split pages to overlag */
+static int rotation_g = 0;      /* optional value for rotation angle */
+static int auto_rotate_g = 0;   /* rotate image for best fit on the page */
+static const char *filename = NULL; /* input filename */
+static const char *title = NULL;    /* optional document title string */
+static const char *creator = NULL;  /* optional document creator string */
+static char pageOrientation[12]; /* set optional PageOrientation DSC to Landscape or
                              Portrait */
-int useImagemask = FALSE; /* Use imagemask instead of image operator */
-uint16_t res_unit = 0;    /* Resolution units: 2 - inches, 3 - cm */
+static int useImagemask = FALSE; /* Use imagemask instead of image operator */
+static uint16_t res_unit = 0;    /* Resolution units: 2 - inches, 3 - cm */
 
 /*
  * ASCII85 Encoding Support.
  */
-unsigned char ascii85buf[10];
-int ascii85count;
-int ascii85breaklen;
+static unsigned char ascii85buf[10];
+static int ascii85count;
+static int ascii85breaklen;
 
-int TIFF2PS(FILE *, TIFF *, double, double, double, double, int);
-void PSpage(FILE *, TIFF *, uint32_t, uint32_t);
-void PSColorContigPreamble(FILE *, uint32_t, uint32_t, int);
-void PSColorSeparatePreamble(FILE *, uint32_t, uint32_t, int);
-void PSDataColorContig(FILE *, TIFF *, uint32_t, uint32_t, int);
-void PSDataColorSeparate(FILE *, TIFF *, uint32_t, uint32_t, int);
-void PSDataPalette(FILE *, TIFF *, uint32_t, uint32_t);
-void PSDataBW(FILE *, TIFF *, uint32_t, uint32_t);
-void PSRawDataBW(FILE *, TIFF *, uint32_t, uint32_t);
-void Ascii85Init(void);
-void Ascii85Put(unsigned char code, FILE *fd);
-void Ascii85Flush(FILE *fd);
-void PSHead(FILE *, double, double, double, double);
-void PSTail(FILE *, int);
-int psStart(FILE *, int, int, int *, double *, double, double, double, double,
+static int TIFF2PS(FILE *, TIFF *, double, double, double, double, int);
+static void PSpage(FILE *, TIFF *, uint32_t, uint32_t);
+static void PSColorContigPreamble(FILE *, uint32_t, uint32_t, int);
+static void PSColorSeparatePreamble(FILE *, uint32_t, uint32_t, int);
+static void PSDataColorContig(FILE *, TIFF *, uint32_t, uint32_t, int);
+static void PSDataColorSeparate(FILE *, TIFF *, uint32_t, uint32_t, int);
+static void PSDataPalette(FILE *, TIFF *, uint32_t, uint32_t);
+static void PSDataBW(FILE *, TIFF *, uint32_t, uint32_t);
+static void PSRawDataBW(FILE *, TIFF *, uint32_t, uint32_t);
+static void Ascii85Init(void);
+static void Ascii85Put(unsigned char code, FILE *fd);
+static void Ascii85Flush(FILE *fd);
+static void PSHead(FILE *, double, double, double, double);
+static void PSTail(FILE *, int);
+static int psStart(FILE *, int, int, int *, double *, double, double, double, double,
             double, double, double, double, double, double);
-int psPageSize(FILE *, int, double, double, double, double, double, double);
-int psRotateImage(FILE *, int, double, double, double, double);
-int psMaskImage(FILE *, TIFF *, int, int, int *, double, double, double, double,
+static int psPageSize(FILE *, int, double, double, double, double, double, double);
+static int psRotateImage(FILE *, int, double, double, double, double);
+static int psMaskImage(FILE *, TIFF *, int, int, int *, double, double, double, double,
                 double, double, double, double, double);
-int psScaleImage(FILE *, double, int, int, double, double, double, double,
+static int psScaleImage(FILE *, double, int, int, double, double, double, double,
                  double, double);
-int get_viewport(double, double, double, double, double *, double *, int);
-int exportMaskedImage(FILE *, double, double, double, double, int, int, double,
+static int get_viewport(double, double, double, double, double *, double *, int);
+static int exportMaskedImage(FILE *, double, double, double, double, int, int, double,
                       double, double, int, int);
 
 #if defined(EXP_ASCII85ENCODER)
-tsize_t Ascii85EncodeBlock(uint8_t *ascii85_p, unsigned f_eod,
+static tsize_t Ascii85EncodeBlock(uint8_t *ascii85_p, unsigned f_eod,
                            const uint8_t *raw_p, tsize_t raw_l);
 #endif
 
@@ -770,6 +770,7 @@ static char *hex = "0123456789abcdef";
  * Only one of maxPageHeight or maxPageWidth can be used.
  * These are global variables unfortunately.
  */
+static 
 int get_subimage_count(double pagewidth, double pageheight, double imagewidth,
                        double imageheight, int *ximages, int *yimages,
                        int rotation, double scale)
@@ -931,6 +932,7 @@ int get_subimage_count(double pagewidth, double pageheight, double imagewidth,
 /* New version of PlaceImage that handles only the translation and rotation
  * for a single output page.
  */
+static 
 int exportMaskedImage(FILE *fp, double pagewidth, double pageheight,
                       double imagewidth, double imageheight, int row,
                       int column, double left_offset, double bott_offset,
@@ -1109,6 +1111,7 @@ int exportMaskedImage(FILE *fp, double pagewidth, double pageheight,
 }
 
 /* Rotate an image without scaling or clipping */
+static 
 int psRotateImage(FILE *fd, int rotation, double pswidth, double psheight,
                   double left_offset, double bottom_offset)
 {
@@ -1142,6 +1145,7 @@ int psRotateImage(FILE *fd, int rotation, double pswidth, double psheight,
 }
 
 /* Scale and rotate an image to a single output page. */
+static 
 int psScaleImage(FILE *fd, double scale, int rotation, int center,
                  double reqwidth, double reqheight, double pswidth,
                  double psheight, double left_offset, double bottom_offset)
@@ -1231,6 +1235,7 @@ int psScaleImage(FILE *fd, double scale, int rotation, int center,
 /* This controls the visible portion of the page which is displayed.
  * N.B. Setting maxPageHeight no longer sets pageheight if not set explicitly
  */
+static 
 int psPageSize(FILE *fd, int rotation, double pgwidth, double pgheight,
                double reqwidth, double reqheight, double pswidth,
                double psheight)
@@ -1391,6 +1396,7 @@ int psPageSize(FILE *fd, int rotation, double pgwidth, double pgheight,
 /* Mask an image as a series of pages, each only showing a section defined
  * by the maxPageHeight or maxPageWidth options.
  */
+static 
 int psMaskImage(FILE *fd, TIFF *tif, int rotation, int center, int *npages,
                 double pixwidth, double pixheight, double left_margin,
                 double bottom_margin, double pgwidth, double pgheight,
@@ -1452,6 +1458,7 @@ int psMaskImage(FILE *fd, TIFF *tif, int rotation, int center, int *npages,
 }
 
 /* Compute scale factor and write out file header */
+static 
 int psStart(FILE *fd, int npages, int auto_rotate, int *rotation, double *scale,
             double ox, double oy, double pgwidth, double pgheight,
             double reqwidth, double reqheight, double pswidth, double psheight,
@@ -1620,6 +1627,7 @@ int psStart(FILE *fd, int npages, int auto_rotate, int *rotation, double *scale,
     return (0);
 }
 
+static 
 int get_viewport(double pgwidth, double pgheight, double pswidth,
                  double psheight, double *view_width, double *view_height,
                  int rotation)
@@ -1711,6 +1719,7 @@ int get_viewport(double pgwidth, double pgheight, double pswidth,
  * image size returns the sequence number of the page processed or -1 on error
  */
 
+static 
 int TIFF2PS(FILE *fd, TIFF *tif, double pgwidth, double pgheight, double lm,
             double bm, int center)
 {
@@ -1901,6 +1910,7 @@ gsave newpath clippath pathbbox grestore\n\
   dup 1 lt { dup scale } { pop } ifelse\n\
 ";
 
+static 
 void PSHead(FILE *fd, double pagewidth, double pageheight, double xoff,
             double yoff)
 {
@@ -1939,6 +1949,7 @@ void PSHead(FILE *fd, double pagewidth, double pageheight, double xoff,
     }
 }
 
+static 
 void PSTail(FILE *fd, int npages)
 {
     fprintf(fd, "%%%%Trailer\n");
@@ -2408,6 +2419,7 @@ static void PS_FlipBytes(unsigned char *buf, tsize_t count)
 
 #define MAXLINE 36
 
+static 
 int PS_Lvl2page(FILE *fd, TIFF *tif, uint32_t w, uint32_t h)
 {
     uint16_t fillorder;
@@ -2616,9 +2628,10 @@ int PS_Lvl2page(FILE *fd, TIFF *tif, uint32_t w, uint32_t h)
     return (TRUE);
 }
 
+static 
 void PSpage(FILE *fd, TIFF *tif, uint32_t w, uint32_t h)
 {
-    char *imageOp = "image";
+    const char *imageOp = "image";
 
     if (useImagemask && (bitspersample == 1))
         imageOp = "imagemask";
@@ -2683,6 +2696,7 @@ void PSpage(FILE *fd, TIFF *tif, uint32_t w, uint32_t h)
     putc('\n', fd);
 }
 
+static 
 void PSColorContigPreamble(FILE *fd, uint32_t w, uint32_t h, int nc)
 {
     ps_bytesperrow = nc * (tf_bytesperrow / samplesperpixel);
@@ -2694,6 +2708,7 @@ void PSColorContigPreamble(FILE *fd, uint32_t w, uint32_t h, int nc)
     fprintf(fd, "false %d colorimage\n", nc);
 }
 
+static 
 void PSColorSeparatePreamble(FILE *fd, uint32_t w, uint32_t h, int nc)
 {
     int i;
@@ -2721,6 +2736,7 @@ static inline void puthex(unsigned int c, FILE *fd)
     putc(hex[(c)&0xf], fd);
 }
 
+static 
 void PSDataColorContig(FILE *fd, TIFF *tif, uint32_t w, uint32_t h, int nc)
 {
     uint32_t row;
@@ -2802,6 +2818,7 @@ void PSDataColorContig(FILE *fd, TIFF *tif, uint32_t w, uint32_t h, int nc)
     _TIFFfree((char *)tf_buf);
 }
 
+static 
 void PSDataColorSeparate(FILE *fd, TIFF *tif, uint32_t w, uint32_t h, int nc)
 {
     uint32_t row;
@@ -2842,6 +2859,7 @@ end_loop:
     puthex(gmap[c], fd);                                                       \
     puthex(bmap[c], fd)
 
+static 
 void PSDataPalette(FILE *fd, TIFF *tif, uint32_t w, uint32_t h)
 {
     uint16_t *rmap, *gmap, *bmap;
@@ -2942,6 +2960,7 @@ end_loop:
     _TIFFfree((char *)tf_buf);
 }
 
+static 
 void PSDataBW(FILE *fd, TIFF *tif, uint32_t w, uint32_t h)
 {
     int breaklen = MAXLINE;
@@ -3090,6 +3109,7 @@ void PSDataBW(FILE *fd, TIFF *tif, uint32_t w, uint32_t h)
     _TIFFfree(tf_buf);
 }
 
+static 
 void PSRawDataBW(FILE *fd, TIFF *tif, uint32_t w, uint32_t h)
 {
     uint64_t *bc;
@@ -3198,6 +3218,7 @@ void PSRawDataBW(FILE *fd, TIFF *tif, uint32_t w, uint32_t h)
 #endif
 }
 
+static 
 void Ascii85Init(void)
 {
     ascii85breaklen = 2 * MAXLINE;
@@ -3236,6 +3257,7 @@ static char *Ascii85Encode(unsigned char *raw)
     return (encoded);
 }
 
+static 
 void Ascii85Put(unsigned char code, FILE *fd)
 {
     ascii85buf[ascii85count++] = code;
@@ -3262,6 +3284,7 @@ void Ascii85Put(unsigned char code, FILE *fd)
     }
 }
 
+static 
 void Ascii85Flush(FILE *fd)
 {
     if (ascii85count > 0)
@@ -3316,6 +3339,7 @@ void Ascii85Flush(FILE *fd)
  *
  *****************************************************************************/
 
+static 
 tsize_t Ascii85EncodeBlock(uint8_t *ascii85_p, unsigned f_eod,
                            const uint8_t *raw_p, tsize_t raw_l)
 

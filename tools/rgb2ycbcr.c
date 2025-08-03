@@ -44,7 +44,9 @@
 #define EXIT_FAILURE 1
 #endif
 
-#define streq(a, b) (strcmp(a, b) == 0)
+#ifndef streq
+#define streq(a, b)(strcmp(a, b) == 0)
+#endif
 #define CopyField(tag, v)                                                      \
     if (TIFFGetField(in, tag, &v))                                             \
     TIFFSetField(out, tag, v)
@@ -58,14 +60,14 @@
 #define LumaGreen ycbcrCoeffs[1]
 #define LumaBlue ycbcrCoeffs[2]
 
-uint16_t compression = COMPRESSION_PACKBITS;
-uint32_t rowsperstrip = (uint32_t)-1;
+static uint16_t compression = COMPRESSION_PACKBITS;
+static uint32_t rowsperstrip = (uint32_t)-1;
 
-uint16_t horizSubSampling = 2; /* YCbCr horizontal subsampling */
-uint16_t vertSubSampling = 2;  /* YCbCr vertical subsampling */
-float ycbcrCoeffs[3] = {.299F, .587F, .114F};
+static uint16_t horizSubSampling = 2; /* YCbCr horizontal subsampling */
+static uint16_t vertSubSampling = 2;  /* YCbCr vertical subsampling */
+static float ycbcrCoeffs[3] = {.299F, .587F, .114F};
 /* default coding range is CCIR Rec 601-1 with no headroom/footroom */
-float refBlackWhite[6] = {0.F, 255.F, 128.F, 255.F, 128.F, 255.F};
+static float refBlackWhite[6] = {0.F, 255.F, 128.F, 255.F, 128.F, 255.F};
 
 static int tiffcvt(TIFF *in, TIFF *out);
 static void usage(int code);
@@ -152,11 +154,11 @@ int main(int argc, const char **argv)
     return (EXIT_SUCCESS);
 }
 
-float *lumaRed;
-float *lumaGreen;
-float *lumaBlue;
-float D1, D2;
-int Yzero;
+static float *lumaRed;
+static float *lumaGreen;
+static float *lumaBlue;
+static float D1, D2;
+static int Yzero;
 
 static float *setupLuma(float c)
 {
@@ -377,7 +379,7 @@ static int tiffcvt(TIFF *in, TIFF *out)
     return result;
 }
 
-const char *usage_info[] = {
+static const char *usage_info[] = {
     /* Help information format modified for the sake of consistency with the
        other tiff tools */
     /*    "usage: rgb2ycbcr [-c comp] [-r rows] [-h N] [-v N] input...

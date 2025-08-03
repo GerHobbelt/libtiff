@@ -95,7 +95,7 @@ static int defpreset = -1;
 static int subcodec = -1;
 
 static int tiffcp(TIFF *, TIFF *);
-static int processCompressOptions(char *);
+static int processCompressOptions(const char *);
 static void usage(int code);
 
 static char comma = ','; /* (default) comma separator character */
@@ -370,7 +370,7 @@ int main(int argc, const char **argv)
         pageNum = -1;
     for (; optind < argc - 1; optind++)
     {
-        char *imageCursor = argv[optind];
+        const char *imageCursor = argv[optind];
         in = openSrcImage(&imageCursor);
         if (in == NULL)
         {
@@ -417,7 +417,7 @@ int main(int argc, const char **argv)
     return (EXIT_SUCCESS);
 }
 
-static void processZIPOptions(char *cp)
+static void processZIPOptions(const char *cp)
 {
     if ((cp = strchr(cp, ':')))
     {
@@ -436,7 +436,7 @@ static void processZIPOptions(char *cp)
     }
 }
 
-static void processLERCOptions(char *cp)
+static void processLERCOptions(const char *cp)
 {
     if ((cp = strchr(cp, ':')))
     {
@@ -455,7 +455,7 @@ static void processLERCOptions(char *cp)
     }
 }
 
-static void processG3Options(char *cp)
+static void processG3Options(const char *cp)
 {
     if ((cp = strchr(cp, ':')))
     {
@@ -476,7 +476,7 @@ static void processG3Options(char *cp)
     }
 }
 
-static int processCompressOptions(char *opt)
+static int processCompressOptions(const char *opt)
 {
     if (streq(opt, "none"))
     {

@@ -22,7 +22,6 @@
  * OF THIS SOFTWARE.
  */
 
-#include "libport.h"
 #include "tif_config.h"
 
 #include <stdio.h>
@@ -36,6 +35,8 @@
 #include "tiffio.h"
 #include "tiffiop.h"
 
+#include "libport.h"
+
 #ifndef EXIT_SUCCESS
 #define EXIT_SUCCESS 0
 #endif
@@ -43,8 +44,13 @@
 #define EXIT_FAILURE 1
 #endif
 
+#ifndef streq
 #define streq(a, b) (strcmp(a, b) == 0)
+#endif
+#ifndef strneq
 #define strneq(a, b, n) (strncmp(a, b, n) == 0)
+#endif
+
 
 #define CopyField(tag, v)                                                      \
     if (TIFFGetField(in, tag, &v))                                             \
@@ -165,7 +171,7 @@ static uint16_t compression = COMPRESSION_PACKBITS;
 static uint16_t predictor = 0;
 static uint32_t group3options = 0;
 
-static void processG3Options(char *cp)
+static void processG3Options(const char *cp)
 {
     if ((cp = strchr(cp, ':')))
     {
@@ -184,7 +190,7 @@ static void processG3Options(char *cp)
     }
 }
 
-static int processCompressOptions(char *opt)
+static int processCompressOptions(const char *opt)
 {
     if (streq(opt, "none"))
         compression = COMPRESSION_NONE;
@@ -199,14 +205,14 @@ static int processCompressOptions(char *opt)
         compression = COMPRESSION_CCITTFAX4;
     else if (strneq(opt, "lzw", 3))
     {
-        char *cp = strchr(opt, ':');
+        const char *cp = strchr(opt, ':');
         if (cp)
             predictor = atoi(cp + 1);
         compression = COMPRESSION_LZW;
     }
     else if (strneq(opt, "zip", 3))
     {
-        char *cp = strchr(opt, ':');
+        const char *cp = strchr(opt, ':');
         if (cp)
             predictor = atoi(cp + 1);
         compression = COMPRESSION_ADOBE_DEFLATE;

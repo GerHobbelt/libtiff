@@ -117,7 +117,7 @@ static const char *filename, *imagename;
 static uint16_t compression = COMPRESSION_PACKBITS;
 static uint16_t predictor = 0;
 static uint32_t rowsperstrip = (uint32_t)-1;
-static int processCompressOptions(char *);
+static int processCompressOptions(const char *);
 
 static int convert(void);
 static int checksignature(void);
@@ -177,7 +177,7 @@ int main(int argc, const char **argv)
     return (status);
 }
 
-static int processCompressOptions(char *opt)
+static int processCompressOptions(const char *opt)
 {
     if (streq(opt, "none"))
         compression = COMPRESSION_NONE;

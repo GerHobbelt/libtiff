@@ -51,7 +51,7 @@ static int quality = 75; /* JPEG quality */
 static uint16_t predictor = 0;
 
 static void usage(void);
-static int processCompressOptions(char *);
+static int processCompressOptions(const char *);
 
 #if defined(BUILD_MONOLITHIC)
 #define main tiff_ras2tiff_tool_main
@@ -286,7 +286,7 @@ int main(int argc, const char **argv)
     return (0);
 }
 
-static int processCompressOptions(char *opt)
+static int processCompressOptions(const char *opt)
 {
     if (streq(opt, "none"))
         compression = COMPRESSION_NONE;

@@ -114,7 +114,7 @@ static void quant_fsdither(TIFF *, TIFF *);
 static Colorbox *largest_box(void);
 
 static void usage(int);
-static int processCompressOptions(char *);
+static int processCompressOptions(const char *);
 
 #define CopyField(tag, v)                                                      \
     if (TIFFGetField(in, tag, &v))                                             \
@@ -329,7 +329,7 @@ int main(int argc, const char **argv)
     return (EXIT_SUCCESS);
 }
 
-static int processCompressOptions(char *opt)
+static int processCompressOptions(const char *opt)
 {
     if (streq(opt, "none"))
         compression = COMPRESSION_NONE;

@@ -742,7 +742,7 @@ static int generateThumbnail(TIFF *in, TIFF *out)
             TIFFWriteDirectory(out) != -1);
 }
 
-const char *usage_info[] = {
+static const char *usage_info[] = {
     "Create a TIFF file with thumbnail images\n\n"
     "usage: thumbnail [options] input.tif output.tif",
     "where options are:",

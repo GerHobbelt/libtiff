@@ -52,7 +52,7 @@ static int GREEN = PCT(59); /* 59% */
 static int BLUE = PCT(11); /* 11% */
 
 static void usage(int code);
-static int processCompressOptions(char *);
+static int processCompressOptions(const char *);
 
 static void compresscontig(unsigned char *out, unsigned char *rgb, uint32_t n)
 {
@@ -344,7 +344,7 @@ tiff2bw_error:
     return (EXIT_FAILURE);
 }
 
-static int processCompressOptions(char *opt)
+static int processCompressOptions(const char *opt)
 {
     if (streq(opt, "none"))
         compression = COMPRESSION_NONE;

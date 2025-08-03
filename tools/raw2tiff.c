@@ -84,7 +84,7 @@ static int guessSize(int, TIFFDataType, _TIFF_off_t, uint32_t, int, uint32_t *,
                      uint32_t *);
 static double correlation(void *, void *, uint32_t, TIFFDataType);
 static void usage(int);
-static int processCompressOptions(char *);
+static int processCompressOptions(const char *);
 
 
 #if defined(BUILD_MONOLITHIC)
@@ -105,7 +105,7 @@ int main(int argc, const char **argv)
     uint16_t config = PLANARCONFIG_CONTIG;
     uint16_t fillorder = FILLORDER_LSB2MSB;
     int fd;
-    char *outfilename = NULL;
+    const char *outfilename = NULL;
     TIFF *out;
     uint32_t temp_limit_check = 0; /* temp for integer overflow checking*/
 
@@ -665,7 +665,7 @@ static double correlation(void *buf1, void *buf2, uint32_t n_elem,
     return K;
 }
 
-static int processCompressOptions(char *opt)
+static int processCompressOptions(const char *opt)
 {
     if (strcmp(opt, "none") == 0)
         compression = COMPRESSION_NONE;
