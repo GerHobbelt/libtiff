@@ -24,7 +24,7 @@ static unsigned long preveCodes = 0;
 static unsigned long eBits = 0;
 static unsigned long preveBits = 0;
 
-static	void setupLumaTables();
+static	void setupLumaTables(void);
 // static int abs(int v) { return (v < 0 ? -v : v); }      // error C2169: 'abs': intrinsic function, cannot be defined
 static double pct(int v,double range) { return (v*100. / range); }
 static void check(int R, int G, int B);

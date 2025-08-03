@@ -339,12 +339,8 @@ static int pcompar(const void *va, const void *vb)
 
 static void usage(int code);
 
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
-#if !HAVE_DECL_OPTARG
-    extern int optind;
-    extern char *optarg;
-#endif
     uint16_t *pages = NULL, npages = 0, pageNumber;
     int c, dowarnings = 0; /* if 1, enable library warnings */
     TIFF *tif;

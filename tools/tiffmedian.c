@@ -119,7 +119,7 @@ static int processCompressOptions(char *);
     if (TIFFGetField(in, tag, &v))                                             \
     TIFFSetField(out, tag, v)
 
-int main(int argc, char *argv[])
+int main(int argc, const char **argv)
 {
     int i, dither = 0;
     uint16_t shortv, config, photometric;

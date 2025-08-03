@@ -54,8 +54,7 @@ extern	IMAGE* iopen(const char*, const char*);
 extern	void iclose(IMAGE*);
 extern	void getrow(IMAGE*, short*, int, int);
 
-int
-main(int argc, char* argv[])
+int main(int argc, const char **argv)
 {
 	IMAGE *in;
 	TIFF *out;

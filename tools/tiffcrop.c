@@ -2589,12 +2589,8 @@ static int update_output_file(TIFF **tiffout, char *mode, int autoindex,
     return 0;
 } /* end update_output_file */
 
-int main(int argc, char *argv[])
+int main(int argc, const char **argv)
 {
-
-#if !HAVE_DECL_OPTARG
-    extern int optind;
-#endif
     uint16_t defconfig = (uint16_t)-1;
     uint16_t deffillorder = 0;
     uint32_t deftilewidth = (uint32_t)0;

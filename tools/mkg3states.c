@@ -195,7 +195,7 @@ void WriteTable(FILE *fd, const TIFFFaxTabEnt *T, int Size, const char *name)
 }
 
 /* initialize the huffman code tables */
-int main(int argc, char *argv[])
+int main(int argc, const char **argv)
 {
     FILE *fd;
     char *outputfile;

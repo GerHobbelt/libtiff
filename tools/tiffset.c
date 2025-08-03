@@ -131,7 +131,7 @@ static void *limitMalloc(tmsize_t s)
     return _TIFFmalloc(s);
 }
 
-int main(int argc, char *argv[])
+int main(int argc, const char **argv)
 {
     TIFF *tiff;
     int arg_index;

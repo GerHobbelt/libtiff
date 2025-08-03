@@ -70,7 +70,7 @@ static int tiffcvt(TIFF *in, TIFF *out);
 static void usage(int code);
 static void setupLumaTables(void);
 
-int main(int argc, char *argv[])
+int main(int argc, const char **argv)
 {
     TIFF *in, *out;
     int c;

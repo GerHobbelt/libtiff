@@ -216,7 +216,7 @@ static int processCompressOptions(char *opt)
     return (1);
 }
 
-int main(int argc, char *argv[])
+int main(int argc, const char **argv)
 {
     TIFF *in, *out;
     uint16_t samplesperpixel, bitspersample = 1, shortv;
@@ -225,10 +225,6 @@ int main(int argc, char *argv[])
     uint32_t rowsperstrip = (uint32_t)-1;
     uint16_t fillorder = 0;
     int c;
-#if !HAVE_DECL_OPTARG
-    extern int optind;
-    extern char *optarg;
-#endif
 
     while ((c = getopt(argc, argv, "c:f:r:t:h")) != -1)
         switch (c)

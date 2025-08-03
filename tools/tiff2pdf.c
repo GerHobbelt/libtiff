@@ -686,7 +686,7 @@ printf	(-z: compress with Zip/Deflate (requires zlib configured with libtiff));
     See also libtiff.3t, tiffcp.
   */
 
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
 #if !HAVE_DECL_OPTARG
     extern char *optarg;
@@ -1051,7 +1051,7 @@ int tiff2pdf_match_paper_size(float *width, float *length, char *papersize)
  * This function allocates and initializes a T2P context struct pointer.
  */
 
-T2P *t2p_init()
+T2P *t2p_init(void)
 {
     T2P *t2p = (T2P *)_TIFFmalloc(sizeof(T2P));
     if (t2p == NULL)

@@ -173,7 +173,7 @@ static tmsize_t multiply_ms(tmsize_t m1, tmsize_t m2)
     return m1 * m2;
 }
 
-int main(int argc, char *argv[])
+int main(int argc, const char **argv)
 {
     uint16_t photometric = 0;
     uint32_t rowsperstrip = (uint32_t)-1;

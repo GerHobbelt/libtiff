@@ -53,9 +53,7 @@
 # include <io.h>
 #endif
 
-#ifdef NEED_LIBPORT
-# include "libport.h"
-#endif
+#include "libport.h"
 
 #include "tiffiop.h"
 #include "tiffio.h"
@@ -226,8 +224,7 @@ static void usage(void);
 static int processCompressOptions(char*);
 static void rearrangePixels(char *, uint32, uint32);
 
-int
-main(int argc, char* argv[])
+int main(int argc, const char **argv)
 {
 	uint32	width, length;
 	uint16	nbands = 1;		/* number of bands in input image */

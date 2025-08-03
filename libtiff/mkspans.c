@@ -30,7 +30,7 @@
  * runs of zeros and ones in Group 3 Fax encoding.
  */
 
-void dumparray(char *name, unsigned char runs[256])
+static void dumparray(char *name, unsigned char runs[256])
 {
     int i;
     char *sep;

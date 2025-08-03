@@ -52,8 +52,7 @@ int	quality = 75;		/* JPEG quality */
 static	void usage(void);
 static	void tiffsv(char*, int, int, int, int);
 
-int
-main(int argc, char* argv[])
+int main(int argc, const char **argv)
 {
 	int c;
 #if !HAVE_DECL_OPTARG

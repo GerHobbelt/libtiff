@@ -202,7 +202,7 @@ static TIFF *openSrcImage(char **imageSpec)
     return tif;
 }
 
-int main(int argc, char *argv[])
+int main(int argc, const char **argv)
 {
     uint16_t defconfig = (uint16_t)-1;
     uint16_t deffillorder = 0;

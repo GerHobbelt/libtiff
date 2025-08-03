@@ -102,7 +102,7 @@ static void *limitRealloc(void *buf, tmsize_t s)
     return _TIFFrealloc(buf, s);
 }
 
-int main(int argc, char *argv[])
+int main(int argc, const char **argv)
 {
     TIFF *in, *out;
 #if !HAVE_DECL_OPTARG

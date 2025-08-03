@@ -69,7 +69,7 @@ static void PrivateErrorHandler(const char *module, const char *fmt, va_list ap)
     status = EXIT_FAILURE;
 }
 
-int main(int argc, char *argv[])
+int main(int argc, const char **argv)
 {
     int dirnum = -1, multiplefiles, c;
     uint16_t order = 0;

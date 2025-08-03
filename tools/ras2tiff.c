@@ -57,8 +57,7 @@ static	uint16 predictor = 0;
 static void usage(void);
 static	int processCompressOptions(char*);
 
-int
-main(int argc, char* argv[])
+int main(int argc, const char **argv)
 {
 	unsigned char* buf;
 	long row;

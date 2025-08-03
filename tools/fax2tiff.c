@@ -79,7 +79,7 @@ typedef union _FAX_Client_Data
     int fd;       /* Integer file descriptor */
 } FAX_Client_Data;
 
-int main(int argc, char *argv[])
+int main(int argc, const char **argv)
 {
     FILE *in;
     TIFF *out = NULL;

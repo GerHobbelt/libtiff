@@ -71,7 +71,7 @@ static int quality = 75; /* JPEG quality */
 static int jpegcolormode = JPEGCOLORMODE_RGB;
 static int processCompressOptions(char *);
 
-int main(int argc, char *argv[])
+int main(int argc, const char **argv)
 {
     uint16_t bitspersample, shortv;
     uint32_t imagewidth, imagelength;

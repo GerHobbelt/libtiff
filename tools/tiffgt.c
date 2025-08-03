@@ -98,7 +98,7 @@ extern int optind;
 
 static TIFF *tif = NULL;
 
-int main(int argc, char *argv[])
+int main(int argc, const char **argv)
 {
     int c;
     int dirnum = -1;

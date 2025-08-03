@@ -102,7 +102,7 @@ extern int optind;
 extern char *optarg;
 #endif
 
-void usage()
+void usage(void)
 {
     fprintf(stderr, "\nDisplay directory information from TIFF files\n\n");
     fprintf(stderr, "usage: %s [-h] [-o offset] [-m maxitems] file.tif ...\n",
@@ -110,7 +110,7 @@ void usage()
     exit(EXIT_FAILURE);
 }
 
-int main(int argc, char *argv[])
+int main(int argc, const char **argv)
 {
     int one = 1, fd;
     int multiplefiles = (argc > 1);

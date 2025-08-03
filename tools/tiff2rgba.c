@@ -67,7 +67,7 @@ static tmsize_t maxMalloc = DEFAULT_MAX_MALLOC;
 static int tiffcvt(TIFF *in, TIFF *out);
 static void usage(int code);
 
-int main(int argc, char *argv[])
+int main(int argc, const char **argv)
 {
     TIFF *in, *out;
     int c;

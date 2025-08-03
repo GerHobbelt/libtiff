@@ -69,7 +69,7 @@ static void leof(const char *, uint32_t, int);
  * 1    Differences were found.
  * >1   An error occurred.
  */
-int main(int argc, char *argv[])
+int main(int argc, const char **argv)
 {
     TIFF *tif1, *tif2;
     int c, dirnum;

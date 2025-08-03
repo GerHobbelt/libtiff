@@ -45,9 +45,7 @@
 # include <unistd.h>
 #endif
 
-#ifdef NEED_LIBPORT
-# include "libport.h"
-#endif
+#include "libport.h"
 
 #include "tiffio.h"
 
@@ -60,7 +58,7 @@
 
 unsigned short gamtab[256];
 
-void
+static void
 makegamtab(float gam)
 {
     int i;
@@ -134,14 +132,8 @@ int	process(int, unsigned char**);
 void	initcolors(unsigned char [COLSIZE][3], int);
 void	rasterize(int, char*);
 
-int
-main(int argc, char* argv[])
+int main(int argc, const char **argv)
 {
-#if !HAVE_DECL_OPTARG
-    extern int optind;
-    extern char *optarg;
-#endif
-
     int c, status;
 
     while ((c = getopt(argc, argv, "c:r:")) != -1)

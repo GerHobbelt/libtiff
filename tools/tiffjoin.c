@@ -30,15 +30,13 @@
 
 #include "tiffio.h"
 
+#include "libport.h"
+
 #ifndef EXIT_SUCCESS
 #define EXIT_SUCCESS 0
 #endif
 #ifndef EXIT_FAILURE
 #define EXIT_FAILURE 1
-#endif
-
-#ifndef HAVE_GETOPT
-extern int getopt(int argc, char * const argv[], const char *optstring);
 #endif
 
 #define	CopyField(tag, v) \
@@ -55,7 +53,7 @@ static	int cpTiles(TIFF*, TIFF*);
 /* This is based on tiffsplit.c - only the main func differs */
 
 int
-main(int argc, char* argv[])
+main(int argc, const char** argv)
 {
 	TIFF *in, *out;
 

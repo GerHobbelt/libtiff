@@ -108,7 +108,7 @@ static int quality = 75; /* JPEG quality */
 
 static void cpTags(TIFF *in, TIFF *out);
 
-int main(int argc, char *argv[])
+int main(int argc, const char **argv)
 {
     uint32_t rowsperstrip = (uint32_t)-1;
     TIFF *in, *out;

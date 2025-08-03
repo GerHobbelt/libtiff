@@ -30,6 +30,7 @@
 #if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#include <getopt.h>
 #else
 
 int getopt(int argc, char *const argv[], const char *optstring);

@@ -85,7 +85,7 @@ static double correlation(void *, void *, uint32_t, TIFFDataType);
 static void usage(int);
 static int processCompressOptions(char *);
 
-int main(int argc, char *argv[])
+int main(int argc, const char **argv)
 {
     uint32_t width = 0, length = 0, linebytes, bufsize;
     uint32_t nbands = 1;      /* number of bands in input image*/
