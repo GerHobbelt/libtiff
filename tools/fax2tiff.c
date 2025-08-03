@@ -25,7 +25,6 @@
 /*
  * Convert a CCITT Group 3 or 4 FAX file to TIFF Group 3 or 4 format.
  */
-#include "libport.h"
 #include "tif_config.h"
 
 #include <stdio.h>
@@ -45,6 +44,10 @@
 
 #include "tiffiop.h"
 
+#include "libport.h"
+
+#undef verbose
+
 #ifndef EXIT_SUCCESS
 #define EXIT_SUCCESS 0
 #endif
@@ -55,18 +58,18 @@
 #define TIFFhowmany8(x)                                                        \
     (((x)&0x07) ? ((uint32_t)(x) >> 3) + 1 : (uint32_t)(x) >> 3)
 
-TIFF *faxTIFF;
-char *rowbuf;
-char *refbuf;
+static TIFF *faxTIFF;
+static char *rowbuf;
+static char *refbuf;
 
-uint32_t xsize = 1728;
-int verbose;
-int stretch;
-uint16_t badfaxrun;
-uint32_t badfaxlines;
-int compression_in;
+static uint32_t xsize = 1728;
+static int verbose;
+static int stretch;
+static uint16_t badfaxrun;
+static uint32_t badfaxlines;
+static int compression_in;
 
-int copyFaxFile(TIFF *tifin, TIFF *tifout);
+static int copyFaxFile(TIFF *tifin, TIFF *tifout);
 static void usage(int code);
 
 /*
@@ -102,11 +105,6 @@ int main(int argc, const char **argv)
     int c;
     int pn, npages;
     float resY = 196.0;
-
-#if !HAVE_DECL_OPTARG
-    extern int optind;
-    extern char *optarg;
-#endif
 
     while ((c = getopt(argc, argv, "R:X:o:r:1234ABLMPUW5678abcflmprsuvwzh")) !=
            -1)
@@ -385,7 +383,7 @@ int main(int argc, const char **argv)
     return (EXIT_SUCCESS);
 }
 
-int copyFaxFile(TIFF *tifin, TIFF *tifout)
+static int copyFaxFile(TIFF *tifin, TIFF *tifout)
 {
     uint32_t row;
     uint32_t linesize = TIFFhowmany8(xsize);

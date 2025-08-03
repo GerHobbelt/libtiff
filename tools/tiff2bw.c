@@ -22,7 +22,6 @@
  * OF THIS SOFTWARE.
  */
 
-#include "libport.h"
 #include "tif_config.h"
 
 #include <ctype.h>
@@ -37,6 +36,8 @@
 #include "tiffio.h"
 #include "tiffiop.h"
 
+#include "libport.h"
+
 #ifndef EXIT_SUCCESS
 #define EXIT_SUCCESS 0
 #endif
@@ -46,9 +47,9 @@
 
 /* x% weighting -> fraction of full color */
 #define PCT(x) (((x)*256 + 50) / 100)
-int RED = PCT(30);   /* 30% */
-int GREEN = PCT(59); /* 59% */
-int BLUE = PCT(11);  /* 11% */
+static int RED = PCT(30);   /* 30% */
+static int GREEN = PCT(59); /* 59% */
+static int BLUE = PCT(11); /* 11% */
 
 static void usage(int code);
 static int processCompressOptions(char *);
@@ -126,10 +127,6 @@ int main(int argc, const char **argv)
     unsigned char *inbuf, *outbuf;
     char thing[1024];
     int c;
-#if !HAVE_DECL_OPTARG
-    extern int optind;
-    extern char *optarg;
-#endif
 
     in = (TIFF *)NULL;
     out = (TIFF *)NULL;

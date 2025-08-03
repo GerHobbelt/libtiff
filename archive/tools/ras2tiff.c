@@ -34,9 +34,7 @@
 #include <unistd.h>
 #endif
 
-#ifdef NEED_LIBPORT
 #include "libport.h"
-#endif
 
 #include "rasterfile.h"
 #include "tiffio.h"
@@ -55,7 +53,7 @@ static uint16_t predictor = 0;
 static void usage(void);
 static int processCompressOptions(char *);
 
-int main(int argc, char *argv[])
+int main(int argc, const char **argv)
 {
     unsigned char *buf;
     long row;
@@ -67,10 +65,6 @@ int main(int argc, char *argv[])
     uint16_t config = PLANARCONFIG_CONTIG;
     uint32_t rowsperstrip = (uint32_t)-1;
     int c;
-#if !HAVE_DECL_OPTARG
-    extern int optind;
-    extern char *optarg;
-#endif
 
     while ((c = getopt(argc, argv, "c:r:h")) != -1)
         switch (c)

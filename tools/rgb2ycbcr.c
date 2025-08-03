@@ -22,7 +22,6 @@
  * OF THIS SOFTWARE.
  */
 
-#include "libport.h"
 #include "tif_config.h"
 
 #include <stdio.h>
@@ -35,6 +34,8 @@
 
 #include "tiffio.h"
 #include "tiffiop.h"
+
+#include "libport.h"
 
 #ifndef EXIT_SUCCESS
 #define EXIT_SUCCESS 0
@@ -74,10 +75,6 @@ int main(int argc, const char **argv)
 {
     TIFF *in, *out;
     int c;
-#if !HAVE_DECL_OPTARG
-    extern int optind;
-    extern char *optarg;
-#endif
 
     while ((c = getopt(argc, argv, "c:h:r:v:z")) != -1)
         switch (c)

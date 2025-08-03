@@ -27,7 +27,6 @@
  * in Frank Cringle's viewfax program;
  *      Copyright (C) 1990, 1995  Frank D. Cringle.
  */
-#include "libport.h"
 #include "tif_config.h"
 
 #include <stdio.h>
@@ -39,6 +38,8 @@
 #endif
 
 #include "tif_fax3.h"
+
+#include "libport.h"
 
 #define streq(a, b) (strcmp(a, b) == 0)
 
@@ -150,11 +151,11 @@ static void FillTable(TIFFFaxTabEnt *T, int Size, struct proto *P, int State)
     }
 }
 
-static char *storage_class = "";
-static char *const_class = "";
+static const char *storage_class = "";
+static const char *const_class = "";
 static int packoutput = 1;
-static char *prebrace = "";
-static char *postbrace = "";
+static const char *prebrace = "";
+static const char *postbrace = "";
 
 void WriteTable(FILE *fd, const TIFFFaxTabEnt *T, int Size, const char *name)
 {
@@ -198,13 +199,8 @@ void WriteTable(FILE *fd, const TIFFFaxTabEnt *T, int Size, const char *name)
 int main(int argc, const char **argv)
 {
     FILE *fd;
-    char *outputfile;
+    const char *outputfile;
     int c;
-
-#if !HAVE_DECL_OPTARG
-    extern int optind;
-    extern char *optarg;
-#endif
 
     while ((c = getopt(argc, argv, "c:s:bp")) != -1)
         switch (c)

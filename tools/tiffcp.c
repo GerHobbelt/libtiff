@@ -37,7 +37,6 @@
  */
 
 #include "tif_config.h"
-#include "libport.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,6 +50,8 @@
 #endif
 
 #include "tiffio.h"
+
+#include "libport.h"
 
 #ifndef EXIT_SUCCESS
 #define EXIT_SUCCESS 0
@@ -215,10 +216,6 @@ int main(int argc, const char **argv)
     char mode[10];
     char *mp = mode;
     int c;
-#if !HAVE_DECL_OPTARG
-    extern int optind;
-    extern char *optarg;
-#endif
 
     *mp++ = 'w';
     *mp = '\0';

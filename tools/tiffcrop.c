@@ -127,7 +127,6 @@
  */
 /* clang-format on */
 
-#include "libport.h"
 #include "tif_config.h"
 #include "tiffiop.h"
 
@@ -154,12 +153,20 @@
 
 #include "tiffio.h"
 
+#include "libport.h"
+
 #ifndef PATH_MAX
 #define PATH_MAX 1024
 #endif
 
 #define TRUE 1
 #define FALSE 0
+
+#if defined(_WIN32)
+static inline int strcasecmp(const char *s1, const char *s2) {
+    return stricmp(s1, s2);
+}
+#endif
 
 #ifndef TIFFhowmany
 #define TIFFhowmany(x, y)                                                      \
@@ -512,7 +519,7 @@ static int writeBufferToSeparateTiles(TIFF *, uint8_t *, uint32_t, uint32_t,
 static int extractContigSamplesToBuffer(uint8_t *, uint8_t *, uint32_t,
                                         uint32_t, tsample_t, uint16_t, uint16_t,
                                         struct dump_opts *);
-static int processCompressOptions(char *);
+static int processCompressOptions(const char *);
 static void usage(int code);
 
 /* All other functions by Richard Nolde,  not found in tiffcp */
@@ -523,14 +530,14 @@ static void initPageSetup(struct pagedef *, struct pageseg *,
 static void initDumpOptions(struct dump_opts *);
 
 /* Command line and file naming functions */
-void process_command_opts(int, char *[], char *, char *, uint32_t *, uint16_t *,
+static void process_command_opts(int, const char **, char *, char *, uint32_t *, uint16_t *,
                           uint16_t *, uint32_t *, uint32_t *, uint32_t *,
                           struct crop_mask *, struct pagedef *,
                           struct dump_opts *, unsigned int *, unsigned int *);
-static int update_output_file(TIFF **, char *, int, char *, unsigned int *);
+static int update_output_file(TIFF **, char *, int, const char *, unsigned int *);
 
 /*  * High level functions for whole image manipulation */
-static int get_page_geometry(char *, struct pagedef *);
+static int get_page_geometry(const char *, struct pagedef *);
 static int computeInputPixelOffsets(struct crop_mask *, struct image_data *,
                                     struct offset *);
 static int computeOutputPixelOffsets(struct crop_mask *, struct image_data *,
@@ -545,7 +552,7 @@ static int processCropSelections(struct image_data *, struct crop_mask *,
                                  unsigned char **, struct buffinfo[]);
 static int writeSelections(TIFF *, TIFF **, struct crop_mask *,
                            struct image_data *, struct dump_opts *,
-                           struct buffinfo[], char *, char *, unsigned int *,
+                           struct buffinfo[], char *, const char *, unsigned int *,
                            unsigned int);
 
 /* Section functions */
@@ -1610,7 +1617,7 @@ static int writeBufferToSeparateTiles(TIFF *out, uint8_t *buf,
     return 0;
 } /* end writeBufferToSeparateTiles */
 
-static void processG3Options(char *cp)
+static void processG3Options(const char *cp)
 {
     if ((cp = strchr(cp, ':')))
     {
@@ -1631,7 +1638,7 @@ static void processG3Options(char *cp)
     }
 }
 
-static int processCompressOptions(char *opt)
+static int processCompressOptions(const char *opt)
 {
     char *cp = NULL;
 
@@ -1828,7 +1835,7 @@ static const struct cpTag
 #define CopyTag(tag, count, type) cpTag(in, out, tag, count, type)
 
 /* Functions written by Richard Nolde, with exceptions noted. */
-void process_command_opts(int argc, char *argv[], char *mp, char *mode,
+static void process_command_opts(int argc, const char **argv, char *mp, char *mode,
                           uint32_t *dirnum, uint16_t *defconfig,
                           uint16_t *deffillorder, uint32_t *deftilewidth,
                           uint32_t *deftilelength, uint32_t *defrowsperstrip,
@@ -1841,10 +1848,6 @@ void process_command_opts(int argc, char *argv[], char *mp, char *mode,
     char *opt_ptr = NULL;    /* Pointer to next token in option set */
     char *sep = NULL;        /* Pointer to a token separator */
     unsigned int i, j, start, end;
-#if !HAVE_DECL_OPTARG
-    extern int optind;
-    extern char *optarg;
-#endif
 
     *mp++ = 'w';
     *mp = '\0';
@@ -1967,7 +1970,7 @@ void process_command_opts(int argc, char *argv[], char *mp, char *mode,
             case 'z': /* regions of an image specified as
                          x1,y1,x2,y2:x3,y3,x4,y4 etc */
                 crop_data->crop_mode |= CROP_REGIONS;
-                for (i = 0, opt_ptr = strtok(optarg, ":");
+                for (i = 0, opt_ptr = strtok((char *)optarg, ":");
                      ((opt_ptr != NULL) && (i < MAX_REGIONS));
                      (opt_ptr = strtok(NULL, ":")), i++)
                 {
@@ -2064,7 +2067,7 @@ void process_command_opts(int argc, char *argv[], char *mp, char *mode,
             break;
             /* options for Debugging / data dump */
             case 'D':
-                for (i = 0, opt_ptr = strtok(optarg, ","); (opt_ptr != NULL);
+                for (i = 0, opt_ptr = strtok((char *)optarg, ","); (opt_ptr != NULL);
                      (opt_ptr = strtok(NULL, ",")), i++)
                 {
                     opt_offset = strpbrk(opt_ptr, ":=");
@@ -2153,7 +2156,7 @@ void process_command_opts(int argc, char *argv[], char *mp, char *mode,
                          already used */
                 /* order of values must be TOP, LEFT, BOTTOM, RIGHT */
                 crop_data->crop_mode |= CROP_MARGINS;
-                for (i = 0, opt_ptr = strtok(optarg, ",:");
+                for (i = 0, opt_ptr = strtok((char *)optarg, ",:");
                      ((opt_ptr != NULL) && (i < 4));
                      (opt_ptr = strtok(NULL, ",:")), i++)
                 {
@@ -2247,7 +2250,7 @@ void process_command_opts(int argc, char *argv[], char *mp, char *mode,
                 page->mode |= PAGE_MODE_MARGINS;
                 break;
             case 'N': /* list of images to process */
-                for (i = 0, opt_ptr = strtok(optarg, ",");
+                for (i = 0, opt_ptr = strtok((char *)optarg, ",");
                      ((opt_ptr != NULL) && (i < MAX_IMAGES));
                      (opt_ptr = strtok(NULL, ",")))
                 { /* We do not know how many images are in file yet
@@ -2441,7 +2444,7 @@ void process_command_opts(int argc, char *argv[], char *mp, char *mode,
                 break;
             case 'Z': /* zones of an image X:Y read as zone X of Y */
                 crop_data->crop_mode |= CROP_ZONES;
-                for (i = 0, opt_ptr = strtok(optarg, ",");
+                for (i = 0, opt_ptr = strtok((char *)optarg, ",");
                      ((opt_ptr != NULL) && (i < MAX_REGIONS));
                      (opt_ptr = strtok(NULL, ",")), i++)
                 {
@@ -2510,7 +2513,7 @@ overflows.
  * so TIFFTAG PAGENUM will be correct in image.
  */
 static int update_output_file(TIFF **tiffout, char *mode, int autoindex,
-                              char *outname, unsigned int *page)
+                              const char *outname, unsigned int *page)
 {
     static int findex = 0; /* file sequence indicator */
     size_t basename_len;
@@ -5706,17 +5709,13 @@ static int readSeparateStripsIntoBuffer(TIFF *in, uint8_t *obuf,
     return (result);
 } /* end readSeparateStripsIntoBuffer */
 
-static int get_page_geometry(char *name, struct pagedef *page)
+static int get_page_geometry(const char *name, struct pagedef *page)
 {
-    char *ptr;
     unsigned int n;
-
-    for (ptr = name; *ptr; ptr++)
-        *ptr = (char)tolower((int)*ptr);
 
     for (n = 0; n < MAX_PAPERNAMES; n++)
     {
-        if (strcmp(name, PaperTable[n].name) == 0)
+        if (strcasecmp(name, PaperTable[n].name) == 0)
         {
             page->width = PaperTable[n].width;
             page->length = PaperTable[n].length;
@@ -8094,7 +8093,7 @@ static int extractImageSection(struct image_data *image,
 static int writeSelections(TIFF *in, TIFF **out, struct crop_mask *crop,
                            struct image_data *image, struct dump_opts *dump,
                            struct buffinfo seg_buffs[], char *mp,
-                           char *filename, unsigned int *page,
+                           const char *filename, unsigned int *page,
                            unsigned int total_pages)
 {
     int i, page_count;

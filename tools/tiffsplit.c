@@ -22,7 +22,6 @@
  * OF THIS SOFTWARE.
  */
 
-#include "libport.h"
 #include "tif_config.h"
 
 #include <stdio.h>
@@ -30,6 +29,8 @@
 #include <string.h>
 
 #include "tiffio.h"
+
+#include "libport.h"
 
 #ifndef EXIT_SUCCESS
 #define EXIT_SUCCESS 0
@@ -105,10 +106,6 @@ static void *limitRealloc(void *buf, tmsize_t s)
 int main(int argc, const char **argv)
 {
     TIFF *in, *out;
-#if !HAVE_DECL_OPTARG
-    extern char *optarg;
-    extern int optind;
-#endif
     int c;
 
     while ((c = getopt(argc, argv, "M:")) != -1)

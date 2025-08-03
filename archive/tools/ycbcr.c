@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
+
 #include "tiffio.h"
+
+#include "libport.h"
 
 static float ycbcrCoeffs[3] = {.299, .587, .114};
 /* default coding range is CCIR Rec 601-1 with no headroom/footroom */
@@ -62,11 +65,11 @@ int main(int argc, const char **argv)
         for (G = 0; G < 256; G++)
             for (B = 0; B < 256; B++)
                 check(R, G, B);
-        printf("[%3u] c %u/%u b %u/%u (R %u/%d/%u G %u/%d/%u B %u/%d/%u)\n", R,
-               eCodes - preveCodes, eCodes, eBits - preveBits, eBits,
-               abs(AbseRtotal - preveRtotal), eRtotal, AbseRtotal,
-               abs(AbseGtotal - preveGtotal), eGtotal, AbseGtotal,
-               abs(AbseBtotal - preveBtotal), eBtotal, AbseBtotal);
+        printf("[%3u] c %u/%u b %u/%u (R %u/%d/%lu G %u/%d/%lu B %u/%d/%lu)\n", R,
+               (int)(eCodes - preveCodes), (int)eCodes, (int)(eBits - preveBits), (int)eBits,
+               abs(AbseRtotal - preveRtotal), (int)eRtotal, AbseRtotal,
+               abs(AbseGtotal - preveGtotal), (int)eGtotal, AbseGtotal,
+               abs(AbseBtotal - preveBtotal), (int)eBtotal, AbseBtotal);
         preveRtotal = AbseRtotal;
         preveGtotal = AbseGtotal;
         preveBtotal = AbseBtotal;
@@ -74,15 +77,15 @@ int main(int argc, const char **argv)
         preveBits = eBits;
     }
     printf("%u total codes\n", 256 * 256 * 256);
-    printf("total error: %u codes %u bits (R %d/%u G %d/%u B %d/%u)\n", eCodes,
+    printf("total error: %lu codes %lu bits (R %ld/%lu G %ld/%lu B %ld/%lu)\n", eCodes,
            eBits, eRtotal, AbseRtotal, eGtotal, AbseGtotal, eBtotal,
            AbseBtotal);
     return (0);
 }
 
-float *lumaRed;
-float *lumaGreen;
-float *lumaBlue;
+static float *lumaRed;
+static float *lumaGreen;
+static float *lumaBlue;
 
 static float *setupLuma(float c)
 {

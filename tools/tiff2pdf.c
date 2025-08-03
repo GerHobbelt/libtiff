@@ -44,16 +44,23 @@
 #include <io.h>
 #endif
 
-#include "libport.h"
 #include "tif_config.h"
 #include "tiffio.h"
 #include "tiffiop.h"
+
+#include "libport.h"
 
 #ifndef EXIT_SUCCESS
 #define EXIT_SUCCESS 0
 #endif
 #ifndef EXIT_FAILURE
 #define EXIT_FAILURE 1
+#endif
+
+#if defined(_WIN32)
+static inline int strcasecmp(const char* s1, const char* s2) {
+    return stricmp(s1, s2);
+}
 #endif
 
 #define TIFF2PDF_MODULE "tiff2pdf"
@@ -309,7 +316,8 @@ static uint32_t _TIFFCastSSizeToUInt32(tmsize_t val, const char *module)
 /* These functions are called by main. */
 
 static void usage_info(int);
-int tiff2pdf_match_paper_size(float *, float *, char *);
+
+int tiff2pdf_match_paper_size(float *, float *, const char *);
 
 /* These functions are used to generate a PDF from a TIFF. */
 
@@ -688,10 +696,6 @@ printf	(-z: compress with Zip/Deflate (requires zlib configured with libtiff));
 
 int main(int argc, const char **argv)
 {
-#if !HAVE_DECL_OPTARG
-    extern char *optarg;
-    extern int optind;
-#endif
     const char *outfilename = NULL;
     T2P *t2p = NULL;
     TIFF *input = NULL, *output = NULL;
@@ -992,11 +996,11 @@ static void usage_info(int code)
     return;
 }
 
-int tiff2pdf_match_paper_size(float *width, float *length, char *papersize)
+int tiff2pdf_match_paper_size(float *width, float *length, const char *papersize)
 {
 
-    size_t i, len;
-    const char *sizes[] = {
+    size_t i;
+    static const char *sizes[] = {
         "LETTER", "A4",      "LEGAL",   "EXECUTIVE", "LETTER",    "LEGAL",
         "LEDGER", "TABLOID", "A",       "B",         "C",         "D",
         "E",      "F",       "G",       "H",         "J",         "K",
@@ -1011,7 +1015,7 @@ int tiff2pdf_match_paper_size(float *width, float *length, char *papersize)
         "RA2",    "RA1",     "RA0",     "SRA4",      "SRA3",      "SRA2",
         "SRA1",   "SRA0",    "A3EXTRA", "A4EXTRA",   "STATEMENT", "FOLIO",
         "QUARTO", NULL};
-    const int widths[] = {
+    static const int widths[] = {
         612,  595,  612,  522,  612,  612,  792,  792,  612,  792, 1224, 1584,
         2448, 2016, 792,  2016, 2448, 2880, 74,   105,  147,  210, 298,  420,
         595,  842,  1191, 1684, 2384, 3370, 4768, 3370, 4768, 88,  125,  176,
@@ -1019,7 +1023,7 @@ int tiff2pdf_match_paper_size(float *width, float *length, char *papersize)
         363,  516,  729,  1032, 1460, 2064, 2920, 79,   113,  162, 230,  323,
         459,  649,  918,  1298, 1298, 2599, 1219, 1729, 2438, 638, 907,  1276,
         1814, 2551, 914,  667,  396,  612,  609,  0};
-    const int lengths[] = {
+    static const int lengths[] = {
         792,  842,  1008, 756,  792,  1008,  1224,  1224,  792,  1224,
         1584, 2448, 3168, 2880, 6480, 10296, 12672, 10296, 105,  147,
         210,  298,  420,  595,  842,  1191,  1684,  2384,  3370, 4768,
@@ -1029,14 +1033,9 @@ int tiff2pdf_match_paper_size(float *width, float *length, char *papersize)
         649,  918,  1298, 1837, 1837, 3677,  1729,  2438,  3458, 907,
         1276, 1814, 2551, 3628, 1262, 914,   612,   936,   780,  0};
 
-    len = strlen(papersize);
-    for (i = 0; i < len; i++)
-    {
-        papersize[i] = toupper((int)papersize[i]);
-    }
     for (i = 0; sizes[i] != NULL; i++)
     {
-        if (strcmp((const char *)papersize, sizes[i]) == 0)
+        if (strcasecmp((const char *)papersize, sizes[i]) == 0)
         {
             *width = (float)widths[i];
             *length = (float)lengths[i];

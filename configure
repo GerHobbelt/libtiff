@@ -17518,10 +17518,6 @@ else
   ac_have_decl=0
 fi
 
-cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_OPTARG $ac_have_decl
-_ACEOF
-
 
 
 # Obtain size of an 'signed short' and define as SIZEOF_SIGNED_SHORT

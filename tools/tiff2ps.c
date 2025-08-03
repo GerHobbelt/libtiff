@@ -22,7 +22,6 @@
  * OF THIS SOFTWARE.
  */
 
-#include "libport.h"
 #include "tif_config.h"
 
 #include <math.h>
@@ -36,6 +35,8 @@
 #endif
 
 #include "tiffio.h"
+
+#include "libport.h"
 
 #ifndef EXIT_SUCCESS
 #define EXIT_SUCCESS 0
@@ -273,10 +274,6 @@ int main(int argc, const char **argv)
     double pageWidth = 0;
     double pageHeight = 0;
     uint32_t diroff = 0;
-#if !HAVE_DECL_OPTARG
-    extern char *optarg;
-    extern int optind;
-#endif
     FILE *output = stdout;
 
     pageOrientation[0] = '\0';

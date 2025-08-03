@@ -22,7 +22,6 @@
  * OF THIS SOFTWARE.
  */
 
-#include "libport.h"
 #include "tif_config.h"
 
 #include <stdio.h>
@@ -38,6 +37,8 @@
 #endif
 
 #include "tiffiop.h"
+
+#include "libport.h"
 
 #ifndef EXIT_SUCCESS
 #define EXIT_SUCCESS 0
@@ -74,10 +75,6 @@ int main(int argc, const char **argv)
     int dirnum = -1, multiplefiles, c;
     uint16_t order = 0;
     TIFF *tif;
-#if !HAVE_DECL_OPTARG
-    extern int optind;
-    extern char *optarg;
-#endif
     long flags = 0;
     uint64_t diroff = 0;
     int chopstrips = 0; /* disable strip chopping */

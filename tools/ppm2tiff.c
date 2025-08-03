@@ -22,7 +22,6 @@
  * OF THIS SOFTWARE.
  */
 
-#include "libport.h"
 #include "tif_config.h"
 
 #include <ctype.h>
@@ -43,6 +42,8 @@
 #endif
 
 #include "tiffio.h"
+
+#include "libport.h"
 
 #ifndef EXIT_SUCCESS
 #define EXIT_SUCCESS 0
@@ -189,10 +190,6 @@ int main(int argc, const char **argv)
     unsigned int w, h, prec, row;
     char *infile;
     int c;
-#if !HAVE_DECL_OPTARG
-    extern int optind;
-    extern char *optarg;
-#endif
     tmsize_t scanline_size;
 
     if (argc < 2)

@@ -28,9 +28,12 @@
 #include <string.h>
 
 #include <ctype.h>
+#if __has_include(<gl.h>)
 #include <gl.h>
 
 #include "tiffio.h"
+
+#include "libport.h"
 
 //typedef unsigned char unsigned char;
 //typedef unsigned long uint32_t;
@@ -51,13 +54,9 @@ int quality = 75; /* JPEG quality */
 static void usage(void);
 static void tiffsv(char *, int, int, int, int);
 
-int main(int argc, char *argv[])
+int main(int argc, const char **argv)
 {
     int c;
-#if !HAVE_DECL_OPTARG
-    extern int optind;
-    extern char *optarg;
-#endif
 
     while ((c = getopt(argc, argv, "c:p:r:")) != -1)
         switch (c)
@@ -321,3 +320,5 @@ static void tiffsv(char *name, int x1, int x2, int y1, int y2)
     (void)TIFFClose(tif);
     _TIFFfree((char *)scrbuf);
 }
+
+#endif

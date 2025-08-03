@@ -23,7 +23,6 @@
  * OF THIS SOFTWARE.
  */
 
-#include "libport.h"
 #include "tif_config.h"
 
 #include <stdio.h>
@@ -37,6 +36,7 @@
 #include <OpenGL/gl.h>
 #else
 #ifdef _WIN32
+#include <winsock2.h>   // [GHo] fixes issues elsewhere, e.g. spdlog, when this header file is loaded before another, which loads winsock2.h or (*shudder*) winsock.h, e.g. windows.h: you'll get clashes in preprocessor defines in ws2def.h vs. winsock2.h  :-((
 #include <windows.h>
 #endif
 #include <GL/gl.h>
@@ -50,12 +50,16 @@
 #include "tiffio.h"
 #include "tiffiop.h"
 
+#include "libport.h"
+
 #ifndef EXIT_SUCCESS
 #define EXIT_SUCCESS 0
 #endif
 #ifndef EXIT_FAILURE
 #define EXIT_FAILURE 1
 #endif
+
+#undef verbose
 
 static uint32_t width = 0, height = 0; /* window width & height */
 static uint32_t *raster = NULL;        /* displayable image */
@@ -84,11 +88,6 @@ static void raster_draw(void);
 static void raster_reshape(int, int);
 static void raster_keys(unsigned char, int, int);
 static void raster_special(int, int, int);
-
-#if !HAVE_DECL_OPTARG
-extern char *optarg;
-extern int optind;
-#endif
 
 /* GLUT framework on MacOS X produces deprecation warnings */
 #if defined(__GNUC__) && defined(__APPLE__)

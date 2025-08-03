@@ -43,9 +43,7 @@
 #include <unistd.h>
 #endif
 
-#ifdef NEED_LIBPORT
 #include "libport.h"
-#endif
 
 #include "tiffio.h"
 
@@ -56,8 +54,9 @@
 #define streq(a, b) (strcmp(a, b) == 0)
 #define strneq(a, b, n) (strncmp(a, b, n) == 0)
 
-unsigned short gamtab[256];
+static unsigned short gamtab[256];
 
+static
 void makegamtab(float gam)
 {
     int i;
@@ -66,7 +65,7 @@ void makegamtab(float gam)
         gamtab[i] = (unsigned short)(IMAX * pow(i / 255.0, gam) + 0.5);
 }
 
-char *stuff[] = {
+static const char *stuff[] = {
     "usage: gif2tiff [options] input.gif output.tif",
     "where options are:",
     " -r #		make each strip have no more than # rows",
@@ -96,47 +95,42 @@ static void usage(void)
 
 #define COLSIZE 256
 
-unsigned char *stackp;
-unsigned int prefix[4096];
-unsigned char suffix[4096];
-unsigned char stack[4096];
-int datasize, codesize, codemask; /* Decoder working variables */
-int clear, eoi;                   /* Special code values */
-int avail, oldcode;
+static unsigned char *stackp = NULL;
+static unsigned int prefix[4096];
+static unsigned char suffix[4096];
+static unsigned char stack[4096];
+static int datasize, codesize, codemask; /* Decoder working variables */
+static int clear, eoi;                   /* Special code values */
+static int avail, oldcode;
 
-FILE *infile;
-int global;                          /* Is there a global color map? */
-int globalbits;                      /* Number of bits of global colors */
-unsigned char globalmap[COLSIZE][3]; /* RGB values for global color map */
-unsigned char *raster;               /* Decoded image data */
-unsigned long width, height;
-unsigned short red[COLSIZE];
-unsigned short green[COLSIZE];
-unsigned short blue[COLSIZE];
-char *filename, *imagename;
+static FILE *infile;
+static int global;                   /* Is there a global color map? */
+static int globalbits;               /* Number of bits of global colors */
+static unsigned char globalmap[COLSIZE][3]; /* RGB values for global color map */
+static unsigned char *raster;      /* Decoded image data */
+static unsigned long width, height;
+static unsigned short red[COLSIZE];
+static unsigned short green[COLSIZE];
+static unsigned short blue[COLSIZE];
+static const char *filename, *imagename;
 
 static uint16_t compression = COMPRESSION_PACKBITS;
 static uint16_t predictor = 0;
 static uint32_t rowsperstrip = (uint32_t)-1;
 static int processCompressOptions(char *);
 
-int convert(void);
-int checksignature(void);
-int readscreen(void);
-int readgifimage(char *);
-int readextension(void);
-int readraster(void);
-int process(int, unsigned char **);
-void initcolors(unsigned char[COLSIZE][3], int);
-void rasterize(int, char *);
+static int convert(void);
+static int checksignature(void);
+static int readscreen(void);
+static int readgifimage(char *);
+static int readextension(void);
+static int readraster(void);
+static int process(int, unsigned char **);
+static void initcolors(unsigned char[COLSIZE][3], int);
+static void rasterize(int, char *);
 
-int main(int argc, char *argv[])
+int main(int argc, const char **argv)
 {
-#if !HAVE_DECL_OPTARG
-    extern int optind;
-    extern char *optarg;
-#endif
-
     int c, status;
 
     while ((c = getopt(argc, argv, "c:r:")) != -1)
@@ -204,7 +198,7 @@ static int processCompressOptions(char *opt)
     return (1);
 }
 
-int convert(void)
+static int convert(void)
 {
     int ch;
     char *mode = "w";
@@ -236,7 +230,7 @@ int convert(void)
     return (0);
 }
 
-int checksignature(void)
+static int checksignature(void)
 {
     char buf[6];
 
@@ -264,7 +258,7 @@ int checksignature(void)
  *		Get information which is global to all the images stored
  *	in the file
  */
-int readscreen(void)
+static int readscreen(void)
 {
     unsigned char buf[7];
 
@@ -289,7 +283,7 @@ int readscreen(void)
     return 1;
 }
 
-int readgifimage(char *mode)
+static int readgifimage(char *mode)
 {
     unsigned char buf[9];
     int local, interleaved;
@@ -362,7 +356,7 @@ int readgifimage(char *mode)
  *		Read a GIF extension block (and do nothing with it).
  *
  */
-int readextension(void)
+static int readextension(void)
 {
     int count;
     char buf[255];
@@ -385,7 +379,7 @@ int readextension(void)
  *		Decode a raster image
  *
  */
-int readraster(void)
+static int readraster(void)
 {
     unsigned char *fill = raster;
     unsigned char buf[255];
@@ -461,7 +455,7 @@ exitloop:
  *	Otherwise make a new code table entry, and output the bytes
  *	associated with the code.
  */
-int process(register int code, unsigned char **fill)
+static int process(register int code, unsigned char **fill)
 {
     int incode;
     static unsigned char firstchar;
@@ -539,7 +533,7 @@ int process(register int code, unsigned char **fill)
  * 	values.
  *
  */
-void initcolors(unsigned char colormap[COLSIZE][3], int ncolors)
+static void initcolors(unsigned char colormap[COLSIZE][3], int ncolors)
 {
     register int i;
 
@@ -551,7 +545,7 @@ void initcolors(unsigned char colormap[COLSIZE][3], int ncolors)
     }
 }
 
-void rasterize(int interleaved, char *mode)
+static void rasterize(int interleaved, char *mode)
 {
     register unsigned long row;
     unsigned char *newras;

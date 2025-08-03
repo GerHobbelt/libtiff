@@ -26,7 +26,6 @@
  * OF THIS SOFTWARE.
  */
 
-#include "libport.h"
 #include "tif_config.h"
 
 #include <ctype.h>
@@ -55,6 +54,8 @@
 
 #include "tiffio.h"
 #include "tiffiop.h"
+
+#include "libport.h"
 
 #ifndef EXIT_SUCCESS
 #define EXIT_SUCCESS 0
@@ -106,10 +107,6 @@ int main(int argc, const char **argv)
     uint32_t row, col, band;
     int c;
     unsigned char *buf = NULL, *buf1 = NULL;
-#if !HAVE_DECL_OPTARG
-    extern int optind;
-    extern char *optarg;
-#endif
 
     while ((c = getopt(argc, argv, "c:r:H:w:l:b:d:LMp:si:o:h")) != -1)
     {

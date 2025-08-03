@@ -23,12 +23,15 @@
  */
 
 #include <ctype.h>
+#if __has_include(<gl/image.h>)
 #include <gl/image.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "tiffio.h"
+
+#include "libport.h"
 
 #define streq(a, b) (strcmp(a, b) == 0)
 #define strneq(a, b, n) (strncmp(a, b, n) == 0)
@@ -52,15 +55,11 @@ extern IMAGE *iopen(const char *, const char *);
 extern void iclose(IMAGE *);
 extern void getrow(IMAGE *, short *, int, int);
 
-int main(int argc, char *argv[])
+int main(int argc, const char **argv)
 {
     IMAGE *in;
     TIFF *out;
     int c;
-#if !HAVE_DECL_OPTARG
-    extern int optind;
-    extern char *optarg;
-#endif
 
     while ((c = getopt(argc, argv, "c:p:r:")) != -1)
         switch (c)
@@ -344,3 +343,5 @@ static void usage(void)
         fprintf(stderr, "%s\n", stuff[i]);
     exit(-1);
 }
+
+#endif

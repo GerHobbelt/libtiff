@@ -22,7 +22,6 @@
  * OF THIS SOFTWARE.
  */
 
-#include "libport.h"
 #include "tif_config.h"
 
 #include <math.h> /* for isfinite() */
@@ -50,6 +49,8 @@
 
 #include "tiffio.h"
 
+#include "libport.h"
+
 #ifndef EXIT_SUCCESS
 #define EXIT_SUCCESS 0
 #endif
@@ -67,8 +68,8 @@ static union
     TIFFHeaderBig big;
     TIFFHeaderCommon common;
 } hdr;
-static char *appname;
-static char *curfile;
+static const char *appname = NULL;
+static const char *curfile = NULL;
 static int swabflag;
 static int bigendian;
 static int bigtiff;
@@ -93,16 +94,11 @@ static const char srationalfmt[] = "%s%g";     /* SRATIONAL */
 static const char floatfmt[] = "%s%g";         /* FLOAT */
 static const char doublefmt[] = "%s%g";        /* DOUBLE */
 
-unsigned int hex_mode;
+static unsigned int hex_mode;
 
 static void dump(int, uint64_t);
 
-#if !HAVE_DECL_OPTARG
-extern int optind;
-extern char *optarg;
-#endif
-
-void usage(void)
+static void usage(void)
 {
     fprintf(stderr, "\nDisplay directory information from TIFF files\n\n");
     fprintf(stderr, "usage: %s [-h] [-o offset] [-m maxitems] file.tif ...\n",

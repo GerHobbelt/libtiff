@@ -29,12 +29,6 @@ include(CheckSymbolExists)
 
 # Check for getopt
 check_symbol_exists(getopt "unistd.h;stdio.h" HAVE_GETOPT)
-check_symbol_exists(optarg "getopt.h" HAVE_DECL_OPTARG)
-if (HAVE_DECL_OPTARG)
-    set(HAVE_DECL_OPTARG 1)
-else()
-    set(HAVE_DECL_OPTARG 0)
-endif()
 
 # Check for mmap
 check_symbol_exists(mmap "sys/mman.h" HAVE_MMAP)
