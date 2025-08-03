@@ -174,6 +174,11 @@ static tmsize_t multiply_ms(tmsize_t m1, tmsize_t m2)
     return m1 * m2;
 }
 
+
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_ppm2tiff_tool_main
+#endif
+
 int main(int argc, const char **argv)
 {
     uint16_t photometric = 0;

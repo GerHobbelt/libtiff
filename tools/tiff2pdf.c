@@ -694,6 +694,11 @@ printf	(-z: compress with Zip/Deflate (requires zlib configured with libtiff));
     See also libtiff.3t, tiffcp.
   */
 
+
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_tiff2pdf_tool_main
+#endif
+
 int main(int argc, const char **argv)
 {
     const char *outfilename = NULL;

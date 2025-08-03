@@ -68,6 +68,11 @@ static tmsize_t maxMalloc = DEFAULT_MAX_MALLOC;
 static int tiffcvt(TIFF *in, TIFF *out);
 static void usage(int code);
 
+
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_tiff2rgba_tool_main
+#endif
+
 int main(int argc, const char **argv)
 {
     TIFF *in, *out;

@@ -129,6 +129,10 @@ static int process(int, unsigned char **);
 static void initcolors(unsigned char[COLSIZE][3], int);
 static void rasterize(int, char *);
 
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_gif2tiff_tool_main
+#endif
+
 int main(int argc, const char **argv)
 {
     int c, status;

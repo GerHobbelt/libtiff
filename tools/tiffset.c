@@ -131,6 +131,11 @@ static void *limitMalloc(tmsize_t s)
     return _TIFFmalloc(s);
 }
 
+
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_tiffset_tool_main
+#endif
+
 int main(int argc, const char **argv)
 {
     TIFF *tiff;

@@ -50,6 +50,11 @@ static void dumparray(char *name, unsigned char runs[256])
     printf("\n};\n");
 }
 
+
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_mkspans_tool_main
+#endif
+
 int main(void)
 {
     unsigned char runs[2][256];

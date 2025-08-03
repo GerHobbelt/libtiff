@@ -72,6 +72,11 @@ static int generateThumbnail(TIFF *, TIFF *);
 static void initScale(void);
 static void usage(int code);
 
+
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_thumbnail_tool_main
+#endif
+
 int main(int argc, const char **argv)
 {
     TIFF *in;

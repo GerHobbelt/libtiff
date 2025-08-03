@@ -72,6 +72,11 @@ static int quality = 75; /* JPEG quality */
 static int jpegcolormode = JPEGCOLORMODE_RGB;
 static int processCompressOptions(char *);
 
+
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_pal2rgb_tool_main
+#endif
+
 int main(int argc, const char **argv)
 {
     uint16_t bitspersample, shortv;

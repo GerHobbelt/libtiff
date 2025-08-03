@@ -216,6 +216,11 @@ static int processCompressOptions(char *opt)
     return (1);
 }
 
+
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_tiffdither_tool_main
+#endif
+
 int main(int argc, const char **argv)
 {
     TIFF *in, *out;

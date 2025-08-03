@@ -71,6 +71,11 @@ static int tiffcvt(TIFF *in, TIFF *out);
 static void usage(int code);
 static void setupLumaTables(void);
 
+
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_rgb2ycbcr_tool_main
+#endif
+
 int main(int argc, const char **argv)
 {
     TIFF *in, *out;

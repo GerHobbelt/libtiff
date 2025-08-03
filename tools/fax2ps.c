@@ -341,6 +341,10 @@ static int pcompar(const void *va, const void *vb)
 
 static void usage(int code);
 
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_fax2ps_tool_main
+#endif
+
 int main(int argc, const char **argv)
 {
     uint16_t *pages = NULL, npages = 0, pageNumber;

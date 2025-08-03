@@ -195,6 +195,10 @@ void WriteTable(FILE *fd, const TIFFFaxTabEnt *T, int Size, const char *name)
     fprintf(fd, "\n};\n");
 }
 
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_mkg3states_tool_main
+#endif
+
 /* initialize the huffman code tables */
 int main(int argc, const char **argv)
 {

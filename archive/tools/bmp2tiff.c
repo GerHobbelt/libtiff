@@ -223,6 +223,10 @@ static void usage(void);
 static int processCompressOptions(char *);
 static void rearrangePixels(char *, uint32_t, uint32_t);
 
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_bmp2tiff_tool_main
+#endif
+
 int main(int argc, const char **argv)
 {
     uint32_t width, length;

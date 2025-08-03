@@ -82,6 +82,10 @@ typedef union _FAX_Client_Data
     int fd;       /* Integer file descriptor */
 } FAX_Client_Data;
 
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_fax2tiff_tool_main
+#endif
+
 int main(int argc, const char **argv)
 {
     FILE *in;

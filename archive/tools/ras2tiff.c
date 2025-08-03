@@ -53,6 +53,10 @@ static uint16_t predictor = 0;
 static void usage(void);
 static int processCompressOptions(char *);
 
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_ras2tiff_tool_main
+#endif
+
 int main(int argc, const char **argv)
 {
     unsigned char *buf;

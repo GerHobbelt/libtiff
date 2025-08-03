@@ -54,6 +54,10 @@ int quality = 75; /* JPEG quality */
 static void usage(void);
 static void tiffsv(char *, int, int, int, int);
 
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_sgisv_tool_main
+#endif
+
 int main(int argc, const char **argv)
 {
     int c;

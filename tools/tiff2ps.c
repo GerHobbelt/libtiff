@@ -265,6 +265,10 @@ static void *limitMalloc(tmsize_t s)
     return _TIFFmalloc(s);
 }
 
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_tiff2ps_tool_main
+#endif
+
 int main(int argc, const char **argv)
 {
     int dirnum = -1, c, np = 0;

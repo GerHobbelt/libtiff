@@ -52,8 +52,12 @@ static	int cpTiles(TIFF*, TIFF*);
 
 /* This is based on tiffsplit.c - only the main func differs */
 
-int
-main(int argc, const char** argv)
+
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_tiffjoin_tool_main
+#endif
+
+int main(int argc, const char** argv)
 {
 	TIFF *in, *out;
 

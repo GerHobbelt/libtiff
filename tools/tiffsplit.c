@@ -103,6 +103,11 @@ static void *limitRealloc(void *buf, tmsize_t s)
     return _TIFFrealloc(buf, s);
 }
 
+
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_tiffsplit_tool_main
+#endif
+
 int main(int argc, const char **argv)
 {
     TIFF *in, *out;

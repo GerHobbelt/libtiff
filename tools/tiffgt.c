@@ -97,6 +97,11 @@ static void raster_special(int, int, int);
 
 static TIFF *tif = NULL;
 
+
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_tiffgt_tool_main
+#endif
+
 int main(int argc, const char **argv)
 {
     int c;

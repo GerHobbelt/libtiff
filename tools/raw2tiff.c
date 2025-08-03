@@ -86,6 +86,11 @@ static double correlation(void *, void *, uint32_t, TIFFDataType);
 static void usage(int);
 static int processCompressOptions(char *);
 
+
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_raw2tiff_tool_main
+#endif
+
 int main(int argc, const char **argv)
 {
     uint32_t width = 0, length = 0, linebytes, bufsize;

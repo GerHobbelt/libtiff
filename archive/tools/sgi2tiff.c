@@ -55,6 +55,10 @@ extern IMAGE *iopen(const char *, const char *);
 extern void iclose(IMAGE *);
 extern void getrow(IMAGE *, short *, int, int);
 
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_sgi2tiff_tool_main
+#endif
+
 int main(int argc, const char **argv)
 {
     IMAGE *in;

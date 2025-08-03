@@ -109,6 +109,11 @@ static int quality = 75; /* JPEG quality */
 
 static void cpTags(TIFF *in, TIFF *out);
 
+
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_tiff2bw_tool_main
+#endif
+
 int main(int argc, const char **argv)
 {
     uint32_t rowsperstrip = (uint32_t)-1;

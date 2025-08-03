@@ -120,6 +120,11 @@ static int processCompressOptions(char *);
     if (TIFFGetField(in, tag, &v))                                             \
     TIFFSetField(out, tag, v)
 
+
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_tiffmedian_tool_main
+#endif
+
 int main(int argc, const char **argv)
 {
     int i, dither = 0;

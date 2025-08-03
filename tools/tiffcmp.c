@@ -64,6 +64,10 @@ static void PrintFloatDiff(uint32_t, int, uint32_t, double, double);
 
 static void leof(const char *, uint32_t, int);
 
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_tiffcmp_tool_main
+#endif
+
 /*
  * exit with status :
  * 0    No differences were found.

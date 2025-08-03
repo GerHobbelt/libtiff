@@ -203,6 +203,11 @@ static TIFF *openSrcImage(char **imageSpec)
     return tif;
 }
 
+
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_tiffcp_tool_main
+#endif
+
 int main(int argc, const char **argv)
 {
     uint16_t defconfig = (uint16_t)-1;

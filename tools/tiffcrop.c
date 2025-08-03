@@ -2592,6 +2592,11 @@ static int update_output_file(TIFF **tiffout, char *mode, int autoindex,
     return 0;
 } /* end update_output_file */
 
+
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_tiffcrop_tool_main
+#endif
+
 int main(int argc, const char **argv)
 {
     uint16_t defconfig = (uint16_t)-1;
