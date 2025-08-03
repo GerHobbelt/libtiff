@@ -266,6 +266,11 @@ failure:
 } /*-- write_basic_IFD_data() --*/
 
 /*==== main() ====*/
+
+#if defined(BUILD_MONOLITHIC)
+#define main   tiff_transfer_function_read_write_test_main
+#endif
+
 int main(void)
 {
     const char *filename = "test_transferfunction_write_read.tif";

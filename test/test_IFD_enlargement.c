@@ -1752,6 +1752,11 @@ failure:
 } /*-- test_OddDataSizes --*/
 
 
+
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_IFD_enlargement_test_main
+#endif
+
 int main(void)
 {
     int retval = 0;

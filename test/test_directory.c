@@ -2299,6 +2299,10 @@ failure:
 } /*-- test_solitary_custom_directory() --*/
 
 
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_directory_test_main
+#endif
+
 int main(void)
 {
     unsigned int openModeMax =

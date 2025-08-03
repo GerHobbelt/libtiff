@@ -347,6 +347,11 @@ failure:
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
+
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_rewrite_tag_test_main
+#endif
+
 int main(void)
 {
     int failure = 0;

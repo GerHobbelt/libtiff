@@ -41,6 +41,12 @@
         return 1;                                                              \
     }
 
+
+
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_types_test_main
+#endif
+
 int main(void)
 {
     CHECK_TYPE(int8_t, 1)

@@ -41,6 +41,10 @@
 
 #include "tiffio.h"
 
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_append_to_strip_test_main
+#endif
+
 int main(void)
 {
     tmsize_t ret;

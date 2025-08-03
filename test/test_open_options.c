@@ -472,6 +472,10 @@ static int test_TIFFheader_swapping(void)
     return ret;
 }
 
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_open_options_test_main
+#endif
+
 int main(void)
 {
     int ret = 0;

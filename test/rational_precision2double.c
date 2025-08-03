@@ -194,6 +194,11 @@ static void _XTIFFDefaultDirectory(TIFF *tif)
 }
 
 
+
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_rational_to_double_test_main
+#endif
+
 int
 main(void)
 {

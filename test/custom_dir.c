@@ -58,6 +58,11 @@ static TIFFField customFields[] = {
 
 static TIFFFieldArray customFieldArray = {tfiatOther, 0, 2, customFields};
 
+
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_custom_dir_test_main
+#endif
+
 int main(void)
 {
     TIFF *tif;

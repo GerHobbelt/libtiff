@@ -173,6 +173,11 @@ static int read_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
  * Then, writing/reading is tested for ClassicTIFF and BigTIFF.
  * Testprograms shall return 0 for success.
  */
+
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_write_read_tags_test_main
+#endif
+
 int main(void)
 {
     int ret, ret1, ret2;

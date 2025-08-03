@@ -219,6 +219,10 @@ static int test(const char *mode, int tiled, int height)
     return 0;
 }
 
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_defer_Strile_writing_test_main
+#endif
+
 int main(void)
 {
     int tiled;

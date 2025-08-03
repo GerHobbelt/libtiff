@@ -95,6 +95,11 @@ static const uint16_t rows_per_strip = 1;
 static const uint16_t planarconfig = PLANARCONFIG_CONTIG;
 
 
+
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_custom_dir_EXIF_231_test_main
+#endif
+
 int
 main(void)
 {

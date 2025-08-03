@@ -64,6 +64,11 @@ static const struct
 static const char ink_names[] = "Red\0Green\0Blue";
 const int ink_names_size = 15;
 
+
+#if defined(BUILD_MONOLITHIC)
+#define main   tiff_ascii_tag_test_main
+#endif
+
 int main(void)
 {
     TIFF *tif;

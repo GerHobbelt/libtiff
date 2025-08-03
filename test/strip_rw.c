@@ -41,7 +41,11 @@
 
 static const char *filename = "strip_test.tiff";
 
-int main(int argc, char **argv)
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_strip_rw_test_main
+#endif
+
+int main(int argc, const char **argv)
 {
     uint32_t rowsperstrip;
     uint16_t compression;

@@ -1122,6 +1122,11 @@ void checkOpenLogFile(int blnReOpen)
 }
 
 /* ============  MAIN =============== */
+
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_RGBA_image_test_main
+#endif
+
 int main(void)
 {
     int retval = 0;

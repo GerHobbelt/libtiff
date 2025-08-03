@@ -316,6 +316,10 @@ static int test(int classictif, int height, int tiled)
     return 0;
 }
 
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_defer_strile_loading_test_main
+#endif
+
 int main(void)
 {
     int is_classic;

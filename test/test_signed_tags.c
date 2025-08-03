@@ -825,6 +825,10 @@ failure:
 }
 /*-- readTestTiff_ignore_some_tags() --*/
 
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_signed_tags_test_main
+#endif
+
 int main(void)
 {
     /*-- Signed tags test --*/

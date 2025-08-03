@@ -184,6 +184,11 @@ int test_subifd_loop(void)
 } /*-- test_subifd_loop() --*/
 
 
+
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_IFD_loop_detection_test_main
+#endif
+
 int main(void)
 {
     int ret = 0;

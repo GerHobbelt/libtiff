@@ -120,6 +120,10 @@ static int check_rgba_pixel(int pixel, int min_red, int max_red, int min_green,
     return 1;
 }
 
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_raw_decode_test_main
+#endif
+
 int main(int argc, const char **argv)
 {
     TIFF *tif;

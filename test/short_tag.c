@@ -73,6 +73,10 @@ static const struct
                          {TIFFTAG_YCBCRSUBSAMPLING, {2, 1}}};
 #define NPAIREDTAGS (sizeof(short_paired_tags) / sizeof(short_paired_tags[0]))
 
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_short_tag_test_main
+#endif
+
 int main(void)
 {
     TIFF *tif;

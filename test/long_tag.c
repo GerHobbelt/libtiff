@@ -53,6 +53,10 @@ static const uint32_t width = 1;
 static const uint32_t length = 1;
 static const uint32_t rows_per_strip = 1;
 
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_long_tag_test_main
+#endif
+
 int main(int argc, char **argv)
 {
     TIFF *tif;
