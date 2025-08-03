@@ -120,11 +120,11 @@ static int check_rgba_pixel(int pixel, int min_red, int max_red, int min_green,
     return 1;
 }
 
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
     TIFF *tif;
     static const char *srcfilerel = "images/quad-tile.jpg.tiff";
-    char *srcdir = NULL;
+    const char *srcdir = NULL;
     char srcfile[1024];
     unsigned short h, v;
     int status;

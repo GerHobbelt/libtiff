@@ -32,25 +32,25 @@
 #endif
 
 /* Define basic TIFF file settings */
-uint16_t spp = 3;
-const uint16_t width = 4;
-const uint16_t length = 6;
-const uint16_t bps = 8;
-const uint16_t photometric = PHOTOMETRIC_RGB;
-const uint16_t rows_per_strip = 100; /* up to 2**32-1 */
-const uint16_t planarconfig = PLANARCONFIG_CONTIG;
+static uint16_t spp = 3;
+static const uint16_t width = 4;
+static const uint16_t length = 6;
+static const uint16_t bps = 8;
+static const uint16_t photometric = PHOTOMETRIC_RGB;
+static const uint16_t rows_per_strip = 100; /* up to 2**32-1 */
+static const uint16_t planarconfig = PLANARCONFIG_CONTIG;
 
 /* Data and pointer to three transfer functions. */
-uint16_t *pTransferFunctionData;
-uint32_t nSamplesPerTransferFunction;
+static uint16_t *pTransferFunctionData;
+static uint32_t nSamplesPerTransferFunction;
 /* Pointers into pTransferFunctionData for writing */
-const uint16_t *ptf0;
-const uint16_t *ptf1;
-const uint16_t *ptf2;
+static const uint16_t *ptf0;
+static const uint16_t *ptf1;
+static const uint16_t *ptf2;
 /* Pointers for reading */
-const uint16_t *ptfR0;
-const uint16_t *ptfR1;
-const uint16_t *ptfR2;
+static const uint16_t *ptfR0;
+static const uint16_t *ptfR1;
+static const uint16_t *ptfR2;
 
 #define GOTOFAILURE(x)                                                                                                 \
     {                                                                                                                  \
@@ -64,6 +64,7 @@ const uint16_t *ptfR2;
  * Pointer ptf0, ptf1, ptf2 are initialized to the first array element of
  * each transfer function.
  */
+static 
 int setup_transfer_functions(void)
 {
     if (pTransferFunctionData)
@@ -93,6 +94,7 @@ int setup_transfer_functions(void)
  * TIFF **ptif returns the TIFF pointer.
  * The function returns a bit-field with one bit set for each successfully read transfer function.
  */
+static 
 int read_check_transferfunctions(TIFF **ptif, const char *filename, int blnClose, const uint16_t *ptfx0,
                                  const uint16_t *ptfx1, const uint16_t *ptfx2)
 {
@@ -143,6 +145,7 @@ failure:
  * Only if blnCloseFile is true, the file is closed.
  * TIFF **ptif returns the pointer to the opened TIFF file.
  */
+static 
 int write_basic_IFD_data(TIFF **ptif, const char *filename, int wrtTransferFunction, int nExtraSamples,
                          int blnCloseFile)
 {
@@ -265,7 +268,6 @@ failure:
 /*==== main() ====*/
 int main(void)
 {
-
     const char *filename = "test_transferfunction_write_read.tif";
 
     if (setup_transfer_functions())

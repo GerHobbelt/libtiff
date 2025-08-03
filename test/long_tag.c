@@ -36,10 +36,9 @@
 #endif
 
 #include "tiffio.h"
+#include "tifftest.h"
 
-extern int CheckLongField(TIFF *, ttag_t, uint32_t);
-
-const char *filename = "long_test.tiff";
+static const char *filename = "long_test.tiff";
 
 static struct Tags
 {
@@ -50,9 +49,9 @@ static struct Tags
                   FILETYPE_REDUCEDIMAGE | FILETYPE_PAGE | FILETYPE_MASK}};
 #define NTAGS (sizeof(long_tags) / sizeof(long_tags[0]))
 
-const uint32_t width = 1;
-const uint32_t length = 1;
-const uint32_t rows_per_strip = 1;
+static const uint32_t width = 1;
+static const uint32_t length = 1;
+static const uint32_t rows_per_strip = 1;
 
 int main(int argc, char **argv)
 {

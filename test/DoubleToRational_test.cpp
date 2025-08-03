@@ -59,18 +59,19 @@
 #include <stdint.h>
 
 /* Defines from  tif_dirwrite.c */
-void DoubleToRational(const double value, uint32_t *num, uint32_t *denom);
-void DoubleToSrational(const double value, int32_t *num, int32_t *denom);
-void DoubleToRational_direct(const double value, uint32_t *num, uint32_t *denom);
-void DoubleToSrational_direct(const double value, int32_t *num, int32_t *denom);
+static void DoubleToRational(const double value, uint32_t *num, uint32_t *denom);
+static void DoubleToSrational(const double value, int32_t *num, int32_t *denom);
+static void DoubleToRational_direct(const double value, uint32_t *num, uint32_t *denom);
+static void DoubleToSrational_direct(const double value, int32_t *num, int32_t *denom);
 
 /* Defines from original functions at end of this module */
-void DoubleToRational2(const double value, uint32_t *num, uint32_t *denom);
-void DoubleToSrational2(const double value, int32_t *num, int32_t *denom);
-void DoubleToRationalOld(const double value, uint32_t *num, uint32_t *denom);
-void DoubleToSrationalOld(const double value, int32_t *num, int32_t *denom);
+static void DoubleToRational2(const double value, uint32_t *num, uint32_t *denom);
+static void DoubleToSrational2(const double value, int32_t *num, int32_t *denom);
+static void DoubleToRationalOld(const double value, uint32_t *num, uint32_t *denom);
+static void DoubleToSrationalOld(const double value, int32_t *num, int32_t *denom);
 
 
+static 
 void printFile(FILE* fpFile, int idx, double dblIn, long long uNum, long long uDenom, long long uNumOld, long long uDenomOld, long long uNum3, long long uDenom3)
 {
 	double auxDouble, auxDoubleOld;
@@ -263,6 +264,7 @@ int stop = 1817; /*debugging*/
  * Calculates the rational fractional of a double input value
  * using the Euclidean algorithm to find the greatest common divisor (GCD)
 ------------------------------------------------------------------------*/
+static 
 void ToRationalEuclideanGCD(const double value, int blnUseSignedRange, int blnUseSmallRange, uint64_t *ullNum, uint64_t *ullDenom)
 {
 	/* Internally, the integer variables can be bigger than the external ones,
@@ -387,6 +389,7 @@ void ToRationalEuclideanGCD(const double value, int blnUseSignedRange, int blnUs
    *  (ref. e.g. https://de.wikipedia.org/wiki/Kettenbruch or https://en.wikipedia.org/wiki/Continued_fraction
    *             https://en.wikipedia.org/wiki/Euclidean_algorithm)
    */
+static 
 void DoubleToRational2(const double value, uint32_t *num, uint32_t *denom)
 {
 	/*---- UN-SIGNED RATIONAL ---- */
@@ -483,6 +486,7 @@ void DoubleToRational2(const double value, uint32_t *num, uint32_t *denom)
 * for SIGNED rationals,
 * using the Euclidean algorithm to find the greatest common divisor (GCD)
 ------------------------------------------------------------------------*/
+static 
 void DoubleToSrational2(const double value, int32_t *num, int32_t *denom)
 {
 	/*---- SIGNED RATIONAL ----*/
@@ -596,6 +600,7 @@ void DoubleToSrational2(const double value, int32_t *num, int32_t *denom)
 *     1.0/7.0 would be "2573485501354569/18014398509481984", for example.
 *     md=65536 seems to be sufficient for double values and long num/denom
 */
+static 
 void DoubleToRationalOld(const double value, uint32_t *num, uint32_t *denom)
 {
 	//---- UN-SIGNED RATIONAL ----
@@ -701,6 +706,7 @@ void DoubleToRationalOld(const double value, uint32_t *num, uint32_t *denom)
 }  //-- DoubleToRationalOld() --------------
 
 
+static 
 void DoubleToSrationalOld(const double value, int32_t *num, int32_t *denom)
 {
 	//---- SIGNED RATIONAL ----
@@ -808,6 +814,7 @@ void DoubleToSrationalOld(const double value, int32_t *num, int32_t *denom)
 }  //-- DoubleToSrationalOld() --------------
 
 
+static 
 void DoubleToRational_direct(const double value, uint32_t *num, uint32_t *denom)
 {
 	/*--- OLD Code for debugging and comparison  ---- */
@@ -838,6 +845,7 @@ void DoubleToRational_direct(const double value, uint32_t *num, uint32_t *denom)
 	}
 }  /*-- DoubleToRational_direct() -------------- */
 
+static 
 void DoubleToSrational_direct(const double value, int32_t *num, int32_t *denom)
 {
 	/*--- OLD Code for debugging and comparison -- SIGNED-version ----*/

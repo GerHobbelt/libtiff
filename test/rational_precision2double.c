@@ -67,16 +67,16 @@
 #include "tifftest.h"
 
 
-int write_test_tiff(TIFF *tif, const char *filenameRead, int blnAllCustomTags);
-int addTags(TIFF *tif);
+static int write_test_tiff(TIFF *tif, const char *filenameRead, int blnAllCustomTags);
+static int addTags(TIFF *tif);
 
 #define SPP 3 /* Samples per pixel */
-const uint16_t width = 1;
-const uint16_t length = 1;
-const uint16_t bps = 8;
-const uint16_t photometric = PHOTOMETRIC_RGB;
-const uint16_t rows_per_strip = 1;
-const uint16_t planarconfig = PLANARCONFIG_CONTIG;
+static const uint16_t width = 1;
+static const uint16_t length = 1;
+static const uint16_t bps = 8;
+static const uint16_t photometric = PHOTOMETRIC_RGB;
+static const uint16_t rows_per_strip = 1;
+static const uint16_t planarconfig = PLANARCONFIG_CONTIG;
 
 /*-- Additional custom TIFF tags for testing of Rational2Double precision --*/
 #define TIFFTAG_RATIONAL_DOUBLE 60000
@@ -295,6 +295,7 @@ main(void)
     return (ret);
 } /* main() */
 
+static 
 int write_test_tiff(TIFF *tif, const char *filenameRead, int blnAllCustomTags)
 {
     unsigned char buf[SPP] = {0, 127, 255};

@@ -36,4 +36,17 @@ int CheckShortField(TIFF *, const ttag_t, const uint16_t);
 int CheckShortPairedField(TIFF *, const ttag_t, const uint16_t *);
 int CheckLongField(TIFF *, const ttag_t, const uint32_t);
 
+int write_strips(TIFF *tif, const tdata_t array, const tsize_t size);
+int read_strips(TIFF *tif, const tdata_t array, const tsize_t size);
+int create_image_striped(const char *name, uint32_t width, uint32_t length,
+                         uint32_t rowsperstrip, uint16_t compression,
+                         uint16_t spp, uint16_t bps, uint16_t photometric,
+                         uint16_t sampleformat, uint16_t planarconfig,
+                         const tdata_t array, const tsize_t size);
+int read_image_striped(const char *name, uint32_t width, uint32_t length,
+                       uint32_t rowsperstrip, uint16_t compression,
+                       uint16_t spp, uint16_t bps, uint16_t photometric,
+                       uint16_t sampleformat, uint16_t planarconfig,
+                       const tdata_t array, const tsize_t size);
+
 #endif /* _TIFFTEST_ */

@@ -31,6 +31,7 @@
 #include <string.h>
 
 #include "tiffio.h"
+#include "tifftest.h"
 
 int write_strips(TIFF *tif, const tdata_t array, const tsize_t size)
 {

@@ -36,10 +36,11 @@
 #define SPP 3 /* samples per pixel */
 #define BPS 8 /* bits per sample */
 
-char *modeStrings[] = {"wl", "wb", "w8l", "w8b"};
+static const char *modeStrings[] = {"wl", "wb", "w8l", "w8b"};
 
 /* Writes some pixel data as scanline or tiles to file.
  */
+static
 int write_image_data(TIFF *tif, uint16_t width, uint16_t length, bool tiled,
                      unsigned int pixval, unsigned char *plastlinedata,
                      unsigned int lastlinebytesmax)
@@ -137,6 +138,7 @@ int write_image_data(TIFF *tif, uint16_t width, uint16_t length, bool tiled,
 /* Fills the active IFD with some default values and writes
  *  an image with given number of lines as strips (scanlines) or tiles to file.
  */
+static 
 int write_data_to_current_directory(TIFF *tif, uint16_t width, uint16_t length,
                                     bool tiled, int ifd_page_num,
                                     bool write_data,
@@ -228,6 +230,7 @@ int write_data_to_current_directory(TIFF *tif, uint16_t width, uint16_t length,
 
 /* Adds an EXIF IFD with some default values to the active IFD.
  */
+static 
 int write_EXIF_data_to_current_directory(TIFF *tif, int i,
                                          uint64_t *dir_offset_EXIF)
 {
@@ -272,6 +275,7 @@ int write_EXIF_data_to_current_directory(TIFF *tif, int i,
 
 /* Compare 'requested_dir_number' with number written in PageName tag
  * into the IFD to identify that IFD.  */
+static 
 int is_requested_directory(TIFF *tif, int requested_dir_number,
                            const char *filename)
 {
@@ -316,6 +320,7 @@ int is_requested_directory(TIFF *tif, int requested_dir_number,
 /* Checks that IFDs on file can be overwritten if they have not grown and
  * were re-written to an other location if IFD size has been grown.
  */
+static 
 int test_IFD_enlargement(const char *filename, unsigned int openMode,
                          bool is_strile_array_writing, int numIFDs,
                          uint16_t width, uint16_t length, bool tiled)
@@ -889,6 +894,7 @@ failure:
  * not grown and were re-written to an other location if IFD size has been
  * grown.
  */
+static 
 int test_EXIF_enlargement(const char *filename, bool is_big_tiff)
 {
     char auxString[128];
@@ -1179,6 +1185,7 @@ failure:
  * offset was taken for TIFFSetSubDirectory(). This shall result in an error
  * return of TIFFWriteDirectory().
  */
+static 
 int test_SubIFD_enlargement(const char *filename, bool is_big_tiff)
 {
 
@@ -1401,6 +1408,7 @@ failure:
  * IFD in a file overwrite it if it has not grown, and write it to another
  * location if the IFD size has grown.
  */
+static 
 int test_CheckpointDirectory(const char *filename, bool is_big_tiff)
 {
 
@@ -1606,6 +1614,7 @@ failure:
  * byte gaps in the data space for data outside IFD entries. This routine
  * checks correct handling for that.
  */
+static 
 int test_OddDataSizes(const char *filename, unsigned int openMode)
 {
 
@@ -1742,9 +1751,9 @@ failure:
     return 1;
 } /*-- test_OddDataSizes --*/
 
+
 int main(void)
 {
-
     int retval = 0;
     int retvalLast = 0;
     int ntest = 0;

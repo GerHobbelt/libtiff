@@ -184,12 +184,12 @@ static void extender2(TIFF *tif)
 }
 
 /*-- Global test fields --*/
-int8_t s8[] = {-8, -9, -10, -11, INT8_MAX, INT8_MIN};
-int16_t s16[] = {-16, -17, -18, -19, INT16_MAX, INT16_MIN};
-int32_t s32[] = {-32, -33, -34, -35, INT32_MAX, INT32_MIN};
-int64_t s64[] = {-64, -65, -66, -67, INT64_MAX, INT64_MIN};
+static const int8_t s8[] = {-8, -9, -10, -11, INT8_MAX, INT8_MIN};
+static const int16_t s16[] = {-16, -17, -18, -19, INT16_MAX, INT16_MIN};
+static const int32_t s32[] = {-32, -33, -34, -35, INT32_MAX, INT32_MIN};
+static const int64_t s64[] = {-64, -65, -66, -67, INT64_MAX, INT64_MIN};
 
-const uint32_t idxSingle = 0;
+static const uint32_t idxSingle = 0;
 
 static int writeTestTiff(const char *szFileName, int isBigTiff)
 {

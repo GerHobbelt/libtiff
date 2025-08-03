@@ -69,36 +69,36 @@ static const char filenameBigTiff[] = "test_write_read_tags_Big.tif";
 
 /* Settings for basic TIFF image to be written */
 #define SPP 3 /* Samples per pixel */
-const uint16_t width = 1;
-const uint16_t length = 1;
-const uint16_t bps = 8;
-const uint16_t photometric = PHOTOMETRIC_RGB;
-const uint16_t rows_per_strip = 1;
-const uint16_t planarconfig = PLANARCONFIG_CONTIG;
+static const uint16_t width = 1;
+static const uint16_t length = 1;
+static const uint16_t bps = 8;
+static const uint16_t photometric = PHOTOMETRIC_RGB;
+static const uint16_t rows_per_strip = 1;
+static const uint16_t planarconfig = PLANARCONFIG_CONTIG;
 
 /* -- Test data for writing -- */
 #define STRSIZE 1000
 #define N_SIZE 400
 #define VARIABLE_ARRAY_SIZE 6
 
-char auxCharArrayW[N_SIZE];
-short auxShortArrayW[N_SIZE];
-int32_t auxInt32ArrayW[N_SIZE];
-float auxFloatArrayW[N_SIZE];
-double auxDoubleArrayW[N_SIZE];
-char auxTextArrayW[N_SIZE][STRSIZE];
+static char auxCharArrayW[N_SIZE];
+static short auxShortArrayW[N_SIZE];
+static int32_t auxInt32ArrayW[N_SIZE];
+static float auxFloatArrayW[N_SIZE];
+static double auxDoubleArrayW[N_SIZE];
+static char auxTextArrayW[N_SIZE][STRSIZE];
 
 /*-- Additional variables --*/
-char exifVersion[4] = {
+static char exifVersion[4] = {
     '0', '2', '3', '1'}; /* EXIF 2.31 version is 4 characters of a string! */
-char gpsVersion[4] = {2, 2, 0, 1}; /* GPS Version is 4 numbers! */
+static char gpsVersion[4] = {2, 2, 0, 1}; /* GPS Version is 4 numbers! */
 
 /* Inkname string is separated but not closed at the very end with a NULL.
  * Otherwise NumberOfInks would be counted to four by countInkNamesString()
  * at TIFFSetField() for the inkname string.
  */
 #define NINKS 3
-char inkNamesW[] = {"Ink1\0Ink2\0Ink3"};
+static char inkNamesW[] = {"Ink1\0Ink2\0Ink3"};
 
 #define NUM_ELEMENTS(x) (sizeof(x) / sizeof(x[0]))
 
@@ -110,7 +110,7 @@ char inkNamesW[] = {"Ink1\0Ink2\0Ink3"};
  *  - For TileOffsets and TileBytecounts the same variable is used as for
  *    StripOffsets and StripBytecounts, respectively.
  */
-uint32_t listTagsNotToWrite[] = {TIFFTAG_OSUBFILETYPE,
+static uint32_t listTagsNotToWrite[] = {TIFFTAG_OSUBFILETYPE,
                                  TIFFTAG_STRIPOFFSETS,
                                  TIFFTAG_COMPRESSION,
                                  TIFFTAG_STRIPBYTECOUNTS,
@@ -144,7 +144,7 @@ uint32_t listTagsNotToWrite[] = {TIFFTAG_OSUBFILETYPE,
  * Most of them are handled by LibTIFF in special cases anyway, so the tag
  * definition is irrelevant.
  */
-uint32_t listTagsNotFollowPasscountRules[] = {
+static uint32_t listTagsNotFollowPasscountRules[] = {
     TIFFTAG_STRIPOFFSETS,      TIFFTAG_STRIPBYTECOUNTS,
     TIFFTAG_MINSAMPLEVALUE,    TIFFTAG_MAXSAMPLEVALUE,
     TIFFTAG_FREEOFFSETS,       TIFFTAG_FREEBYTECOUNTS,
@@ -155,16 +155,16 @@ uint32_t listTagsNotFollowPasscountRules[] = {
     TIFFTAG_TILEBYTECOUNTS,    TIFFTAG_PERSAMPLE};
 
 /* Function definition */
-int check_tag_definitions(void);
-int write_test_tiff(TIFF *tif, const char *filenameRead);
-int write_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
+static int check_tag_definitions(void);
+static int write_test_tiff(TIFF *tif, const char *filenameRead);
+static int write_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                    uint32_t *plistTagsNotToWrite, uint32_t nTagsInList,
                    uint32_t *iCnt);
-int tagIsInList(uint32_t tTag, uint32_t *list, uint32_t nTagsInList);
-int testPasscountFlag(const char *szMsg, const TIFFFieldArray *tFieldArray,
+static int tagIsInList(uint32_t tTag, uint32_t *list, uint32_t nTagsInList);
+static int testPasscountFlag(const char *szMsg, const TIFFFieldArray *tFieldArray,
                       uint32_t *plistTagsNotFollowPasscountRules,
                       uint32_t nTagsInList);
-int read_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
+static int read_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                   uint32_t *plistTagsNotToWrite, uint32_t nTagsNotToWrite,
                   uint32_t *iCnt);
 
@@ -233,6 +233,7 @@ int main(void)
  * Check for correct definition of tags within tags FieldArray wrt passcount
  * flag and set_get_field_type.
  */
+static 
 int check_tag_definitions(void)
 {
     const TIFFFieldArray *tFieldArray;
@@ -259,7 +260,7 @@ int check_tag_definitions(void)
  * Finally, the file is closed, re-opened and all tags are read
  * and compared to their written value.
  */
-
+static
 int write_test_tiff(TIFF *tif, const char *filenameRead)
 {
     unsigned char buf[SPP] = {0, 127, 255};
@@ -685,6 +686,7 @@ failure:
  * Some tags, which are handled directly, do not follow the rules.
  *
  */
+static
 int testPasscountFlag(const char *szMsg, const TIFFFieldArray *tFieldArray,
                       uint32_t *plistTagsNotFollowPasscountRules,
                       uint32_t nTagsInList)
@@ -939,6 +941,7 @@ int testPasscountFlag(const char *szMsg, const TIFFFieldArray *tFieldArray,
  * definition except tags listed in listTagsNotToWrite.
  * iCnt is an index into predefined arrays for the values to write.
  */
+static
 int write_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                    uint32_t *plistTagsNotToWrite, uint32_t nTagsInList,
                    uint32_t *iCnt)
@@ -1256,6 +1259,7 @@ failure:
  * Returns TRUE if tag is in the list, otherwise FALSE.
  * When the pointer to the list is NULL also FALSE is returned.
  */
+static
 int tagIsInList(uint32_t tTag, uint32_t *list, uint32_t nTagsInList)
 {
     if (list == NULL)
@@ -1275,6 +1279,7 @@ int tagIsInList(uint32_t tTag, uint32_t *list, uint32_t nTagsInList)
  * iCnt is an index into predefined arrays for the values written.
  * The read values are compared to the written ones.
  */
+static
 int read_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                   uint32_t *plistTagsNotToWrite, uint32_t nTagsNotToWrite,
                   uint32_t *iCnt)

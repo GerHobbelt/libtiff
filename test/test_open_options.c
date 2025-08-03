@@ -89,7 +89,7 @@ static int myErrorHandler(TIFF *tiff, void *user_data, const char *module,
     return 1;
 }
 
-static int test_error_handler()
+static int test_error_handler(void)
 {
     int ret = 0;
     char error_buffer[ERROR_STRING_SIZE] = {0};
@@ -271,7 +271,7 @@ static int test_TIFFOpenOptionsSetMaxCumulatedMemAlloc(
     return ret;
 }
 
-int test_header_byte_order(TIFF *tif, char *openModeString)
+static int test_header_byte_order(TIFF *tif, char *openModeString)
 {
 
     if (tif->tif_header.common.tiff_magic != TIFF_BIGENDIAN &&
@@ -310,6 +310,7 @@ int test_header_byte_order(TIFF *tif, char *openModeString)
     return 0;
 }
 
+static
 int open_file_and_write(const char *filename, char *openModeString,
                         int blnWriteIFD, int blnClose, TIFF **tifOut)
 {
@@ -360,7 +361,7 @@ int open_file_and_write(const char *filename, char *openModeString,
  * behaviour shall be harmonized so that the internal parameters are always in
  * host byte-order.
  */
-int test_TIFFheader_swapping(void)
+static int test_TIFFheader_swapping(void)
 {
 
     /* Provoke swapping and non-swapping on any host. */

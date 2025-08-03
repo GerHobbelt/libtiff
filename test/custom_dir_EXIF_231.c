@@ -81,18 +81,18 @@
 #include "tiffio.h"
 #include "tiffiop.h"
 
-int write_test_tiff(TIFF *tif, const char *filenameRead);
+static int write_test_tiff(TIFF *tif, const char *filenameRead);
 
 static const char filename[] = "custom_dir_EXIF_231.tif";
 static const char filenameBigTiff[] = "custom_dir_EXIF_231_Big.tif";
 
 #define SPP 3 /* Samples per pixel */
-const uint16_t width = 1;
-const uint16_t length = 1;
-const uint16_t bps = 8;
-const uint16_t photometric = PHOTOMETRIC_RGB;
-const uint16_t rows_per_strip = 1;
-const uint16_t planarconfig = PLANARCONFIG_CONTIG;
+static const uint16_t width = 1;
+static const uint16_t length = 1;
+static const uint16_t bps = 8;
+static const uint16_t photometric = PHOTOMETRIC_RGB;
+static const uint16_t rows_per_strip = 1;
+static const uint16_t planarconfig = PLANARCONFIG_CONTIG;
 
 
 int
@@ -148,7 +148,7 @@ main(void)
 
 } /* main() */
 
-int write_test_tiff(TIFF *tif, const char *filenameRead)
+static int write_test_tiff(TIFF *tif, const char *filenameRead)
 {
     unsigned char buf[SPP] = {0, 127, 255};
     uint64_t dir_offset = 0;

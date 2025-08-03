@@ -41,12 +41,12 @@
 static const char filename[] = "short_test.tiff";
 
 #define SPP 3 /* Samples per pixel */
-const uint16_t width = 1;
-const uint16_t length = 1;
-const uint16_t bps = 8;
-const uint16_t photometric = PHOTOMETRIC_RGB;
-const uint16_t rows_per_strip = 1;
-const uint16_t planarconfig = PLANARCONFIG_CONTIG;
+static const uint16_t width = 1;
+static const uint16_t length = 1;
+static const uint16_t bps = 8;
+static const uint16_t photometric = PHOTOMETRIC_RGB;
+static const uint16_t rows_per_strip = 1;
+static const uint16_t planarconfig = PLANARCONFIG_CONTIG;
 
 static const struct
 {

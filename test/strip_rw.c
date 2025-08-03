@@ -37,16 +37,9 @@
 
 #include "test_arrays.h"
 #include "tiffio.h"
+#include "tifftest.h"
 
-extern int create_image_striped(const char *, uint32_t, uint32_t, uint32_t,
-                                uint16_t, uint16_t, uint16_t, uint16_t,
-                                uint16_t, uint16_t, const tdata_t,
-                                const tsize_t);
-extern int read_image_striped(const char *, uint32_t, uint32_t, uint32_t,
-                              uint16_t, uint16_t, uint16_t, uint16_t, uint16_t,
-                              uint16_t, const tdata_t, const tsize_t);
-
-const char *filename = "strip_test.tiff";
+static const char *filename = "strip_test.tiff";
 
 int main(int argc, char **argv)
 {
