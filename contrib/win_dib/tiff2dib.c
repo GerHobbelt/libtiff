@@ -179,11 +179,11 @@ HDIB LoadTIFFinDIB(LPSTR lpFileName)
                         for (i = 0; i < (int)(imageWidth); i++)
                         {
                             lpBits[i * SamplePerPixel + 0] =
-                                buf[l * LineSize + i * Sample_PerPixel + 2];
+                                buf[l * LineSize + i * SamplePerPixel + 2];
                             lpBits[i * SamplePerPixel + 1] =
-                                buf[l * LineSize + i * Sample_PerPixel + 1];
+                                buf[l * LineSize + i * SamplePerPixel + 1];
                             lpBits[i * SamplePerPixel + 2] =
-                                buf[l * LineSize + i * Sample_PerPixel + 0];
+                                buf[l * LineSize + i * SamplePerPixel + 0];
                         }
                     else
                         memcpy(lpBits, &buf[(int)(l * LineSize)],
