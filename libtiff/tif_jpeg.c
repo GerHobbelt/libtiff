@@ -25,10 +25,17 @@
 #define WIN32_LEAN_AND_MEAN
 #define VC_EXTRALEAN
 
-#include "tiffiop.h"
+#include <stdio.h>   // either brings in FILE*
 #include <stdlib.h>
 
+#include "jpeglib.h"  // brings in HAVE_JPEGTURBO_DUAL_MODE_8_12
+#include "tiffiop.h"
+
 #ifdef JPEG_SUPPORT
+
+#if defined(HAVE_JPEGTURBO_DUAL_MODE_8_12) && !defined(JPEG_DUAL_MODE_8_12)
+#define JPEG_DUAL_MODE_8_12
+#endif
 
 /*
  * TIFF Library
@@ -69,9 +76,11 @@ typedef struct
 
 int TIFFFillStrip(TIFF *tif, uint32_t strip);
 int TIFFFillTile(TIFF *tif, uint32_t tile);
+#if defined(JPEG_DUAL_MODE_8_12)
 int TIFFReInitJPEG_12(TIFF *tif, const JPEGOtherSettings *otherSettings,
                       int scheme, int is_encode);
 int TIFFJPEGIsFullStripRequired_12(TIFF *tif);
+#endif
 
 #ifdef wxHACK_BOOLEAN
   #include "wx/defs.h"

@@ -1,4 +1,8 @@
 
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "jpeglib.h"  // brings in HAVE_JPEGTURBO_DUAL_MODE_8_12
 #include "tiffiop.h"
 
 #if defined(HAVE_JPEGTURBO_DUAL_MODE_8_12)
