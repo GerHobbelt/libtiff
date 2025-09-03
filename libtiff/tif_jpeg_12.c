@@ -5,7 +5,7 @@
 #include "jpeglib.h"  // brings in HAVE_JPEGTURBO_DUAL_MODE_8_12
 #include "tiffiop.h"
 
-#if defined(HAVE_JPEGTURBO_DUAL_MODE_8_12)
+#if defined(HAVE_JPEGTURBO_DUAL_MODE_8_12) && !defined(JPEG_DUAL_MODE_8_12)
 #define JPEG_DUAL_MODE_8_12
 #endif
 
