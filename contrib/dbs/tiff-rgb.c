@@ -37,11 +37,15 @@
 
 static void Usage(void);
 
-static char *programName = NULL;
+static const char *programName = NULL;
+
+#if defined(BUILD_MONOLITHIC)
+#define main tiff_contrib_dbs_rgb_main
+#endif
 
 int main(int argc, const char **argv)
 {
-    char *input_file = NULL;
+    const char *input_file = NULL;
     double image_gamma = TIFF_GAMMA;
     int i, j;
     TIFF *tif;
