@@ -89,7 +89,7 @@ int mfs_map(int fd, char **addr, size_t *len);
 int mfs_unmap(int fd);
 int mfs_close(int fd);
 static int extend_mem_file(int fd, int size);
-static void mem_init();
+static void mem_init(void);
 
 /*
 --------------------------------------------------------------------------------
@@ -565,7 +565,7 @@ static int extend_mem_file(int fd, int size)
 --------------------------------------------------------------------------------
 */
 
-static void mem_init()
+static void mem_init(void)
 {
     int i;
 

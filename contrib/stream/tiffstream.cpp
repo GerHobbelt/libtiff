@@ -23,7 +23,7 @@ TiffStream::~TiffStream()
         TIFFClose(m_tif);
 }
 
-TIFF *TiffStream::makeFileStream(istream *str)
+TIFF *TiffStream::makeFileStream(std::istream *str)
 {
     m_inStream = str;
     m_outStream = NULL;
@@ -35,7 +35,7 @@ TIFF *TiffStream::makeFileStream(istream *str)
     return m_tif;
 }
 
-TIFF *TiffStream::makeFileStream(ostream *str)
+TIFF *TiffStream::makeFileStream(std::ostream *str)
 {
     m_inStream = NULL;
     m_outStream = str;
@@ -47,7 +47,7 @@ TIFF *TiffStream::makeFileStream(ostream *str)
     return m_tif;
 }
 
-TIFF *TiffStream::makeFileStream(iostream *str)
+TIFF *TiffStream::makeFileStream(std::iostream *str)
 {
     m_inStream = NULL;
     m_outStream = NULL;
@@ -61,7 +61,7 @@ TIFF *TiffStream::makeFileStream(iostream *str)
 
 tsize_t TiffStream::read(thandle_t fd, tdata_t buf, tsize_t size)
 {
-    istream *istr;
+    std::istream *istr;
     TiffStream *ts = reinterpret_cast<TiffStream *>(fd);
     if (ts->m_inStream != NULL)
     {
@@ -71,6 +71,11 @@ tsize_t TiffStream::read(thandle_t fd, tdata_t buf, tsize_t size)
     {
         istr = ts->m_ioStream;
     }
+	else
+	{
+		// TODO: input/argument error
+        return 0;
+	}
 
     int remain = ts->m_streamLength - ts->tell(fd);
     int actual = remain < size ? remain : size;
@@ -81,7 +86,7 @@ tsize_t TiffStream::read(thandle_t fd, tdata_t buf, tsize_t size)
 tsize_t TiffStream::write(thandle_t fd, tdata_t buf, tsize_t size)
 {
     TiffStream *ts = reinterpret_cast<TiffStream *>(fd);
-    ostream *ostr;
+    std::ostream *ostr;
     if (ts->m_outStream != NULL)
     {
         ostr = ts->m_outStream;
@@ -90,8 +95,13 @@ tsize_t TiffStream::write(thandle_t fd, tdata_t buf, tsize_t size)
     {
         ostr = ts->m_ioStream;
     }
+    else
+    {
+        // TODO: input/argument error
+        return 0;
+    }
 
-    streampos start = ostr->tellp();
+    std::streampos start = ostr->tellp();
     ostr->write(reinterpret_cast<const char *>(buf), size);
     return ostr->tellp() - start;
 }
@@ -177,17 +187,17 @@ bool TiffStream::seekInt(thandle_t fd, unsigned int offset, int origin)
     if (!isOpen(fd))
         return false;
 
-    ios::seek_dir org;
+    std::ios_base::seekdir org;
     switch (origin)
     {
         case beg:
-            org = ios::beg;
+            org = std::ios::beg;
             break;
         case cur:
-            org = ios::cur;
+            org = std::ios::cur;
             break;
         case end:
-            org = ios::end;
+            org = std::ios::end;
             break;
     }
 
