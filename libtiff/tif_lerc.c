@@ -32,7 +32,7 @@
  */
 
 #include "Lerc_c_api.h"
-#include "zlib.h"
+#include "zlib-ng.h"
 #ifdef ZSTD_SUPPORT
 #include "zstd.h"
 #endif
@@ -350,18 +350,18 @@ static int LERCPreDecode(TIFF *tif, uint16_t s)
         lerc_data = (uint8_t *)sp->compressed_buffer;
         lerc_data_size = (unsigned int)lerc_data_sizet;
 #else
-        z_stream strm;
+        zng_stream strm;
         int zlib_ret;
 
         memset(&strm, 0, sizeof(strm));
         strm.zalloc = NULL;
         strm.zfree = NULL;
         strm.opaque = NULL;
-        zlib_ret = inflateInit(&strm);
+        zlib_ret = zng_inflateInit(&strm);
         if (zlib_ret != Z_OK)
         {
             TIFFErrorExtR(tif, module, "inflateInit() failed");
-            inflateEnd(&strm);
+            zng_inflateEnd(&strm);
             return 0;
         }
 
@@ -369,16 +369,16 @@ static int LERCPreDecode(TIFF *tif, uint16_t s)
         strm.next_in = tif->tif_rawcp;
         strm.avail_out = sp->compressed_size;
         strm.next_out = (Bytef *)sp->compressed_buffer;
-        zlib_ret = inflate(&strm, Z_FINISH);
+        zlib_ret = zng_inflate(&strm, Z_FINISH);
         if (zlib_ret != Z_STREAM_END && zlib_ret != Z_OK)
         {
             TIFFErrorExtR(tif, module, "inflate() failed");
-            inflateEnd(&strm);
+            zng_inflateEnd(&strm);
             return 0;
         }
         lerc_data = (uint8_t *)sp->compressed_buffer;
         lerc_data_size = sp->compressed_size - strm.avail_out;
-        inflateEnd(&strm);
+        zng_inflateEnd(&strm);
 #endif
     }
     else if (sp->additional_compression == LERC_ADD_COMPRESSION_ZSTD)
@@ -1190,7 +1190,7 @@ static int LERCPostEncode(TIFF *tif)
             return 0;
         }
 #else
-        z_stream strm;
+        zng_stream strm;
         int zlib_ret;
         int cappedQuality = sp->zipquality;
         if (cappedQuality > Z_BEST_COMPRESSION)
@@ -1200,7 +1200,7 @@ static int LERCPostEncode(TIFF *tif)
         strm.zalloc = NULL;
         strm.zfree = NULL;
         strm.opaque = NULL;
-        zlib_ret = deflateInit(&strm, cappedQuality);
+        zlib_ret = zng_deflateInit(&strm, cappedQuality);
         if (zlib_ret != Z_OK)
         {
             TIFFErrorExtR(tif, module, "deflateInit() failed");
@@ -1211,12 +1211,12 @@ static int LERCPostEncode(TIFF *tif)
         strm.next_in = sp->compressed_buffer;
         strm.avail_out = sp->uncompressed_alloc;
         strm.next_out = sp->uncompressed_buffer;
-        zlib_ret = deflate(&strm, Z_FINISH);
+        zlib_ret = zng_deflate(&strm, Z_FINISH);
         if (zlib_ret == Z_STREAM_END)
         {
             tif->tif_rawcc = sp->uncompressed_alloc - strm.avail_out;
         }
-        deflateEnd(&strm);
+        zng_deflateEnd(&strm);
         if (zlib_ret != Z_STREAM_END)
         {
             TIFFErrorExtR(tif, module, "deflate() failed");
