@@ -184,12 +184,14 @@ int main(int argc, const char **argv)
     {
         fprintf(stderr, "%s: Image must have at least 8-bits/sample\n",
                 argv[optind]);
+        (void)TIFFClose(in);
         return (EXIT_FAILURE);
     }
     if (!TIFFGetField(in, TIFFTAG_PHOTOMETRIC, &photometric) ||
         photometric != PHOTOMETRIC_RGB || samplesperpixel < 3)
     {
         fprintf(stderr, "%s: Image must have RGB data\n", argv[optind]);
+        (void)TIFFClose(in);
         return (EXIT_FAILURE);
     }
     TIFFGetField(in, TIFFTAG_PLANARCONFIG, &config);
@@ -197,6 +199,7 @@ int main(int argc, const char **argv)
     {
         fprintf(stderr, "%s: Can only handle contiguous data packing\n",
                 argv[optind]);
+        (void)TIFFClose(in);
         return (EXIT_FAILURE);
     }
 
@@ -274,6 +277,7 @@ int main(int argc, const char **argv)
     if (out == NULL)
     {
         _TIFFfree(ColorCells);
+        (void)TIFFClose(in);
         return (EXIT_FAILURE);
     }
 
@@ -325,6 +329,7 @@ int main(int argc, const char **argv)
     }
     TIFFSetField(out, TIFFTAG_COLORMAP, rm, gm, bm);
     (void)TIFFClose(out);
+    (void)TIFFClose(in);
     _TIFFfree(ColorCells);
     return (EXIT_SUCCESS);
 }

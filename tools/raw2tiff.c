@@ -218,11 +218,15 @@ int main(int argc, const char **argv)
     if (nbands == 0)
     {
         fprintf(stderr, "The number of bands is illegal.\n");
+        close(fd);
         return (-1);
     }
 
     if (guessSize(fd, dtype, hdr_size, nbands, swab, &width, &length) < 0)
+    {
+        close(fd);
         return EXIT_FAILURE;
+    }
 
     /* check for integer overflow in */
     /* hdr_size + (*width) * (*length) * nbands * depth */
@@ -230,6 +234,7 @@ int main(int argc, const char **argv)
     if ((width == 0) || (length == 0))
     {
         fprintf(stderr, "Too large nbands value specified.\n");
+        close(fd);
         return (EXIT_FAILURE);
     }
 
@@ -238,6 +243,7 @@ int main(int argc, const char **argv)
     if (!temp_limit_check || length > (UINT_MAX / temp_limit_check))
     {
         fprintf(stderr, "Too large length size specified.\n");
+        close(fd);
         return (EXIT_FAILURE);
     }
     temp_limit_check = temp_limit_check * length;
@@ -245,6 +251,7 @@ int main(int argc, const char **argv)
     if (!temp_limit_check || width > (UINT_MAX / temp_limit_check))
     {
         fprintf(stderr, "Too large width size specified.\n");
+        close(fd);
         return (EXIT_FAILURE);
     }
     temp_limit_check = temp_limit_check * width;
@@ -252,6 +259,7 @@ int main(int argc, const char **argv)
     if (!temp_limit_check || hdr_size > (UINT_MAX - temp_limit_check))
     {
         fprintf(stderr, "Too large header size specified.\n");
+        close(fd);
         return (EXIT_FAILURE);
     }
 
@@ -262,6 +270,7 @@ int main(int argc, const char **argv)
     {
         fprintf(stderr, "%s: %s: Cannot open file for output.\n", argv[0],
                 outfilename);
+        close(fd);
         return (EXIT_FAILURE);
     }
     TIFFSetField(out, TIFFTAG_IMAGEWIDTH, width);
@@ -389,6 +398,7 @@ int main(int argc, const char **argv)
     if (buf1)
         _TIFFfree(buf1);
     TIFFClose(out);
+    close(fd);
     return (EXIT_SUCCESS);
 }
 
