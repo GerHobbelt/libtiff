@@ -139,6 +139,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -1849,7 +1850,7 @@ static void process_command_opts(int argc, const char **argv, char *mp, char *mo
                           struct dump_opts *dump, unsigned int *imagelist,
                           unsigned int *image_count)
 {
-    int c, good_args = 0;
+    int c;
     char *opt_offset = NULL; /* Position in string of value sought */
     char *opt_ptr = NULL;    /* Pointer to next token in option set */
     char *sep = NULL;        /* Pointer to a token separator */
@@ -1861,7 +1862,6 @@ static void process_command_opts(int argc, const char **argv, char *mp, char *mo
                        "ac:d:e:f:hik:l:m:p:r:stvw:z:BCD:E:F:H:I:J:K:LMN:O:P:R:"
                        "S:U:V:X:Y:Z:")) != -1)
     {
-        good_args++;
         switch (c)
         {
             case 'a':
@@ -7199,6 +7199,7 @@ static int loadImage(TIFF *in, struct image_data *image, struct dump_opts *dump,
     if (read_buff)
     {
         _TIFFfree(read_buff);
+        *read_ptr = NULL;
     }
     if (buffsize > 0xFFFFFFFFU - 3)
     {
@@ -10374,14 +10375,16 @@ static int reverseSamples32bits(uint16_t spp, uint16_t bps, uint32_t width,
             match_bits = mask_bits << (64 - high_bit - bps);
             if (little_endian)
             {
-                longbuff1 =
-                    (src[0] << 24) | (src[1] << 16) | (src[2] << 8) | src[3];
+                longbuff1 = ((uint32_t)src[0] << 24) |
+                            ((uint32_t)src[1] << 16) | ((uint32_t)src[2] << 8) |
+                            (uint32_t)src[3];
                 longbuff2 = longbuff1;
             }
             else
             {
-                longbuff1 =
-                    (src[3] << 24) | (src[2] << 16) | (src[1] << 8) | src[0];
+                longbuff1 = ((uint32_t)src[3] << 24) |
+                            ((uint32_t)src[2] << 16) | ((uint32_t)src[1] << 8) |
+                            (uint32_t)src[0];
                 longbuff2 = longbuff1;
             }
             buff3 = ((uint64_t)longbuff1 << 32) | longbuff2;
