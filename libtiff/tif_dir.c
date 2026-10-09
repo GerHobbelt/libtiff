@@ -1741,6 +1741,8 @@ int TIFFCreateDirectory(TIFF *tif)
 
 int TIFFCreateCustomDirectory(TIFF *tif, const TIFFFieldArray *infoarray)
 {
+    int retcode = 0;
+
     /* Free previously allocated memory and setup default values. */
     TIFFFreeDirectory(tif);
     TIFFDefaultDirectory(tif);
@@ -1749,8 +1751,19 @@ int TIFFCreateCustomDirectory(TIFF *tif, const TIFFFieldArray *infoarray)
      * Reset the field definitions to match the application provided list.
      * Hopefully TIFFDefaultDirectory() won't have done anything irreversible
      * based on it's assumption this is an image directory.
+     *
+     * Check for valid infoarray and return default directory on error.
      */
-    _TIFFSetupFields(tif, infoarray);
+    if (infoarray)
+    {
+        _TIFFSetupFields(tif, infoarray);
+    }
+    else
+    {
+        TIFFErrorExtR(tif, "TIFFCreateCustomDirectory",
+                      "Invalid TIFFFieldArray provided (NULL pointer)");
+        retcode = 1;
+    }
 
     tif->tif_diroff = 0;
     tif->tif_nextdiroff = 0;
@@ -1761,7 +1774,7 @@ int TIFFCreateCustomDirectory(TIFF *tif, const TIFFFieldArray *infoarray)
     _TIFFCleanupIFDOffsetAndNumberMaps(tif);
     /* To be able to return from SubIFD or custom-IFD to main-IFD */
     tif->tif_setdirectory_force_absolute = TRUE;
-    return 0;
+    return retcode;
 }
 
 int TIFFCreateEXIFDirectory(TIFF *tif)
