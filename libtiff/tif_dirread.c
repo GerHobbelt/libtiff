@@ -1203,6 +1203,8 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryDataAndRealloc(TIFF *tif,
     tmsize_t already_read = 0;
 
     assert(!isMapped(tif));
+    if (size <= 0)
+        return (TIFFReadDirEntryErrCount);
 
     if (!SeekOK(tif, offset))
         return (TIFFReadDirEntryErrIo);
@@ -3988,7 +3990,8 @@ TIFFReadDirEntryCheckRangeSlong8Long8(uint64_t value)
 static enum TIFFReadDirEntryErr TIFFReadDirEntryData(TIFF *tif, uint64_t offset,
                                                      tmsize_t size, void *dest)
 {
-    assert(size > 0);
+    if (size <= 0)
+        return (TIFFReadDirEntryErrCount);
     if (!isMapped(tif))
     {
         if (!SeekOK(tif, offset))
