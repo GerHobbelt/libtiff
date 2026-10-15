@@ -183,7 +183,7 @@ static int write_test_tiff(TIFF *tif, const char *filenameRead)
     TIFFDataType tType;
     short tWriteCount;
     TIFFSetGetFieldType tSetFieldType;
-    char *tFieldName;
+    const char *tFieldName;
     const TIFFField *fip;
 
     char blnFillGPSManually = 1;

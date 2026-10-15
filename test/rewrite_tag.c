@@ -154,7 +154,7 @@ static int rewrite_test(const char *filename, uint32_t width, int length, int bi
     uint64_t *upd_rowoffset = NULL;
     uint64_t *upd_bytecount = NULL;
 
-    buf = calloc(1, width);
+    buf = (unsigned char *)calloc(1, width);
     assert(buf);
 
     /* Test whether we can write tags. */

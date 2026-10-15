@@ -224,7 +224,8 @@ int main(int argc, const char **argv)
                     {
                         if (nCount > 0)
                         {
-                            subIFDoffsets = malloc(nCount * sizeof(uint64_t));
+                            subIFDoffsets =
+                                (uint64_t *)malloc(nCount * sizeof(uint64_t));
                             if (subIFDoffsets != NULL)
                             {
                                 memcpy(subIFDoffsets, vPtr,
@@ -307,7 +308,7 @@ static void usage(int code)
 static void ShowStrip(tstrip_t strip, unsigned char *pp, uint32_t nrow,
                       tsize_t scanline)
 {
-    register tsize_t cc;
+    tsize_t cc;
 
     printf("Strip %" PRIu32 ":\n", strip);
     while (nrow-- > 0)

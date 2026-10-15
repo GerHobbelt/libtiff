@@ -72,7 +72,8 @@ int setup_transfer_functions(void)
 
     /* Setup array with some more values to shift start of the three arrays. */
     nSamplesPerTransferFunction = ((uint32_t)1 << bps);
-    pTransferFunctionData = _TIFFmalloc(3 * (tmsize_t)nSamplesPerTransferFunction * sizeof(uint16_t));
+    pTransferFunctionData = (uint16_t *)_TIFFmalloc(
+        3 * (tmsize_t)nSamplesPerTransferFunction * sizeof(uint16_t));
     if (!pTransferFunctionData)
         return 1;
 
@@ -152,6 +153,9 @@ int write_basic_IFD_data(TIFF **ptif, const char *filename, int wrtTransferFunct
     unsigned char buf[3] = {0, 127, 255};
     int retval = 0;
     uint8_t *bufLine = NULL;
+    uint16_t extraSamples[4] = {EXTRASAMPLE_UNSPECIFIED, EXTRASAMPLE_UNSPECIFIED, EXTRASAMPLE_UNSPECIFIED,
+                                EXTRASAMPLE_UNSPECIFIED};
+    size_t bufLen;
     TIFF *tif = TIFFOpen(filename, "w");
     *ptif = tif;
     if (!tif)
@@ -208,8 +212,6 @@ int write_basic_IFD_data(TIFF **ptif, const char *filename, int wrtTransferFunct
     }
 
     /* Set ExtraSamples thus SamplesPerPixel for transfer functions is reduced by one. */
-    uint16_t extraSamples[4] = {EXTRASAMPLE_UNSPECIFIED, EXTRASAMPLE_UNSPECIFIED, EXTRASAMPLE_UNSPECIFIED,
-                                EXTRASAMPLE_UNSPECIFIED};
     if (nExtraSamples > 0 && nExtraSamples < 4)
     {
         if (!TIFFSetField(tif, TIFFTAG_EXTRASAMPLES, nExtraSamples, extraSamples))
@@ -230,8 +232,8 @@ int write_basic_IFD_data(TIFF **ptif, const char *filename, int wrtTransferFunct
     }
 
     /* Setup buffer for image line */
-    size_t bufLen = (size_t)width * spp * (bps + 7) / 8;
-    bufLine = _TIFFmalloc(bufLen);
+    bufLen = (size_t)width * spp * (bps + 7) / 8;
+    bufLine = (uint8_t *)_TIFFmalloc(bufLen);
     if (!bufLine)
     {
         fprintf(stderr, "write_basic_IFD_data(): Can't allocate bufLine buffer.\n");

@@ -75,7 +75,7 @@ int write_image_data(TIFF *tif, uint16_t width, uint16_t length, bool tiled,
         bufLen = (((size_t)width * SPP * BPS) + 7) / 8;
     }
 
-    pbufLine = _TIFFmalloc(bufLen);
+    pbufLine = (unsigned char *)_TIFFmalloc(bufLen);
     if (pbufLine == NULL)
         return 1;
 
@@ -295,11 +295,10 @@ int is_requested_directory(TIFF *tif, int requested_dir_number,
 
     if (ptr == NULL || auxStr == NULL || strncmp(auxStr, " th.", 4))
     {
-        ptr = ptr == NULL ? "(null)" : ptr;
         fprintf(stderr,
                 "Error reading IFD directory number from PageName tag: %s. "
                 "Testline %d\n",
-                ptr, __LINE__);
+                ptr == NULL ? "(null)" : ptr, __LINE__);
         return 0;
     }
 
@@ -332,12 +331,18 @@ int test_IFD_enlargement(const char *filename, unsigned int openMode,
     uint64_t offsetBase[NUMIFDsMAX] = {0};
     uint64_t offsetNew[NUMIFDsMAX];
     unsigned char bufLine[NUMIFDsMAX + 1][1024];
+    TIFF *tif;
+    char xmldata[20];
+    uint32_t xmlpacketLength;
+    char xmldata0[] = "XMLb";
+    char xmldata1[] = "XML data package";
+    char xmldata2[] = "XML data package even longer";
 
     assert(numIFDs <= NUMIFDsMAX);
     assert(openMode < (sizeof(modeStrings) / sizeof(modeStrings[0])));
 
     /*-- Create a file and write numIFDs IFDs directly to it --*/
-    TIFF *tif = TIFFOpen(filename, modeStrings[openMode]);
+    tif = TIFFOpen(filename, modeStrings[openMode]);
     if (!tif)
     {
         fprintf(stderr, "Can't create %s. Testline %d\n", filename, __LINE__);
@@ -360,12 +365,11 @@ int test_IFD_enlargement(const char *filename, unsigned int openMode,
         /* xmldata need to be 9 bytes (17 bytes for BigTIFF, respectively) thus
          * not to fit into the entry itself and have space to cover two
          * strip-/tile-offsets when XMLPACKET tag contents is reduced. */
-        char xmldata[20];
         if (TIFFIsBigTIFF(tif))
             strcpy(xmldata, "XML-ABCDEABCDEFGH");
         else
             strcpy(xmldata, "XML-ABCDE");
-        uint32_t xmlpacketLength = (uint32_t)strlen(xmldata);
+        xmlpacketLength = (uint32_t)strlen(xmldata);
 
         if (!TIFFSetField(tif, TIFFTAG_XMLPACKET, xmlpacketLength, xmldata))
         {
@@ -472,8 +476,7 @@ int test_IFD_enlargement(const char *filename, unsigned int openMode,
      * This leaves some bytes of the larger previous IFD at EOF or before the
      * next IFD. */
     TIFFSetDirectory(tif, 0);
-    char xmldata0[] = "XMLb";
-    uint32_t xmlpacketLength = (uint32_t)strlen(xmldata0);
+    xmlpacketLength = (uint32_t)strlen(xmldata0);
 
     if (!TIFFSetField(tif, TIFFTAG_XMLPACKET, xmlpacketLength, xmldata0))
     {
@@ -561,7 +564,6 @@ int test_IFD_enlargement(const char *filename, unsigned int openMode,
     }
 
     /*-- Enlarge IFD 0 with enlarged tag data and write it again. --*/
-    char xmldata1[] = "XML data package";
     xmlpacketLength = (uint32_t)strlen(xmldata1);
 
     if (!TIFFSetField(tif, TIFFTAG_XMLPACKET, xmlpacketLength, xmldata1))
@@ -757,7 +759,6 @@ int test_IFD_enlargement(const char *filename, unsigned int openMode,
                 offsetNew[0], offsetNew[0], filename, __LINE__);
         goto failure;
     }
-    char xmldata2[] = "XML data package even longer";
     if (!TIFFSetField(tif, TIFFTAG_XMLPACKET, (uint32_t)strlen(xmldata2),
                       xmldata2))
     {
@@ -1202,10 +1203,12 @@ int test_SubIFD_enlargement(const char *filename, bool is_big_tiff)
     TIFFErrorHandler errHandler = NULL;
 
     uint64_t offsetBase[NUMBER_OF_DIRS];
+    TIFF *tif;
+    tdir_t numberOfMainIFDs;
 
     /*-- Create a file and write NUMBER_OF_DIRS IFDs with
      * NUMBER_OF_SUBIFDs SubIFDs to this file. --*/
-    TIFF *tif = TIFFOpen(filename, is_big_tiff ? "w8" : "w");
+    tif = TIFFOpen(filename, is_big_tiff ? "w8" : "w");
     if (!tif)
     {
         fprintf(stderr, "Can't create %s. Testline %d\n", filename, __LINE__);
@@ -1269,7 +1272,7 @@ int test_SubIFD_enlargement(const char *filename, bool is_big_tiff)
         goto failure;
     }
 
-    tdir_t numberOfMainIFDs = TIFFNumberOfDirectories(tif);
+    numberOfMainIFDs = TIFFNumberOfDirectories(tif);
     if (numberOfMainIFDs !=
         (tdir_t)(NUMBER_OF_DIRS + NUMBER_OF_SUBIFDs) - number_of_sub_IFDs)
     {

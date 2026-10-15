@@ -99,7 +99,7 @@ int main(int argc, const char **argv)
     TIFFDataType dtype = TIFF_BYTE;
     int16_t depth = 1;                 /* bytes per pixel in input image */
     int swab = 0;                      /* byte swapping flag */
-    InterleavingType interleaving = 0; /* interleaving type flag */
+    InterleavingType interleaving = PIXEL; /* interleaving type flag */
     uint32_t rowsperstrip = (uint32_t)-1;
     uint16_t photometric = PHOTOMETRIC_MINISBLACK;
     uint16_t config = PLANARCONFIG_CONTIG;
@@ -192,7 +192,7 @@ int main(int argc, const char **argv)
                 else if (strncmp(optarg, "band", 6) == 0)
                     interleaving = BAND;
                 else
-                    interleaving = 0;
+                    interleaving = PIXEL;
                 break;
             case 'o':
                 outfilename = optarg;
@@ -496,8 +496,8 @@ static int guessSize(int fd, TIFFDataType dtype, _TIFF_off_t hdr_size,
                 /* reads 2 lines at the middle of the image and calculate their
                  * correlation. it works for h >= 2. (in this case it will
                  * compare line 0 and line 1 */
-                buf1 = _TIFFmalloc(scanlinesize);
-                buf2 = _TIFFmalloc(scanlinesize);
+                buf1 = (char *)_TIFFmalloc(scanlinesize);
+                buf2 = (char *)_TIFFmalloc(scanlinesize);
                 do
                 {
                     if (_TIFF_lseek_f(

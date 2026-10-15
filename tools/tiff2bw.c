@@ -56,7 +56,7 @@ static int processCompressOptions(const char *);
 
 static void compresscontig(unsigned char *out, unsigned char *rgb, uint32_t n)
 {
-    register int v, red = RED, green = GREEN, blue = BLUE;
+    int v, red = RED, green = GREEN, blue = BLUE;
 
     while (n-- > 0)
     {
@@ -70,7 +70,7 @@ static void compresscontig(unsigned char *out, unsigned char *rgb, uint32_t n)
 static void compresssep(unsigned char *out, unsigned char *r, unsigned char *g,
                         unsigned char *b, uint32_t n)
 {
-    register uint32_t red = RED, green = GREEN, blue = BLUE;
+    uint32_t red = RED, green = GREEN, blue = BLUE;
 
     while (n-- > 0)
         *out++ =
@@ -90,7 +90,7 @@ static int checkcmap(TIFF *tif, int n, uint16_t *r, uint16_t *g, uint16_t *b)
 static void compresspalette(unsigned char *out, unsigned char *data, uint32_t n,
                             uint16_t *rmap, uint16_t *gmap, uint16_t *bmap)
 {
-    register int v, red = RED, green = GREEN, blue = BLUE;
+    int v, red = RED, green = GREEN, blue = BLUE;
 
     while (n-- > 0)
     {
@@ -127,8 +127,8 @@ int main(int argc, const char **argv)
     uint16_t *green;
     uint16_t *blue;
     tsize_t rowsize;
-    register uint32_t row;
-    register tsample_t s;
+    uint32_t row;
+    tsample_t s;
     unsigned char *inbuf, *outbuf;
     char thing[1024];
     int c;
