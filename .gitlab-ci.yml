@@ -170,19 +170,21 @@ windows-cygwin-release:
   stage: build
   rules:
     - if: '$CI_PROJECT_PATH == "libtiff/libtiff"'
-  tags: [windows, docker]
-  image: registry.gitlab.com/codelibre/containers/cygwin-libtiff:latest
+  tags: [windows, cygwin]
+  variables:
+    CHERE_INVOKING: 1
   script:
-    - bash build/gitlab-ci-cygwin Ninja Release
+    - c:/tools/cygwin/bin/bash -l build/gitlab-ci-cygwin Ninja Release
 
 windows-cygwin-debug:
   stage: build
   rules:
     - if: '$CI_PROJECT_PATH == "libtiff/libtiff"'
-  tags: [windows, docker]
-  image: registry.gitlab.com/codelibre/containers/cygwin-libtiff:latest
+  tags: [windows, cygwin]
+  variables:
+    CHERE_INVOKING: 1
   script:
-    - bash build/gitlab-ci-cygwin Ninja Debug
+    - c:/tools/cygwin/bin/bash -l build/gitlab-ci-cygwin Ninja Debug
 
 windows-mingw-release:
   stage: build

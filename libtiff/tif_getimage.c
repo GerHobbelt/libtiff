@@ -1701,6 +1701,8 @@ DECLAREContigPutFunc(put16bitbwtile)
 {
     int samplesperpixel = img->samplesperpixel;
     uint32_t **BWmap = img->BWmap;
+    /* Convert pixel skew to byte skew (16-bit samples) */
+    fromskew = fromskew * (2 * samplesperpixel);
 
     (void)y;
     for (; h > 0; --h)
@@ -2200,7 +2202,7 @@ DECLAREContigPutFunc(putcontig8bitYCbCr44tile)
 
     (void)y;
     /* adjust fromskew */
-    fromskew = (fromskew / 4) * (4 * 2 + 2);
+    fromskew = (fromskew / 4) * (4 * 4 + 2);
     if ((h & 3) == 0 && (w & 3) == 0)
     {
         for (; h >= 4; h -= 4)

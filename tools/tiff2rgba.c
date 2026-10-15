@@ -79,12 +79,16 @@ int main(int argc, const char **argv)
 {
     TIFF *in, *out;
     int c;
+    long v;
 
     while ((c = getopt(argc, argv, "c:r:t:B:bn8hM:")) != -1)
         switch (c)
         {
             case 'M':
-                maxMalloc = (tmsize_t)strtoul(optarg, NULL, 0) << 20;
+                v = strtol(optarg, NULL, 0);
+                if (v < 0)
+                    usage(EXIT_FAILURE);
+                maxMalloc = (tmsize_t)v << 20;
                 break;
             case 'b':
                 process_by_block = 1;

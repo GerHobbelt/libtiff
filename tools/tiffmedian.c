@@ -278,6 +278,10 @@ int main(int argc, const char **argv)
     out = TIFFOpen(argv[optind + 1], "w");
     if (out == NULL)
     {
+        for (i = 0; i < C_LEN * C_LEN * C_LEN; i++)
+        {
+            _TIFFfree(ColorCells[i]);
+        }
         _TIFFfree(ColorCells);
         (void)TIFFClose(in);
         return (EXIT_FAILURE);
@@ -334,6 +338,11 @@ int main(int argc, const char **argv)
     TIFFSetField(out, TIFFTAG_COLORMAP, rm, gm, bm);
     (void)TIFFClose(out);
     (void)TIFFClose(in);
+
+    for (i = 0; i < C_LEN * C_LEN * C_LEN; i++)
+    {
+        _TIFFfree(ColorCells[i]);
+    }
     _TIFFfree(ColorCells);
     return (EXIT_SUCCESS);
 }
@@ -846,7 +855,6 @@ static void map_colortable(void)
                     }
                 }
             }
-    _TIFFfree(cell);
 }
 
 /*

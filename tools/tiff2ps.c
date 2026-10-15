@@ -288,6 +288,7 @@ int main(int argc, const char **argv)
     double pageHeight = 0;
     uint32_t diroff = 0;
     FILE *output = stdout;
+    long v;
 
     pageOrientation[0] = '\0';
 
@@ -297,7 +298,10 @@ int main(int argc, const char **argv)
         switch (c)
         {
             case 'M':
-                maxMalloc = (tmsize_t)strtoul(optarg, NULL, 0) << 20;
+                v = strtol(optarg, NULL, 0);
+                if (v < 0)
+                    usage(EXIT_FAILURE);
+                maxMalloc = (tmsize_t)v << 20;
                 break;
             case 'b':
                 bottommargin = atof(optarg);

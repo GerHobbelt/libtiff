@@ -82,16 +82,23 @@ int main(int argc, const char **argv)
     TIFF *in;
     TIFF *out;
     int c;
+    long v;
 
     while ((c = getopt(argc, argv, "w:h:c:")) != -1)
     {
         switch (c)
         {
             case 'w':
-                tnw = strtoul(optarg, NULL, 0);
+                v = strtol(optarg, NULL, 0);
+                if (v < 0)
+                    usage(EXIT_FAILURE);
+                tnw = (uint32_t)v;
                 break;
             case 'h':
-                tnh = strtoul(optarg, NULL, 0);
+                v = strtol(optarg, NULL, 0);
+                if (v < 0)
+                    usage(EXIT_FAILURE);
+                tnh = (uint32_t)v;
                 break;
             case 'c':
                 contrast = streq(optarg, "exp50")    ? EXP50
@@ -117,7 +124,13 @@ int main(int argc, const char **argv)
     if (in == NULL)
         return 2;
 
-    thumbnail = (uint8_t *)_TIFFmalloc(tnw * tnh);
+    uint32_t thumbsize =
+        _TIFFMultiply32(NULL, tnw, tnh, "allocating thumbnail buffer");
+
+    if (thumbsize == 0)
+        return EXIT_FAILURE;
+
+    thumbnail = (uint8_t *)_TIFFmalloc(thumbsize);
     if (!thumbnail)
     {
         TIFFError(TIFFFileName(in),

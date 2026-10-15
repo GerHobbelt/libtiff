@@ -719,6 +719,7 @@ int main(int argc, const char **argv)
     T2P *t2p = NULL;
     TIFF *input = NULL, *output = NULL;
     int c, ret = EXIT_SUCCESS;
+    long v;
 
     t2p = t2p_init();
 
@@ -735,7 +736,10 @@ int main(int argc, const char **argv)
         switch (c)
         {
             case 'm':
-                t2p->tiff_maxdatasize = (tsize_t)strtoul(optarg, NULL, 0) << 20;
+                v = strtol(optarg, NULL, 0);
+                if (v < 0)
+                    usage_info(EXIT_FAILURE);
+                t2p->tiff_maxdatasize = (tsize_t)v << 20;
                 break;
             case 'o':
                 outfilename = optarg;

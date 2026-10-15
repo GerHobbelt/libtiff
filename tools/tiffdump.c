@@ -116,6 +116,7 @@ int main(int argc, const char **argv)
     int multiplefiles = (argc > 1);
     int c;
     uint64_t diroff = 0;
+    long v;
     hex_mode = 0;
     bigendian = (*(char *)&one == 0);
 
@@ -128,10 +129,16 @@ int main(int argc, const char **argv)
                 hex_mode = 1;
                 break;
             case 'o':
-                diroff = (uint64_t)strtoul(optarg, NULL, 0);
+                v = strtol(optarg, NULL, 0);
+                if (v < 0)
+                    usage();
+                diroff = (uint64_t)v;
                 break;
             case 'm':
-                maxitems = strtoul(optarg, NULL, 0);
+                v = strtol(optarg, NULL, 0);
+                if (v < 0)
+                    usage();
+                maxitems = (uint32_t)v;
                 break;
             default:
                 usage();
