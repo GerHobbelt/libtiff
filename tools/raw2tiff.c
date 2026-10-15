@@ -107,10 +107,10 @@ int main(int argc, const char **argv)
     int fd;
     const char *outfilename = NULL;
     TIFF *out;
-    uint32_t temp_limit_check = 0; /* temp for integer overflow checking*/
-
     uint32_t row, col, band;
     int c;
+    int row_ok;
+    uint64_t depth64;
     unsigned char *buf = NULL, *buf1 = NULL;
 
     while ((c = getopt(argc, argv, "c:r:H:w:l:b:d:LMp:si:o:h")) != -1)
@@ -238,36 +238,37 @@ int main(int argc, const char **argv)
         return (EXIT_FAILURE);
     }
 
-    if ((depth <= 0) || ((uint32_t)depth > (UINT_MAX / nbands)))
+    if (hdr_size < 0)
+    {
+        fprintf(stderr, "Invalid header size specified.\n");
+        close(fd);
+        return (EXIT_FAILURE);
+    }
+
+    if (depth <= 0)
     {
         fprintf(stderr, "Too large nbands value specified.\n");
         close(fd);
         return (EXIT_FAILURE);
     }
+    depth64 = (uint64_t)depth;
 
-    temp_limit_check = (uint32_t)depth * nbands;
-
-    if (!temp_limit_check || length > (UINT_MAX / temp_limit_check))
     {
-        fprintf(stderr, "Too large length size specified.\n");
-        close(fd);
-        return (EXIT_FAILURE);
-    }
-    temp_limit_check = temp_limit_check * length;
-
-    if (!temp_limit_check || width > (UINT_MAX / temp_limit_check))
-    {
-        fprintf(stderr, "Too large width size specified.\n");
-        close(fd);
-        return (EXIT_FAILURE);
-    }
-    temp_limit_check = temp_limit_check * width;
-
-    if (!temp_limit_check || hdr_size > (UINT_MAX - temp_limit_check))
-    {
-        fprintf(stderr, "Too large header size specified.\n");
-        close(fd);
-        return (EXIT_FAILURE);
+        uint64_t image_size64 =
+            _TIFFMultiply64(NULL, depth64, nbands, "input image size");
+        uint64_t total_size64;
+        image_size64 =
+            _TIFFMultiply64(NULL, image_size64, length, "input image size");
+        image_size64 =
+            _TIFFMultiply64(NULL, image_size64, width, "input image size");
+        total_size64 = _TIFFAdd64(NULL, (uint64_t)hdr_size, image_size64,
+                                  "input image size");
+        if (image_size64 == 0 || total_size64 == 0 || total_size64 > UINT_MAX)
+        {
+            fprintf(stderr, "Too large image size specified.\n");
+            close(fd);
+            return (EXIT_FAILURE);
+        }
     }
 
     if (outfilename == NULL)
@@ -346,23 +347,54 @@ int main(int argc, const char **argv)
     switch (interleaving)
     {
         case BAND: /* band interleaved data */
-            linebytes = (uint32_t)depth * width;
+        {
+            uint64_t linebytes64 =
+                _TIFFMultiply64(out, depth64, width, "scanline size");
+            linebytes =
+                _TIFFCastUInt64ToUInt32(out, linebytes64, "scanline size");
+            if (linebytes64 == 0 || linebytes == 0)
+            {
+                fprintf(stderr, "Too large image size specified.\n");
+                close(fd);
+                TIFFClose(out);
+                return (EXIT_FAILURE);
+            }
             buf = (unsigned char *)_TIFFmalloc(linebytes);
             break;
+        }
         case PIXEL: /* pixel interleaved data */
         default:
-            linebytes = (uint32_t)depth * width * nbands;
+        {
+            uint64_t linebytes64 =
+                _TIFFMultiply64(out, depth64, width, "scanline size");
+            linebytes64 =
+                _TIFFMultiply64(out, linebytes64, nbands, "scanline size");
+            linebytes =
+                _TIFFCastUInt64ToUInt32(out, linebytes64, "scanline size");
+            if (linebytes64 == 0 || linebytes == 0)
+            {
+                fprintf(stderr, "Too large image size specified.\n");
+                close(fd);
+                TIFFClose(out);
+                return (EXIT_FAILURE);
+            }
             break;
+        }
     }
-    if ((uint32_t)depth > (UINT_MAX / width) ||
-        ((uint32_t)depth * width) > (UINT_MAX / nbands))
     {
-        fprintf(stderr, "Too large image size specified.\n");
-        close(fd);
-        TIFFClose(out);
-        return (EXIT_FAILURE);
+        uint64_t bufsize64 =
+            _TIFFMultiply64(out, depth64, width, "input buffer size");
+        bufsize64 =
+            _TIFFMultiply64(out, bufsize64, nbands, "input buffer size");
+        bufsize = _TIFFCastUInt64ToUInt32(out, bufsize64, "input buffer size");
+        if (bufsize64 == 0 || bufsize == 0)
+        {
+            fprintf(stderr, "Too large image size specified.\n");
+            close(fd);
+            TIFFClose(out);
+            return (EXIT_FAILURE);
+        }
     }
-    bufsize = (uint32_t)depth * width * nbands;
     buf1 = (unsigned char *)_TIFFmalloc(bufsize);
 
     rowsperstrip = TIFFDefaultStripSize(out, rowsperstrip);
@@ -372,17 +404,38 @@ int main(int argc, const char **argv)
     }
     TIFFSetField(out, TIFFTAG_ROWSPERSTRIP, rowsperstrip);
 
-    _TIFF_lseek_f(fd, hdr_size, SEEK_SET); /* Skip the file header */
+    _TIFF_lseek_f(fd, (_TIFF_off_t)hdr_size,
+                  SEEK_SET); /* Skip the file header */
     for (row = 0; row < length; row++)
     {
+        row_ok = 1;
         switch (interleaving)
         {
             case BAND: /* band interleaved data */
                 for (band = 0; band < nbands; band++)
                 {
-                    if (_TIFF_lseek_f(
-                            fd, hdr_size + (length * band + row) * linebytes,
-                            SEEK_SET) == (_TIFF_off_t)-1)
+                    uint64_t band_rows64 =
+                        _TIFFMultiply64(out, length, band, "band file offset");
+                    uint64_t band_row64 =
+                        _TIFFAdd64(out, band_rows64, row, "band file offset");
+                    uint64_t data_offset64 = _TIFFMultiply64(
+                        out, band_row64, linebytes, "band file offset");
+                    uint64_t seek_offset64 =
+                        _TIFFAdd64(out, (uint64_t)hdr_size, data_offset64,
+                                   "band file offset");
+                    if ((band_rows64 == 0 && length != 0 && band != 0) ||
+                        (band_row64 == 0 && (band_rows64 != 0 || row != 0)) ||
+                        (data_offset64 == 0 &&
+                         (band_row64 != 0 && linebytes != 0)) ||
+                        (seek_offset64 == 0 &&
+                         ((uint64_t)hdr_size != 0 || data_offset64 != 0)))
+                    {
+                        fprintf(stderr, "Too large image size specified.\n");
+                        row_ok = 0;
+                        break;
+                    }
+                    if (_TIFF_lseek_f(fd, (_TIFF_off_t)seek_offset64,
+                                      SEEK_SET) == (_TIFF_off_t)-1)
                     {
                         fprintf(stderr,
                                 "%s: %s: scanline %" PRIu32 ": seek error.\n",
@@ -399,8 +452,38 @@ int main(int argc, const char **argv)
                     if (swab) /* Swap bytes if needed */
                         swapBytesInScanline(buf, width, dtype);
                     for (col = 0; col < width; col++)
-                        memcpy(buf1 + (col * nbands + band) * (size_t)depth,
-                               buf + col * (size_t)depth, (size_t)depth);
+                    {
+                        uint64_t sample_index64 =
+                            _TIFFMultiply64(out, col, nbands, "sample offset");
+                        uint64_t dst_sample64 = _TIFFAdd64(
+                            out, sample_index64, band, "sample offset");
+                        uint64_t dst_offset64 = _TIFFMultiply64(
+                            out, dst_sample64, depth64, "sample offset");
+                        uint64_t src_offset64 =
+                            _TIFFMultiply64(out, col, depth64, "sample offset");
+                        tmsize_t dst_offset = _TIFFCastUInt64ToSSize(
+                            out, dst_offset64, "sample offset");
+                        tmsize_t src_offset = _TIFFCastUInt64ToSSize(
+                            out, src_offset64, "sample offset");
+                        if ((sample_index64 == 0 && col != 0 && nbands != 0) ||
+                            (dst_sample64 == 0 &&
+                             (sample_index64 != 0 || band != 0)) ||
+                            (dst_offset64 == 0 &&
+                             (dst_sample64 != 0 && depth64 != 0)) ||
+                            (src_offset64 == 0 && col != 0 && depth64 != 0) ||
+                            (dst_offset == 0 && dst_offset64 != 0) ||
+                            (src_offset == 0 && src_offset64 != 0))
+                        {
+                            fprintf(stderr,
+                                    "Too large image size specified.\n");
+                            row_ok = 0;
+                            break;
+                        }
+                        memcpy(buf1 + dst_offset, buf + src_offset,
+                               (size_t)depth);
+                    }
+                    if (!row_ok)
+                        break;
                 }
                 break;
             case PIXEL: /* pixel interleaved data */
@@ -415,6 +498,12 @@ int main(int argc, const char **argv)
                 if (swab) /* Swap bytes if needed */
                     swapBytesInScanline(buf1, width, dtype);
                 break;
+        }
+        if (!row_ok)
+        {
+            close(fd);
+            TIFFClose(out);
+            return (EXIT_FAILURE);
         }
 
         if (TIFFWriteScanline(out, buf1, row, 0) < 0)
@@ -475,6 +564,7 @@ static int guessSize(int fd, TIFFDataType dtype, _TIFF_off_t hdr_size,
     _TIFF_stat_s filestat;
     uint32_t w, h, scanlinesize, imagesize;
     uint32_t depth = (uint32_t)TIFFDataWidth(dtype);
+    uint64_t depth64 = (uint64_t)depth;
     double cor_coef = 0, tmp;
 
     if (_TIFF_fstat_f(fd, &filestat) == -1)
@@ -486,6 +576,12 @@ static int guessSize(int fd, TIFFDataType dtype, _TIFF_off_t hdr_size,
     if (filestat.st_size < hdr_size)
     {
         fprintf(stderr, "Too large header size specified.\n");
+        return -1;
+    }
+
+    if (depth == 0)
+    {
+        fprintf(stderr, "Invalid sample data type.\n");
         return -1;
     }
 
@@ -532,7 +628,18 @@ static int guessSize(int fd, TIFFDataType dtype, _TIFF_off_t hdr_size,
         {
             if (imagesize % w == 0)
             {
-                scanlinesize = w * depth;
+                {
+                    uint64_t scanlinesize64 =
+                        _TIFFMultiply64(NULL, w, depth64, "scanline size");
+                    scanlinesize = _TIFFCastUInt64ToUInt32(NULL, scanlinesize64,
+                                                           "scanline size");
+                    if (scanlinesize64 == 0 || scanlinesize == 0)
+                    {
+                        fprintf(stderr, "scanline size overflow.\n");
+                        fail = 1;
+                        break;
+                    }
+                }
                 h = imagesize / w;
                 if (h < 2)
                     continue;
@@ -543,9 +650,17 @@ static int guessSize(int fd, TIFFDataType dtype, _TIFF_off_t hdr_size,
                 buf2 = (char *)_TIFFmalloc(scanlinesize);
                 do
                 {
-                    if (_TIFF_lseek_f(fd,
-                                      hdr_size + (uint32_t)((h - 1) / 2) *
-                                                     scanlinesize,
+                    uint64_t seek_row = (uint32_t)((h - 1) / 2);
+                    uint64_t data_offset64 = _TIFFMultiply64(
+                        NULL, seek_row, scanlinesize, "scanline file offset");
+                    uint64_t seek_offset64 =
+                        _TIFFAdd64(NULL, (uint64_t)hdr_size, data_offset64,
+                                   "scanline file offset");
+                    if ((data_offset64 == 0 && seek_row != 0 &&
+                         scanlinesize != 0) ||
+                        (seek_offset64 == 0 &&
+                         ((uint64_t)hdr_size != 0 || data_offset64 != 0)) ||
+                        _TIFF_lseek_f(fd, (_TIFF_off_t)seek_offset64,
                                       SEEK_SET) == (_TIFF_off_t)-1)
                     {
                         fprintf(stderr, "seek error.\n");
@@ -605,8 +720,15 @@ static int guessSize(int fd, TIFFDataType dtype, _TIFF_off_t hdr_size,
     }
     else
     {
-        if (filestat.st_size <
-            (_TIFF_off_t)(hdr_size + (*width) * (*length) * nbands * depth))
+        uint64_t needed_size64 =
+            _TIFFMultiply64(NULL, *width, *length, "input image size");
+        needed_size64 =
+            _TIFFMultiply64(NULL, needed_size64, nbands, "input image size");
+        needed_size64 =
+            _TIFFMultiply64(NULL, needed_size64, depth64, "input image size");
+        needed_size64 = _TIFFAdd64(NULL, (uint64_t)hdr_size, needed_size64,
+                                   "input image size");
+        if (needed_size64 == 0 || (uint64_t)filestat.st_size < needed_size64)
         {
             fprintf(stderr, "Input file too small.\n");
             return -1;

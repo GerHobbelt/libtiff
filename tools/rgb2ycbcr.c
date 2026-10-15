@@ -237,12 +237,60 @@ static void cvtClump(unsigned char *op, uint32_t *raster, uint32_t ch,
  * Convert a strip of RGB data to YCbCr and
  * sample to generate the output data.
  */
-static void cvtStrip(unsigned char *op, uint32_t *raster, uint32_t nrows,
-                     uint32_t width)
+static int checkedRoundup32(TIFF *tif, uint32_t *result, uint32_t value,
+                            uint16_t multiple, const char *where)
+{
+    uint64_t rounded64;
+    uint32_t rounded32;
+
+    if (multiple == 0)
+        return 0;
+    rounded64 = _TIFFAdd64(tif, value, (uint64_t)multiple - 1U, where);
+    if (rounded64 == 0 && value != 0)
+        return 0;
+    rounded64 = _TIFFMultiply64(tif, rounded64 / multiple, multiple, where);
+    rounded32 = _TIFFCastUInt64ToUInt32(tif, rounded64, where);
+    if ((rounded64 == 0 && value != 0) || (rounded32 == 0 && rounded64 != 0))
+        return 0;
+    *result = rounded32;
+    return 1;
+}
+
+static tmsize_t computeYCbCrStripSize(TIFF *tif, uint32_t rows, uint32_t width,
+                                      const char *where)
+{
+    uint64_t luma64 = _TIFFMultiply64(tif, rows, width, where);
+    uint64_t subsampling64 =
+        _TIFFMultiply64(tif, horizSubSampling, vertSubSampling, where);
+    uint64_t chroma_samples64;
+    uint64_t chroma64;
+    uint64_t total64;
+    tmsize_t total;
+
+    if ((luma64 == 0 && rows != 0 && width != 0) || subsampling64 == 0)
+        return 0;
+    chroma_samples64 = luma64 / subsampling64;
+    chroma64 = _TIFFMultiply64(tif, chroma_samples64, 2, where);
+    total64 = _TIFFAdd64(tif, luma64, chroma64, where);
+    total = _TIFFCastUInt64ToSSize(tif, total64, where);
+    if ((chroma64 == 0 && chroma_samples64 != 0) ||
+        (total64 == 0 && (luma64 != 0 || chroma64 != 0)) ||
+        (total == 0 && total64 != 0))
+        return 0;
+    return total;
+}
+
+static int cvtStrip(TIFF *tif, unsigned char *op, uint32_t *raster,
+                    uint32_t nrows, uint32_t width)
 {
     uint32_t x;
     int clumpSize = vertSubSampling * horizSubSampling + 2;
     uint32_t *tp;
+    tmsize_t row_advance =
+        _TIFFComputeRowOffset(tif, width, vertSubSampling, "raster row offset");
+
+    if (row_advance == 0 && width != 0 && vertSubSampling != 0)
+        return 0;
 
     for (; nrows >= vertSubSampling; nrows -= vertSubSampling)
     {
@@ -258,7 +306,7 @@ static void cvtStrip(unsigned char *op, uint32_t *raster, uint32_t nrows,
             cvtClump(op, tp, vertSubSampling, x, width);
             op += clumpSize;
         }
-        raster -= vertSubSampling * width;
+        raster -= row_advance;
     }
     if (nrows > 0)
     {
@@ -272,6 +320,7 @@ static void cvtStrip(unsigned char *op, uint32_t *raster, uint32_t nrows,
         if (x > 0)
             cvtClump(op, tp, nrows, x, width);
     }
+    return 1;
 }
 
 static int cvtRaster(TIFF *tif, uint32_t *raster, uint32_t width,
@@ -281,24 +330,51 @@ static int cvtRaster(TIFF *tif, uint32_t *raster, uint32_t width,
     tstrip_t strip = 0;
     tsize_t cc, acc;
     unsigned char *buf;
-    uint32_t rwidth = roundup(width, horizSubSampling);
-    uint32_t rheight = roundup(height, vertSubSampling);
-    uint32_t nrows = (rowsperstrip > rheight ? rheight : rowsperstrip);
-    uint32_t rnrows = roundup(nrows, vertSubSampling);
+    uint32_t rwidth;
+    uint32_t rheight;
+    uint32_t nrows;
+    uint32_t rnrows;
 
-    cc = (tsize_t)rnrows * rwidth +
-         2 * ((tsize_t)rnrows * rwidth /
-              ((uint32_t)horizSubSampling * vertSubSampling));
+    if (!checkedRoundup32(tif, &rwidth, width, horizSubSampling,
+                          "rounded raster width") ||
+        !checkedRoundup32(tif, &rheight, height, vertSubSampling,
+                          "rounded raster height"))
+        return 0;
+    nrows = (rowsperstrip > rheight ? rheight : rowsperstrip);
+    if (nrows == 0)
+        return 0;
+    if (!checkedRoundup32(tif, &rnrows, nrows, vertSubSampling,
+                          "rounded strip height"))
+        return 0;
+
+    cc = computeYCbCrStripSize(tif, rnrows, rwidth, "YCbCr strip size");
+    if (cc == 0)
+        return 0;
     buf = (unsigned char *)_TIFFmalloc(cc);
     // FIXME unchecked malloc
     for (y = height; (int32_t)y > 0; y -= nrows)
     {
         uint32_t nr = (y > nrows ? nrows : y);
-        cvtStrip(buf, raster + (y - 1) * width, nr, width);
-        nr = roundup(nr, vertSubSampling);
-        acc = (tsize_t)nr * rwidth +
-              2 * ((tsize_t)nr * rwidth /
-                   ((uint32_t)horizSubSampling * vertSubSampling));
+        tmsize_t raster_offset =
+            _TIFFComputeRowOffset(tif, width, y - 1, "raster row offset");
+        if ((raster_offset == 0 && y != 1 && width != 0) ||
+            !cvtStrip(tif, buf, raster + raster_offset, nr, width))
+        {
+            _TIFFfree(buf);
+            return 0;
+        }
+        if (!checkedRoundup32(tif, &nr, nr, vertSubSampling,
+                              "rounded strip height"))
+        {
+            _TIFFfree(buf);
+            return 0;
+        }
+        acc = computeYCbCrStripSize(tif, nr, rwidth, "YCbCr strip size");
+        if (acc == 0)
+        {
+            _TIFFfree(buf);
+            return 0;
+        }
         if (!TIFFWriteEncodedStrip(tif, strip++, buf, acc))
         {
             _TIFFfree(buf);
@@ -318,15 +394,19 @@ static int tiffcvt(TIFF *in, TIFF *out)
     char *stringv;
     uint32_t longv;
     int result;
-    size_t pixel_count;
+    uint64_t pixel_count64;
+    tmsize_t pixel_count;
 
     TIFFGetField(in, TIFFTAG_IMAGEWIDTH, &width);
     TIFFGetField(in, TIFFTAG_IMAGELENGTH, &height);
-    pixel_count = (size_t)width * height;
+    pixel_count64 =
+        _TIFFMultiply64(in, width, height, "raster buffer pixel count");
+    pixel_count =
+        _TIFFCastUInt64ToSSize(in, pixel_count64, "raster buffer pixel count");
 
     /* Check for integer overflow or implausibly large image dimensions. */
-    if (!width || !height || SIZE_MAX / width < height ||
-        pixel_count > (size_t)(INT32_MAX / sizeof(uint32_t)))
+    if (!width || !height || pixel_count == 0 ||
+        pixel_count > (tmsize_t)(INT32_MAX / sizeof(uint32_t)))
     {
         TIFFError(TIFFFileName(in),
                   "Malformed input file; "
@@ -336,12 +416,12 @@ static int tiffcvt(TIFF *in, TIFF *out)
         return 0;
     }
 
-    raster = (uint32_t *)_TIFFCheckMalloc(in, (tmsize_t)pixel_count,
-                                          sizeof(uint32_t), "raster buffer");
+    raster = (uint32_t *)_TIFFCheckMalloc(in, pixel_count, sizeof(uint32_t),
+                                          "raster buffer");
     if (raster == 0)
     {
         TIFFError(TIFFFileName(in),
-                  "Failed to allocate buffer (%" TIFF_SIZE_FORMAT
+                  "Failed to allocate buffer (%" TIFF_SSIZE_FORMAT
                   " elements of %" TIFF_SIZE_FORMAT " each)",
                   pixel_count, sizeof(uint32_t));
         return (0);

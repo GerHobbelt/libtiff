@@ -25,6 +25,7 @@
 #include "tif_config.h"
 
 #include <ctype.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -192,6 +193,8 @@ int main(int argc, const char **argv)
     uint16_t spp = 1;
     uint16_t bpp = 8;
     void (*pack_func)(unsigned char *buf, unsigned int smpls, uint16_t bps);
+    tmsize_t sample_count = 0;
+    unsigned int pack_samples = 0;
     TIFF *out;
     FILE *in;
     unsigned int w, h, prec, row;
@@ -391,18 +394,29 @@ int main(int argc, const char **argv)
         default:
             break;
     }
+    sample_count = multiply_ms(spp, w);
+    if (sample_count == 0 || sample_count > UINT_MAX)
+    {
+        fprintf(stderr, "%s: sample count overflow\n", infile);
+        TIFFClose(out);
+        exit(EXIT_FAILURE);
+    }
+    pack_samples = (unsigned int)sample_count;
+
     if (pbm)
     {
-        /* if round-up overflows, result will be zero, OK */
-        linebytes = (multiply_ms(spp, w) + (8 - 1)) / 8;
+        if (sample_count > TIFF_TMSIZE_T_MAX - (8 - 1))
+            linebytes = 0;
+        else
+            linebytes = (sample_count + (8 - 1)) / 8;
     }
     else if (bpp <= 8)
     {
-        linebytes = multiply_ms(spp, w);
+        linebytes = sample_count;
     }
     else
     {
-        linebytes = multiply_ms(2 * spp, w);
+        linebytes = multiply_ms(2, sample_count);
     }
     if (rowsperstrip == (uint32_t)-1)
     {
@@ -449,7 +463,7 @@ int main(int argc, const char **argv)
             fprintf(stderr, "%s: scanline %u: Read error.\n", infile, row);
             break;
         }
-        pack_func(buf, w * spp, bpp);
+        pack_func(buf, pack_samples, bpp);
         if (TIFFWriteScanline(out, buf, row, 0) < 0)
             break;
     }

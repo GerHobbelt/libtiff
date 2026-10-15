@@ -361,7 +361,7 @@ struct TIFFOpenOptions
 */
 #if defined(HAVE_FSEEKO)
 #  define fseek(stream,offset,whence)  fseeko(stream,offset,whence)
-#  define ftell(stream,offset,whence)  ftello(stream,offset,whence)
+#  define ftell(stream,offset,whence)  ftello(stream)
 #endif
 #endif
 #if defined(_WIN32) &&                                                         \
@@ -449,8 +449,17 @@ void _TIFFErrorEarly(TIFFOpenOptions* opts, thandle_t clientdata, const char* mo
 
 extern uint32_t _TIFFMultiply32(TIFF*, uint32_t, uint32_t, const char*);
 extern uint64_t _TIFFMultiply64(TIFF*, uint64_t, uint64_t, const char*);
+extern uint64_t _TIFFAdd64(TIFF *, uint64_t, uint64_t, const char *);
 extern tmsize_t _TIFFMultiplySSize(TIFF*, tmsize_t, tmsize_t, const char*);
+extern tmsize_t _TIFFAddSSize(TIFF *, tmsize_t, tmsize_t, const char *);
 extern tmsize_t _TIFFCastUInt64ToSSize(TIFF*, uint64_t, const char*);
+extern uint32_t _TIFFCastUInt64ToUInt32(TIFF *, uint64_t, const char *);
+extern uint64_t _TIFFComputeRowSize64(TIFF *, uint32_t, uint16_t, uint16_t,
+                                          const char *);
+extern tmsize_t _TIFFComputeRowOffset(TIFF *, tmsize_t rowstride, uint32_t,
+                                          const char *);
+extern uint64_t _TIFFComputeBitOffset(TIFF *, uint32_t, uint16_t, uint16_t,
+                                          const char *);
 extern void* _TIFFCheckMalloc(TIFF*, tmsize_t, tmsize_t, const char*);
 extern void* _TIFFCheckRealloc(TIFF*, void*, tmsize_t, tmsize_t, const char*);
 

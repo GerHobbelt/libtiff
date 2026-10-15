@@ -24,7 +24,9 @@
 
 #include "tif_config.h"
 
+#include <limits.h>
 #include <math.h> /* for isfinite() */
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -319,6 +321,8 @@ static uint64_t ReadDirectory(int fd, unsigned int ix, uint64_t off)
     void *dirmem = NULL;
     uint64_t nextdiroff = 0;
     uint32_t n;
+    tmsize_t nread;
+    tmsize_t dirsize;
     uint8_t *dp;
 
     if (off == 0) /* no more directories */
@@ -357,17 +361,35 @@ static uint64_t ReadDirectory(int fd, unsigned int ix, uint64_t off)
         dircount = (uint16_t)dircount64;
         direntrysize = 20;
     }
-    dirmem =
-        _TIFFmalloc((tmsize_t)TIFFSafeMultiply(size_t, dircount, direntrysize));
+    dirsize =
+        _TIFFMultiplySSize(NULL, dircount, direntrysize, "directory size");
+    if (dirsize == 0 && dircount != 0)
+    {
+        Fatal("Integer overflow reading TIFF directory");
+        goto done;
+    }
+
+    if (dirsize > INT_MAX)
+    {
+        Fatal("TIFF directory too large");
+        goto done;
+    }
+
+    dirmem = _TIFFmalloc(dirsize);
     if (dirmem == NULL)
     {
         Fatal("No space for TIFF directory");
         goto done;
     }
-    n = (uint32_t)read(fd, (char *)dirmem, dircount * direntrysize);
-    if (n != dircount * direntrysize)
+
+    nread = (tmsize_t)read(fd, (char *)dirmem, (uint32_t)dirsize);
+    if (nread < 0 || nread != dirsize)
     {
-        n /= direntrysize;
+        if (nread <= 0)
+            n = 0;
+        else
+            n = (uint32_t)((tmsize_t)nread / direntrysize);
+
         Error("Could only read %" PRIu32 " of %" PRIu16
               " entries in directory at offset %" PRIu64,
               n, dircount, off);
@@ -549,9 +571,20 @@ static uint64_t ReadDirectory(int fd, unsigned int ix, uint64_t off)
                         break;
                     case TIFF_RATIONAL:
                     case TIFF_SRATIONAL:
-                        TIFFSwabArrayOfLong((uint32_t *)datamem,
-                                            (tmsize_t)count * 2);
+                    {
+                        tmsize_t count_s = _TIFFCastUInt64ToSSize(
+                            NULL, count, "rational word count");
+                        tmsize_t word_count = _TIFFMultiplySSize(
+                            NULL, count_s, 2, "rational word count");
+                        if ((count_s == 0 && count != 0) ||
+                            (word_count == 0 && count_s != 0))
+                        {
+                            Error("Integer overflow swabbing tag %u", tag);
+                            break;
+                        }
+                        TIFFSwabArrayOfLong((uint32_t *)datamem, word_count);
                         break;
+                    }
                     case TIFF_DOUBLE:
                     case TIFF_LONG8:
                     case TIFF_SLONG8:

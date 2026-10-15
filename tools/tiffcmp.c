@@ -221,13 +221,18 @@ static int tiffcmp(TIFF *tif1, TIFF *tif2)
             separate_size = size1;
         }
 
-        if (contig_size < (tsize_t)imagewidth * samplesperpixel ||
-            separate_size < (tsize_t)imagewidth)
         {
-            fprintf(
-                stderr,
-                "Inconsistent scanline size for mixed planar configuration\n");
-            goto bad;
+            tmsize_t contig_min =
+                _TIFFMultiplySSize(tif1, imagewidth, samplesperpixel,
+                                   "mixed planar scanline size");
+            if (contig_min == 0 && imagewidth != 0 && samplesperpixel != 0)
+                goto bad;
+            if (contig_size < contig_min || separate_size < (tsize_t)imagewidth)
+            {
+                fprintf(stderr, "Inconsistent scanline size for mixed planar "
+                                "configuration\n");
+                goto bad;
+            }
         }
     }
 #define pack(a, b) ((a) << 8) | (b)
@@ -731,8 +736,12 @@ static int CheckShortArrayTag(TIFF *tif1, TIFF *tif2, int tag, const char *name)
         {
             const char *sep;
             uint16_t i;
+            tmsize_t array_bytes = _TIFFMultiplySSize(
+                tif1, n1, sizeof(uint16_t), "short array tag size");
 
-            if (memcmp(a1, a2, n1 * sizeof(uint16_t)) == 0)
+            if (array_bytes == 0 && n1 != 0)
+                return (0);
+            if (memcmp(a1, a2, (size_t)array_bytes) == 0)
                 return (1);
             printf("%s: value mismatch, <%" PRIu16 ":", name, n1);
             sep = "";

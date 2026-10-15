@@ -174,15 +174,22 @@ int main(int argc, const char **argv)
     xmax = (uint32_t)(xmax - xmax / 10.0);
     ymax = (uint32_t)(ymax - ymax / 10.0);
 
-    filelist =
-        (char **)_TIFFmalloc((tmsize_t)((size_t)filenum * sizeof(char *)));
-    if (!filelist)
     {
-        TIFFError(argv[0], "Can not allocate space for the file list.");
-        return EXIT_FAILURE;
+        tmsize_t filelist_size =
+            _TIFFMultiplySSize(NULL, filenum, sizeof(char *), "file list");
+        if (filelist_size == 0 && filenum != 0)
+        {
+            TIFFError(argv[0], "Can not allocate space for the file list.");
+            return EXIT_FAILURE;
+        }
+        filelist = (char **)_TIFFmalloc(filelist_size);
+        if (!filelist)
+        {
+            TIFFError(argv[0], "Can not allocate space for the file list.");
+            return EXIT_FAILURE;
+        }
+        _TIFFmemcpy(filelist, argv + optind, filelist_size);
     }
-    _TIFFmemcpy(filelist, argv + optind,
-                (tmsize_t)((size_t)filenum * sizeof(char *)));
     fileindex = -1;
     if (nextImage() < 0)
     {
@@ -285,7 +292,13 @@ static int initImage(void)
     }
     TIFFRGBAImageGet(&img, raster, img.width, img.height);
 #if HOST_BIGENDIAN
-    TIFFSwabArrayOfLong(raster, img.width * img.height);
+    {
+        uint32_t pixel_count =
+            _TIFFMultiply32(tif, img.width, img.height, "raster pixel count");
+        if (pixel_count == 0)
+            return -1;
+        TIFFSwabArrayOfLong(raster, pixel_count);
+    }
 #endif
     return 0;
 }

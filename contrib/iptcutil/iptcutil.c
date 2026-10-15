@@ -1,6 +1,7 @@
 #include "tif_config.h"
 
 #include <ctype.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -245,6 +246,7 @@ static int formatIPTC(FILE *ifile, FILE *ofile)
         if (c & (unsigned char)0x80)
         {
             unsigned char buffer[4];
+            unsigned long taglen_ul;
 
             for (i = 0; i < 4; i++)
             {
@@ -253,8 +255,16 @@ static int formatIPTC(FILE *ifile, FILE *ofile)
                     return -1;
                 buffer[i] = (unsigned char)c;
             }
-            taglen = (((long)buffer[0]) << 24) | (((long)buffer[1]) << 16) |
-                     (((long)buffer[2]) << 8) | (((long)buffer[3]));
+            taglen_ul = (((unsigned long)buffer[0]) << 24) |
+                        (((unsigned long)buffer[1]) << 16) |
+                        (((unsigned long)buffer[2]) << 8) |
+                        ((unsigned long)buffer[3]);
+            if (taglen_ul > LONG_MAX)
+            {
+                printf("Inappropriate IPTC tag length %lu\n", taglen_ul);
+                return -1;
+            }
+            taglen = (long)taglen_ul;
         }
         else
         {
@@ -331,8 +341,10 @@ static char *super_fgets(char *b, int *blen, FILE *file)
         if ((int)(q - b + 1) >= len)
         {
             ptrdiff_t tlen = q - b;
-            len <<= 1;
-            b = (char *)realloc(b, (size_t)(len + 2));
+            if (len > (INT_MAX - 2) / 2)
+                return NULL;
+            len *= 2;
+            b = (char *)realloc(b, (size_t)len + 2);
             if (b == NULL)
                 break;
             q = b + tlen;

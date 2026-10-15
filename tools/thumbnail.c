@@ -566,11 +566,19 @@ static void setupCmap(void)
 
 static void initScale(void)
 {
-    src0 = (uint8_t *)_TIFFmalloc(sizeof(uint8_t) * tnw);
-    src1 = (uint8_t *)_TIFFmalloc(sizeof(uint8_t) * tnw);
-    src2 = (uint8_t *)_TIFFmalloc(sizeof(uint8_t) * tnw);
-    rowoff =
-        (uint32_t *)_TIFFmalloc((tmsize_t)(sizeof(uint32_t) * (size_t)tnw));
+    src0 =
+        (uint8_t *)_TIFFCheckMalloc(NULL, tnw, sizeof(uint8_t), "scale table");
+    src1 =
+        (uint8_t *)_TIFFCheckMalloc(NULL, tnw, sizeof(uint8_t), "scale table");
+    src2 =
+        (uint8_t *)_TIFFCheckMalloc(NULL, tnw, sizeof(uint8_t), "scale table");
+    rowoff = (uint32_t *)_TIFFCheckMalloc(NULL, tnw, sizeof(uint32_t),
+                                          "scale table");
+    if (src0 == NULL || src1 == NULL || src2 == NULL || rowoff == NULL)
+    {
+        TIFFError("thumbnail", "Can't allocate space for scale tables");
+        exit(EXIT_FAILURE);
+    }
     filterWidth = 0;
     stepDstWidth = stepSrcWidth = 0;
     setupBitsTables();
@@ -690,8 +698,17 @@ static void setImage1(const uint8_t *br, uint32_t rw, uint32_t rh)
     {
         const uint8_t *rows[256];
         uint32_t nrows = 1;
-        fprintf(stderr, "bpr=%d, sy=%d, bpr*sy=%d\n", bpr, sy, bpr * sy);
-        rows[0] = br + bpr * sy;
+        tmsize_t row_offset = _TIFFComputeRowOffset(NULL, bpr, (uint32_t)sy,
+                                                    "thumbnail row offset");
+        if (row_offset == 0 && sy != 0 && bpr != 0)
+        {
+            TIFFError("thumbnail",
+                      "Integer overflow detected while calculating row offset");
+            exit(EXIT_FAILURE);
+        }
+        fprintf(stderr, "bpr=%d, sy=%d, bpr*sy=%" TIFF_SSIZE_FORMAT "\n", bpr,
+                sy, row_offset);
+        rows[0] = br + row_offset;
         err += step;
         while (err >= limit)
         {
@@ -704,7 +721,18 @@ static void setImage1(const uint8_t *br, uint32_t rw, uint32_t rh)
                  * would leave err >= limit and cause it to grow by
                  * (step - 255*limit) each outer iteration, overflowing. */
                 if (nrows < 256)
-                    rows[nrows++] = br + bpr * sy;
+                {
+                    row_offset = _TIFFComputeRowOffset(NULL, bpr, (uint32_t)sy,
+                                                       "thumbnail row offset");
+                    if (row_offset == 0 && sy != 0 && bpr != 0)
+                    {
+                        TIFFError("thumbnail",
+                                  "Integer overflow detected while calculating "
+                                  "row offset");
+                        exit(EXIT_FAILURE);
+                    }
+                    rows[nrows++] = br + row_offset;
+                }
             }
         }
         setrow(row, nrows, rows);
@@ -737,12 +765,12 @@ static int generateThumbnail(TIFF *in, TIFF *out)
     if (spp != 1 || bps != 1)
         return 0;
     rowsize = TIFFScanlineSize(in);
-    if ((uint64_t)rowsize * sh + 3 > INT32_MAX)
+    rastersize = _TIFFMultiplySSize(in, rowsize, sh, "raster buffer size");
+    if (rastersize == 0 || (uint64_t)rastersize > (uint64_t)INT32_MAX - 3U)
     {
         TIFFError(TIFFFileName(in), "Image is too large to fit in memory");
         return 0;
     }
-    rastersize = sh * rowsize;
     fprintf(stderr, "rastersize=%u\n", (unsigned int)rastersize);
     /* +3 : add a few guard bytes since setrow() can read a bit */
     /* outside buffer */
@@ -759,7 +787,16 @@ static int generateThumbnail(TIFF *in, TIFF *out)
     for (s = 0; s < ns; s++)
     {
         (void)TIFFReadEncodedStrip(in, s, rp, -1);
-        rp += rps * rowsize;
+        {
+            tmsize_t strip_offset =
+                _TIFFComputeRowOffset(in, rowsize, rps, "strip buffer offset");
+            if (strip_offset == 0 && rps != 0 && rowsize != 0)
+            {
+                _TIFFfree(raster);
+                return 0;
+            }
+            rp += strip_offset;
+        }
     }
     TIFFGetField(in, TIFFTAG_PHOTOMETRIC, &photometric);
     setupCmap();
@@ -781,8 +818,14 @@ static int generateThumbnail(TIFF *in, TIFF *out)
     cpTag(in, out, TIFFTAG_HOSTCOMPUTER, (uint16_t)-1, TIFF_ASCII);
     diroff[0] = 0UL;
     TIFFSetField(out, TIFFTAG_SUBIFD, 1, diroff);
-    return (TIFFWriteEncodedStrip(out, 0, thumbnail, tnw * tnh) != -1 &&
-            TIFFWriteDirectory(out) != -1);
+    {
+        uint32_t thumbsize =
+            _TIFFMultiply32(out, tnw, tnh, "thumbnail strip size");
+        if (thumbsize == 0)
+            return 0;
+        return (TIFFWriteEncodedStrip(out, 0, thumbnail, thumbsize) != -1 &&
+                TIFFWriteDirectory(out) != -1);
+    }
 }
 
 static const char *usage_info[] = {

@@ -319,10 +319,24 @@ int main(int argc, const char **argv)
             for (row = 0; row < h; row++)
             {
                 for (s = 0; s < 3; s++)
-                    if (TIFFReadScanline(in, inbuf + s * rowsize, row, s) < 0)
+                {
+                    tmsize_t plane_offset = _TIFFComputeRowOffset(
+                        in, rowsize, s, "sample plane offset");
+                    if ((plane_offset == 0 && s != 0 && rowsize != 0) ||
+                        TIFFReadScanline(in, inbuf + plane_offset, row, s) < 0)
                         goto tiff2bw_error;
-                compresssep(outbuf, inbuf, inbuf + rowsize, inbuf + 2 * rowsize,
-                            w);
+                }
+                {
+                    tmsize_t plane1_offset = _TIFFComputeRowOffset(
+                        in, rowsize, 1, "sample plane offset");
+                    tmsize_t plane2_offset = _TIFFComputeRowOffset(
+                        in, rowsize, 2, "sample plane offset");
+                    if ((plane1_offset == 0 && rowsize != 0) ||
+                        (plane2_offset == 0 && rowsize != 0))
+                        goto tiff2bw_error;
+                    compresssep(outbuf, inbuf, inbuf + plane1_offset,
+                                inbuf + plane2_offset, w);
+                }
                 if (TIFFWriteScanline(out, outbuf, row, 0) < 0)
                     break;
             }

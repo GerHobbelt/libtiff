@@ -49,6 +49,7 @@
 #endif
 
 #include "tiffio.h"
+#include "tiffiop.h"
 
 #include "libport.h"
 
@@ -427,7 +428,20 @@ static void get_histogram(TIFF *local_in, Colorbox *box)
     }
     box->rmin = box->gmin = box->bmin = 999;
     box->rmax = box->gmax = box->bmax = -1;
-    box->total = imagewidth * imagelength;
+    {
+        uint64_t total64 = _TIFFMultiply64(local_in, imagewidth, imagelength,
+                                           "image pixel count");
+        uint32_t total32 =
+            _TIFFCastUInt64ToUInt32(local_in, total64, "image pixel count");
+        if ((total64 == 0 && imagewidth != 0 && imagelength != 0) ||
+            (total32 == 0 && total64 != 0))
+        {
+            fprintf(stderr, "Image is too large to quantize\n");
+            _TIFFfree(inputline);
+            exit(EXIT_FAILURE);
+        }
+        box->total = total32;
+    }
 
     {
         uint32_t *ptr = &histogram[0][0][0];

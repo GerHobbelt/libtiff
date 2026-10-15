@@ -33,7 +33,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "tiff_tools.h"
 #include "tiffio.h"
+#include "tiffiop.h"
 
 #ifdef NEED_LIBPORT
 #include "libport.h"
@@ -119,7 +121,7 @@ static const TIFFField *GetField(TIFF *tiff, const char *tagname)
  */
 static void *limitMalloc(tmsize_t s)
 {
-    if (maxMalloc && (s > maxMalloc))
+    if (s < 0 || (maxMalloc && (s > maxMalloc)))
     {
         fprintf(stderr,
                 "MemoryLimitError: allocation of %" TIFF_SSIZE_FORMAT
@@ -290,7 +292,18 @@ int main(int argc, const char **argv)
                             break;
                     }
 
-                    array = limitMalloc((tmsize_t)wc * size);
+                    {
+                        tmsize_t array_size;
+                        array_size = _TIFFMultiplySSize(NULL, (tmsize_t)wc,
+                                                        size, "tag array size");
+                        if (array_size == 0)
+                        {
+                            fprintf(stderr, "Invalid size for %s tag\n",
+                                    tagname);
+                            return EXIT_FAILURE;
+                        }
+                        array = limitMalloc(array_size);
+                    }
                     if (!array)
                     {
                         fprintf(stderr, "No space for %s tag\n", tagname);
@@ -521,10 +534,8 @@ int main(int argc, const char **argv)
         else if (strcmp(argv[arg_index], "-m") == 0)
         {
             arg_index++;
-            long v = strtol(argv[arg_index], NULL, 0);
-            if (v < 0)
+            if (!TIFFToolsParseMemoryLimitMiB(argv[arg_index], &maxMalloc))
                 usage(EXIT_FAILURE);
-            maxMalloc = (tmsize_t)v << 20;
         }
         else if (strcmp(argv[arg_index], "-h") == 0 ||
                  strcmp(argv[arg_index], "--help") == 0)

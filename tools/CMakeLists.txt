@@ -29,6 +29,11 @@ if (WIN32)
   source_group("Resource Files" FILES tif_tools_versioninfo.rc)
 endif ()
 
+set(TIFF_TOOLS_COMMON_SOURCES
+    tiff_tools.c
+    tiff_tools.h
+)
+
 
 add_executable(fax2ps ../placeholder.h)
 target_sources(fax2ps PRIVATE fax2ps.c ${MSVC_RESOURCE_FILE})
@@ -129,6 +134,17 @@ add_executable(tiffsplit ../placeholder.h)
 target_sources(tiffsplit PRIVATE tiffsplit.c ${MSVC_RESOURCE_FILE})
 set_target_properties(tiffsplit PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(tiffsplit PRIVATE tiff tiff_port)
+
+foreach(target tiff2pdf
+               tiff2ps
+               tiff2rgba
+               tiffcp
+               tiffcrop
+               tiffinfo
+               tiffset
+               tiffsplit)
+  target_sources(${target} PRIVATE ${TIFF_TOOLS_COMMON_SOURCES})
+endforeach()
 
 if(NOT CMAKE_CROSSCOMPILING)
   add_executable(tiff_mkg3states ../placeholder.h)
