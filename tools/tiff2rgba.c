@@ -110,11 +110,11 @@ int main(int argc, const char **argv)
                 break;
 
             case 'r':
-                rowsperstrip = atoi(optarg);
+                rowsperstrip = (uint32_t)atoi(optarg);
                 break;
 
             case 't':
-                rowsperstrip = atoi(optarg);
+                rowsperstrip = (uint32_t)atoi(optarg);
                 break;
 
             case 'B':
@@ -166,17 +166,17 @@ int main(int argc, const char **argv)
             {
                 if (!tiffcvt(in, out) || !TIFFWriteDirectory(out))
                 {
-                    (void)TIFFClose(out);
-                    (void)TIFFClose(in);
+                    TIFFClose(out);
+                    TIFFClose(in);
                     TIFFOpenOptionsFree(opts);
                     return (1);
                 }
             } while (TIFFReadDirectory(in));
-            (void)TIFFClose(in);
+            TIFFClose(in);
         }
     }
     TIFFOpenOptionsFree(opts);
-    (void)TIFFClose(out);
+    TIFFClose(out);
     return (EXIT_SUCCESS);
 }
 
@@ -381,9 +381,9 @@ static int cvt_by_strip(TIFF *in, TIFF *out)
          * Figure out the number of scanlines actually in this strip.
          */
         if (row + rowsperstrip > height)
-            rows_to_write = height - row;
+            rows_to_write = (int)(height - row);
         else
-            rows_to_write = rowsperstrip;
+            rows_to_write = (int)rowsperstrip;
 
         /*
          * For some reason the TIFFReadRGBAStrip() function chooses the
@@ -394,8 +394,9 @@ static int cvt_by_strip(TIFF *in, TIFF *out)
         {
             uint32_t *top_line, *bottom_line;
 
-            top_line = raster + width * i_row;
-            bottom_line = raster + width * (rows_to_write - i_row - 1);
+            top_line = raster + width * (uint32_t)i_row;
+            bottom_line =
+                raster + width * (uint32_t)(rows_to_write - i_row - 1);
 
             _TIFFmemcpy(wrk_line, top_line, 4 * width);
             _TIFFmemcpy(top_line, bottom_line, 4 * width);
@@ -407,7 +408,7 @@ static int cvt_by_strip(TIFF *in, TIFF *out)
          */
 
         if (TIFFWriteEncodedStrip(out, row / rowsperstrip, raster,
-                                  4 * rows_to_write * width) == -1)
+                                  4 * (uint32_t)rows_to_write * width) == -1)
         {
             ok = 0;
             break;
@@ -463,8 +464,8 @@ static int cvt_whole_image(TIFF *in, TIFF *out)
     rowsperstrip = TIFFDefaultStripSize(out, rowsperstrip);
     TIFFSetField(out, TIFFTAG_ROWSPERSTRIP, rowsperstrip);
 
-    raster = (uint32_t *)_TIFFCheckMalloc(in, pixel_count, sizeof(uint32_t),
-                                          "raster buffer");
+    raster = (uint32_t *)_TIFFCheckMalloc(in, (tmsize_t)pixel_count,
+                                          sizeof(uint32_t), "raster buffer");
     if (raster == 0)
     {
         TIFFError(TIFFFileName(in),
@@ -542,9 +543,9 @@ static int cvt_whole_image(TIFF *in, TIFF *out)
         }
 
         if (row + rowsperstrip > height)
-            rows_to_write = height - row;
+            rows_to_write = (int)(height - row);
         else
-            rows_to_write = rowsperstrip;
+            rows_to_write = (int)rowsperstrip;
 
         if (TIFFWriteEncodedStrip(out, row / rowsperstrip, raster_strip,
                                   (tmsize_t)bytes_per_pixel * rows_to_write *

@@ -10,7 +10,7 @@ int main(int argc, const char **argv)
     const char *fname = "newtif.tif";
     int flags;
 
-    TIFF *tif = (TIFF *)0; /* TIFF-level descriptor */
+    TIFF *tif = NULL; /* TIFF-level descriptor */
 
     if (argc > 1)
         fname = argv[1];

@@ -153,7 +153,7 @@ int main(int argc, const char **argv)
     else
         cpSeparate(in, out);
     (void)iclose(in);
-    (void)TIFFClose(out);
+    TIFFClose(out);
     return (0);
 }
 

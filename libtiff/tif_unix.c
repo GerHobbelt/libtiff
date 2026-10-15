@@ -79,10 +79,10 @@ static tmsize_t _tiffReadProc(thandle_t fd, void *buf, tmsize_t size)
         return (tmsize_t)-1;
     }
     fdh.h = fd;
-    for (bytes_read = 0; bytes_read < bytes_total; bytes_read += count)
+    for (bytes_read = 0; bytes_read < bytes_total; bytes_read += (size_t)count)
     {
         char *buf_offset = (char *)buf + bytes_read;
-        size_t io_size = bytes_total - bytes_read;
+        size_t io_size = (size_t)(bytes_total - bytes_read);
         if (io_size > TIFF_IO_MAX)
             io_size = TIFF_IO_MAX;
         /* Below is an obvious false positive of Coverity Scan */
@@ -110,10 +110,11 @@ static tmsize_t _tiffWriteProc(thandle_t fd, void *buf, tmsize_t size)
         return (tmsize_t)-1;
     }
     fdh.h = fd;
-    for (bytes_written = 0; bytes_written < bytes_total; bytes_written += count)
+    for (bytes_written = 0; bytes_written < bytes_total;
+         bytes_written += (size_t)count)
     {
         const char *buf_offset = (char *)buf + bytes_written;
-        size_t io_size = bytes_total - bytes_written;
+        size_t io_size = (size_t)(bytes_total - bytes_written);
         if (io_size > TIFF_IO_MAX)
             io_size = TIFF_IO_MAX;
         /* Below is an obvious false positive of Coverity Scan */
@@ -176,7 +177,7 @@ static int _tiffMapProc(thandle_t fd, void **pbase, toff_t *psize)
             (void *)mmap(0, (size_t)sizem, PROT_READ, MAP_SHARED, fdh.fd, 0);
         if (*pbase != (void *)-1)
         {
-            *psize = (tmsize_t)sizem;
+            *psize = (toff_t)sizem;
             return (1);
         }
     }
@@ -186,7 +187,7 @@ static int _tiffMapProc(thandle_t fd, void **pbase, toff_t *psize)
 static void _tiffUnmapProc(thandle_t fd, void *base, toff_t size)
 {
     (void)fd;
-    (void)munmap(base, (off_t)size);
+    (void)munmap(base, (size_t)size);
 }
 #else  /* !HAVE_MMAP */
 static int _tiffMapProc(thandle_t fd, void **pbase, toff_t *psize)

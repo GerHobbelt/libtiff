@@ -49,7 +49,7 @@
 
 #ifndef TIFFhowmany8
 #define TIFFhowmany8(x)                                                        \
-    (((x)&0x07) ? ((uint32_t)(x) >> 3) + 1 : (uint32_t)(x) >> 3)
+    ((int)((((x)&0x07) ? ((uint32_t)(x) >> 3) + 1 : (uint32_t)(x) >> 3)))
 #endif
 
 typedef enum
@@ -149,12 +149,12 @@ int main(int argc, const char **argv)
             if (!cpIFD(in, out) || !TIFFWriteDirectory(out))
                 goto bad;
         } while (TIFFReadDirectory(in));
-        (void)TIFFClose(in);
+        TIFFClose(in);
     }
-    (void)TIFFClose(out);
+    TIFFClose(out);
     return EXIT_SUCCESS;
 bad:
-    (void)TIFFClose(out);
+    TIFFClose(out);
     return EXIT_FAILURE;
 }
 
@@ -500,7 +500,7 @@ static void setupBitsTables(void)
 
 static int clamp(float v, int low, int high)
 {
-    return (v < low ? low : v > high ? high : (int)v);
+    return (v < (float)low ? low : v > (float)high ? high : (int)v);
 }
 
 #ifndef M_E
@@ -583,8 +583,8 @@ static void setupStepTables(uint32_t sw)
 {
     if (stepSrcWidth != sw || stepDstWidth != tnw)
     {
-        int step = sw;
-        int limit = tnw;
+        int step = (int)sw;
+        int limit = (int)tnw;
         int err = 0;
         uint32_t sx = 0;
         uint32_t x;
@@ -600,15 +600,15 @@ static void setupStepTables(uint32_t sw)
                 sx++;
             }
             rowoff[x] = sx0 >> 3;
-            fw = sx - sx0; /* width */
+            fw = (int)(sx - sx0); /* width */
             b = (fw < 8) ? (uint8_t)(0xff << (8 - fw)) : (uint8_t)0xff;
             src0[x] = b >> (sx0 & 7);
-            fw -= 8 - (sx0 & 7);
+            fw -= (int)(8 - (sx0 & 7));
             if (fw < 0)
                 fw = 0;
             src1[x] = (uint8_t)(fw >> 3);
             fw -= (fw >> 3) << 3;
-            src2[x] = 0xff << (8 - fw);
+            src2[x] = (uint8_t)(0xff << (8 - fw));
         }
         stepSrcWidth = sw;
         stepDstWidth = tnw;
@@ -678,8 +678,8 @@ static void setrow(uint8_t *row, uint32_t nrows, const uint8_t *rows[])
  */
 static void setImage1(const uint8_t *br, uint32_t rw, uint32_t rh)
 {
-    int step = rh;
-    int limit = tnh;
+    int step = (int)rh;
+    int limit = (int)tnh;
     int err = 0;
     int bpr = TIFFhowmany8(rw);
     int sy = 0;

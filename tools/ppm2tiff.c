@@ -115,11 +115,11 @@ static void pack_bytes(unsigned char *buf, unsigned int smpls, uint16_t bps)
         if (8 <= bits)
         {
             bits -= 8;
-            buf[out++] = (t >> bits) & 0xFF;
+            buf[out++] = (unsigned char)((t >> bits) & 0xFF);
         }
     }
     if (0 != bits)
-        buf[out] = (t << (8 - bits)) & 0xFF;
+        buf[out] = (unsigned char)((t << (8 - bits)) & 0xFF);
 }
 
 static void pack_words(unsigned char *buf, unsigned int smpls, uint16_t bps)
@@ -212,7 +212,7 @@ int main(int argc, const char **argv)
                     usage(EXIT_FAILURE);
                 break;
             case 'r': /* rows/strip */
-                rowsperstrip = atoi(optarg);
+                rowsperstrip = (uint32_t)atoi(optarg);
                 break;
             case 'R': /* resolution */
                 resolution = atof(optarg);
@@ -416,14 +416,14 @@ int main(int argc, const char **argv)
     if (linebytes == 0)
     {
         fprintf(stderr, "%s: scanline size overflow\n", infile);
-        (void)TIFFClose(out);
+        TIFFClose(out);
         exit(EXIT_FAILURE);
     }
     scanline_size = TIFFScanlineSize(out);
     if (scanline_size == 0)
     {
         /* overflow - TIFFScanlineSize already printed a message */
-        (void)TIFFClose(out);
+        TIFFClose(out);
         exit(EXIT_FAILURE);
     }
     if (scanline_size < linebytes)
@@ -433,7 +433,7 @@ int main(int argc, const char **argv)
     if (buf == NULL)
     {
         fprintf(stderr, "%s: Not enough memory\n", infile);
-        (void)TIFFClose(out);
+        TIFFClose(out);
         exit(EXIT_FAILURE);
     }
     if (resolution > 0)
@@ -444,7 +444,7 @@ int main(int argc, const char **argv)
     }
     for (row = 0; row < h; row++)
     {
-        if (fread(buf, linebytes, 1, in) != 1)
+        if (fread(buf, (size_t)linebytes, 1u, in) != 1u)
         {
             fprintf(stderr, "%s: scanline %u: Read error.\n", infile, row);
             break;
@@ -455,7 +455,7 @@ int main(int argc, const char **argv)
     }
     if (in != stdin)
         fclose(in);
-    (void)TIFFClose(out);
+    TIFFClose(out);
     if (buf)
         _TIFFfree(buf);
     return (EXIT_SUCCESS);
@@ -470,7 +470,7 @@ static void processG3Options(const char *cp)
         {
             cp++;
             if (strneq(cp, "1d", 2))
-                g3opts &= ~GROUP3OPT_2DENCODING;
+                g3opts &= ~(uint32_t)GROUP3OPT_2DENCODING;
             else if (strneq(cp, "2d", 2))
                 g3opts |= GROUP3OPT_2DENCODING;
             else if (strneq(cp, "fill", 4))
@@ -494,7 +494,7 @@ static int processCompressOptions(const char *opt)
         compression = COMPRESSION_JPEG;
         while (cp)
         {
-            if (isdigit((int)cp[1]))
+            if (isdigit((unsigned char)cp[1]))
                 quality = atoi(cp + 1);
             else if (cp[1] == 'r')
                 jpegcolormode = JPEGCOLORMODE_RAW;

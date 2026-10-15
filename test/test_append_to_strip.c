@@ -71,7 +71,7 @@ int main(void)
     {
         char c = (char)row;
         int strip = (row < 5) ? 0 : 1;
-        ret = TIFFWriteRawStrip(tif, strip, &c, 1);
+        ret = TIFFWriteRawStrip(tif, (uint32_t)strip, &c, 1);
         assert(ret == 1);
     }
     (void)ret;
@@ -101,7 +101,7 @@ int main(void)
     for (row = 0; row < 9; ++row)
     {
         char c;
-        TIFFReadScanline(tif, &c, row, 0);
+        TIFFReadScanline(tif, &c, (uint32_t)row, 0);
         if (c != row)
         {
             fprintf(

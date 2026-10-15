@@ -109,7 +109,7 @@ int main(int argc, const char **argv)
                     usage(EXIT_FAILURE);
                 break;
             case 'r': /* rows/strip */
-                rowsperstrip = atoi(optarg);
+                rowsperstrip = (uint32_t)atoi(optarg);
                 break;
             case 'h':
                 usage(EXIT_SUCCESS);
@@ -130,14 +130,14 @@ int main(int argc, const char **argv)
         shortv != PHOTOMETRIC_PALETTE)
     {
         fprintf(stderr, "%s: Expecting a palette image.\n", argv[optind]);
-        (void)TIFFClose(in);
+        TIFFClose(in);
         return (EXIT_FAILURE);
     }
     if (!TIFFGetField(in, TIFFTAG_COLORMAP, &rmap, &gmap, &bmap))
     {
         fprintf(stderr, "%s: No colormap (not a valid palette image).\n",
                 argv[optind]);
-        (void)TIFFClose(in);
+        TIFFClose(in);
         return (EXIT_FAILURE);
     }
     bitspersample = 0;
@@ -146,14 +146,14 @@ int main(int argc, const char **argv)
     {
         fprintf(stderr, "%s: Sorry, can only handle 8-bit images.\n",
                 argv[optind]);
-        (void)TIFFClose(in);
+        TIFFClose(in);
         return (EXIT_FAILURE);
     }
     out = TIFFOpen(argv[optind + 1], "w");
     if (out == NULL)
     {
-        (void)TIFFClose(in);
-        return (EXIT_FAILURE);
+        TIFFClose(in);
+        return EXIT_FAILURE;
     }
     cpTags(in, out);
     TIFFGetField(in, TIFFTAG_IMAGEWIDTH, &imagewidth);
@@ -198,7 +198,7 @@ int main(int argc, const char **argv)
 
         for (i = (1 << bitspersample) - 1; i >= 0; i--)
         {
-#define CVT(x) (((x)*255) / ((1L << 16) - 1))
+#define CVT(x) ((uint16_t)((((x)*255) / ((1 << 16) - 1))))
             rmap[i] = CVT(rmap[i]);
             gmap[i] = CVT(gmap[i]);
             bmap[i] = CVT(bmap[i]);
@@ -269,9 +269,9 @@ int main(int argc, const char **argv)
         _TIFFfree(obuf);
     }
 done:
-    (void)TIFFClose(in);
-    (void)TIFFClose(out);
-    return (EXIT_SUCCESS);
+    TIFFClose(in);
+    TIFFClose(out);
+    return EXIT_SUCCESS;
 }
 
 static int processCompressOptions(const char *opt)

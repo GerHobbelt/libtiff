@@ -178,7 +178,7 @@ int main(int argc, const char **argv)
         newfilename();
 
         path_len = strlen(fname) + sizeof(TIFF_SUFFIX);
-        path = (char *)limitMalloc(path_len);
+        path = (char *)limitMalloc((tmsize_t)path_len);
         if (!path)
         {
             fprintf(stderr,
@@ -217,7 +217,7 @@ int main(int argc, const char **argv)
     } while (TIFFReadDirectory(in));
 
     TIFFOpenOptionsFree(opts);
-    (void)TIFFClose(in);
+    TIFFClose(in);
 
     return (EXIT_SUCCESS);
 }

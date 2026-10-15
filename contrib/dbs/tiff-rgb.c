@@ -160,7 +160,7 @@ int main(int argc, const char **argv)
             scan_line[(j * 3) + 1] = 255;
             scan_line[(j * 3) + 2] = (unsigned char)(255 - i);
         }
-        TIFFWriteScanline(tif, scan_line, i, 0);
+        TIFFWriteScanline(tif, scan_line, (uint32_t)i, 0);
     }
     for (i = 255; i < 512; i++)
     {
@@ -206,7 +206,7 @@ int main(int argc, const char **argv)
             scan_line[(j * 3) + 1] = (unsigned char)i;
             scan_line[(j * 3) + 2] = 0;
         }
-        TIFFWriteScanline(tif, scan_line, i, 0);
+        TIFFWriteScanline(tif, scan_line, (uint32_t)i, 0);
     }
 
     free(scan_line);

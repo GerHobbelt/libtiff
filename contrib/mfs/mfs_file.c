@@ -152,7 +152,7 @@ int mfs_open(void *buffer, int size, char *mode)
 
     if (ret >= 0 && *mode == 'r')
     {
-        if (buffer == (void *)NULL)
+        if (buffer == NULL)
         {
             ret = -1;
             errno = EINVAL;
@@ -167,7 +167,7 @@ int mfs_open(void *buffer, int size, char *mode)
     else if (ret >= 0 && *mode == 'w')
     {
 
-        if (buffer != (void *)NULL)
+        if (buffer != NULL)
         {
             ret = -1;
             errno = EINVAL;
@@ -176,7 +176,7 @@ int mfs_open(void *buffer, int size, char *mode)
         else
         {
             tmp = malloc(0); /* Get a pointer */
-            if (tmp == (void *)NULL)
+            if (tmp == NULL)
             {
                 ret = -1;
                 errno = EDQUOT;
@@ -191,10 +191,10 @@ int mfs_open(void *buffer, int size, char *mode)
     }
     else if (ret >= 0 && *mode == 'a')
     {
-        if (buffer == (void *)NULL) /* Create space for client */
+        if (buffer == NULL) /* Create space for client */
         {
             tmp = malloc(0); /* Get a pointer */
-            if (tmp == (void *)NULL)
+            if (tmp == NULL)
             {
                 ret = -1;
                 errno = EDQUOT;
@@ -538,14 +538,14 @@ int mfs_close(int fd)
 
 static int extend_mem_file(int fd, int size)
 {
-    void *new_mem;
+    char *new_mem;
     int ret;
 
-    if ((new_mem = realloc(buf[fd], size)) == (void *)NULL)
+    if ((new_mem = (char *)realloc(buf[fd], size)) == NULL)
         ret = -1;
     else
     {
-        buf[fd] = (char *)new_mem;
+        buf[fd] = new_mem;
         ret = 0;
     }
 

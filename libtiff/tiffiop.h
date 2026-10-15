@@ -326,8 +326,12 @@ struct TIFFOpenOptions
 #define TIFFhowmany8_64(x) (((x)&0x07)?((uint64_t)(x)>>3)+1:(uint64_t)(x)>>3)
 #define TIFFroundup_64(x, y) (TIFFhowmany_64(x,y)*(y))
 
-/* Safe multiply which returns zero if there is an *unsigned* integer overflow. This macro is not safe for *signed* integer types */
-#define TIFFSafeMultiply(t,v,m) ((((t)(m) != (t)0) && (((t)(((v)*(m))/(m))) == (t)(v))) ? (t)((v)*(m)) : (t)0)
+/* Safe multiply which returns zero if there is an *unsigned* integer overflow.
+ * This macro is not safe for *signed* integer types */
+#define TIFFSafeMultiply(t, v, m)                                              \
+    ((((t)(m) != (t)0) && (((t)((((t)(v)) * ((t)(m))) / ((t)(m)))) == (t)(v))) \
+         ? (t)(((t)(v)) * ((t)(m)))                                            \
+         : (t)0)
 
 #define TIFFmax(A,B) ((A)>(B)?(A):(B))
 #define TIFFmin(A,B) ((A)<(B)?(A):(B))

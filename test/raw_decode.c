@@ -177,7 +177,7 @@ int main(int argc, const char **argv)
         exit(1);
     }
 
-    buffer = (unsigned char *)malloc(sz);
+    buffer = (unsigned char *)malloc((size_t)sz);
 
     /*
      * Read a tile in decompressed form, but still YCbCr subsampled.
@@ -213,7 +213,7 @@ int main(int argc, const char **argv)
         exit(1);
     }
 
-    buffer = (unsigned char *)malloc(sz);
+    buffer = (unsigned char *)malloc((size_t)sz);
 
     szout = TIFFReadEncodedTile(tif, 9, buffer, sz);
     if (szout != sz)
@@ -233,9 +233,11 @@ int main(int argc, const char **argv)
      * Hence, use ranges of expected values.  The ranges may need to be
      * widened over time as more versions of libjpeg appear.
      */
-    pixel_status |= check_rgb_pixel(0, 15, 18, 0, 0, 18, 41, buffer);
-    pixel_status |= check_rgb_pixel(64, 0, 0, 0, 0, 0, 2, buffer);
-    pixel_status |= check_rgb_pixel(512, 5, 6, 34, 36, 182, 196, buffer);
+    pixel_status |=
+        (unsigned int)check_rgb_pixel(0, 15, 18, 0, 0, 18, 41, buffer);
+    pixel_status |= (unsigned int)check_rgb_pixel(64, 0, 0, 0, 0, 0, 2, buffer);
+    pixel_status |=
+        (unsigned int)check_rgb_pixel(512, 5, 6, 34, 36, 182, 196, buffer);
 
     free(buffer);
 
@@ -247,7 +249,7 @@ int main(int argc, const char **argv)
     tif = TIFFOpen(srcfile, "r");
 
     sz = 128 * 128 * sizeof(uint32_t);
-    rgba_buffer = (uint32_t *)malloc(sz);
+    rgba_buffer = (uint32_t *)malloc((size_t)sz);
 
     if (!TIFFReadRGBATile(tif, 1 * 128, 2 * 128, rgba_buffer))
     {
@@ -261,12 +263,12 @@ int main(int argc, const char **argv)
      * accomplish it from the YCbCr subsampled buffer ourselves in which
      * case the results may be subtly different but similar.
      */
-    pixel_status |=
-        check_rgba_pixel(0, 15, 18, 0, 0, 18, 41, 255, 255, rgba_buffer);
-    pixel_status |=
-        check_rgba_pixel(64, 0, 0, 0, 0, 0, 2, 255, 255, rgba_buffer);
-    pixel_status |=
-        check_rgba_pixel(512, 5, 6, 34, 36, 182, 196, 255, 255, rgba_buffer);
+    pixel_status |= (unsigned int)check_rgba_pixel(0, 15, 18, 0, 0, 18, 41, 255,
+                                                   255, rgba_buffer);
+    pixel_status |= (unsigned int)check_rgba_pixel(64, 0, 0, 0, 0, 0, 2, 255,
+                                                   255, rgba_buffer);
+    pixel_status |= (unsigned int)check_rgba_pixel(512, 5, 6, 34, 36, 182, 196,
+                                                   255, 255, rgba_buffer);
 
     free(rgba_buffer);
     TIFFClose(tif);

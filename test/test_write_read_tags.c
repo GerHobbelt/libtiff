@@ -992,7 +992,7 @@ int write_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                  * Shorter strings than in auxTextArraxW need a
                  * NULL-termination. Therefore copy the string. */
                 if (tWriteCount > 0)
-                    auxUint32 = tWriteCount - 1;
+                    auxUint32 = (uint32_t)(tWriteCount - 1);
                 else
                     auxUint32 = (uint32_t)strlen(auxTextArrayW[i]) - 1;
                 auxUint32 = (size_t)auxUint32 >= sizeof(auxCharArray)
@@ -1375,7 +1375,7 @@ int read_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                 else
                     auxInt32 = (int32_t)strlen(auxCharArray);
                 int retCode2 =
-                    strncmp(auxCharArray, auxTextArrayW[i], auxInt32);
+                    strncmp(auxCharArray, auxTextArrayW[i], (size_t)auxInt32);
                 if (retCode2 != 0)
                 {
                     fprintf(stderr,
@@ -1480,7 +1480,7 @@ int read_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                     break;
                 }
                 /* compare read values with written ones */
-                auxInt32 = auxUint32;
+                auxInt32 = (int32_t)auxUint32;
                 if (auxInt32 != auxInt32ArrayW[i])
                 {
                     uint32_t auxU;
@@ -1726,7 +1726,7 @@ int read_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                         tSetFieldType == TIFF_SETGET_C32_FLOAT)
                     {
                         memcpy(&auxFloatArray, pVoidArray,
-                               (auxInt32 * sizeof(auxFloatArray[0])));
+                               ((size_t)auxInt32 * sizeof(auxFloatArray[0])));
                         /* compare read values with written ones */
                         if (tType == TIFF_RATIONAL || tType == TIFF_SRATIONAL)
                             dblDiffLimit = RATIONAL_EPS * auxDoubleArrayW[i];
@@ -1734,14 +1734,15 @@ int read_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                             dblDiffLimit = 1e-6;
                         for (j = 0; j < auxInt32; j++)
                         {
-                            dblDiff = auxFloatArray[j] - auxFloatArrayW[i + j];
+                            dblDiff = auxFloatArray[j] -
+                                      auxFloatArrayW[i + (uint32_t)j];
                             if (fabs(dblDiff) > fabs(dblDiffLimit))
                             {
                                 fprintf(stderr,
                                         "Read value %u of %s #%d %f differs "
                                         "from set value %f\n",
                                         i, tFieldName, j, auxFloatArray[j],
-                                        auxFloatArrayW[i + j]);
+                                        auxFloatArrayW[i + (uint32_t)j]);
                                 GOTOFAILURE
                             }
                         }
@@ -1751,7 +1752,7 @@ int read_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                              tSetFieldType == TIFF_SETGET_C32_DOUBLE)
                     {
                         memcpy(&auxDoubleArray, pVoidArray,
-                               (auxInt32 * sizeof(auxDoubleArray[0])));
+                               ((size_t)auxInt32 * sizeof(auxDoubleArray[0])));
                         /* compare read values with written ones */
                         if (tType == TIFF_RATIONAL || tType == TIFF_SRATIONAL)
                             dblDiffLimit = RATIONAL_EPS * auxDoubleArrayW[i];
@@ -1759,15 +1760,15 @@ int read_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                             dblDiffLimit = 1e-6;
                         for (j = 0; j < auxInt32; j++)
                         {
-                            dblDiff =
-                                auxDoubleArray[j] - auxDoubleArrayW[i + j];
+                            dblDiff = auxDoubleArray[j] -
+                                      auxDoubleArrayW[i + (uint32_t)j];
                             if (fabs(dblDiff) > fabs(dblDiffLimit))
                             {
                                 fprintf(stderr,
                                         "Read value %u of %s #%d %f differs "
                                         "from set value %f\n",
                                         i, tFieldName, j, auxDoubleArray[j],
-                                        auxDoubleArrayW[i + j]);
+                                        auxDoubleArrayW[i + (uint32_t)j]);
                                 GOTOFAILURE
                             }
                         }
@@ -1780,7 +1781,7 @@ int read_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                              tSetFieldType == TIFF_SETGET_C32_SINT8)
                     {
                         memcpy(&auxCharArray, pVoidArray,
-                               (auxInt32 * sizeof(auxCharArray[0])));
+                               ((size_t)auxInt32 * sizeof(auxCharArray[0])));
                         /* Compare and check values  */
                         char *auxCharCompare;
                         if (tTag == EXIFTAG_EXIFVERSION)
@@ -1804,7 +1805,7 @@ int read_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                                         "Read value %u of %s #%d %d differs "
                                         "from set value %d\n",
                                         i, tFieldName, j, auxCharArray[j],
-                                        auxCharArrayW[i + j]);
+                                        auxCharArrayW[i + (uint32_t)j]);
                                 GOTOFAILURE
                             }
                         }
@@ -1817,18 +1818,19 @@ int read_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                              tSetFieldType == TIFF_SETGET_C32_SINT16)
                     {
                         memcpy(&auxShortArray, pVoidArray,
-                               (auxInt32 * sizeof(auxShortArray[0])));
+                               ((size_t)auxInt32 * sizeof(auxShortArray[0])));
                         /* Compare and check values  */
                         for (j = 0; j < auxInt32; j++)
                         {
-                            if (auxShortArray[j] != auxShortArrayW[i + j])
+                            if (auxShortArray[j] !=
+                                auxShortArrayW[i + (uint32_t)j])
                             {
                                 fprintf(stderr,
                                         "Read value %u of %s #%d %d "
                                         "differs from "
                                         "set value %d\n",
                                         i, tFieldName, j, auxShortArray[j],
-                                        auxShortArrayW[i + j]);
+                                        auxShortArrayW[i + (uint32_t)j]);
                                 GOTOFAILURE
                             }
                         }
@@ -1841,18 +1843,19 @@ int read_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                              tSetFieldType == TIFF_SETGET_C32_SINT32)
                     {
                         memcpy(&auxInt32Array, pVoidArray,
-                               (auxInt32 * sizeof(auxInt32Array[0])));
+                               ((size_t)auxInt32 * sizeof(auxInt32Array[0])));
                         /* Compare and check values  */
                         for (j = 0; j < auxInt32; j++)
                         {
-                            if (auxInt32Array[j] != auxInt32ArrayW[i + j])
+                            if (auxInt32Array[j] !=
+                                auxInt32ArrayW[i + (uint32_t)j])
                             {
                                 fprintf(stderr,
                                         "Read value %u of %s #%d %d "
                                         "differs from "
                                         "set value %d\n",
                                         i, tFieldName, j, auxInt32Array[j],
-                                        auxInt32ArrayW[i + j]);
+                                        auxInt32ArrayW[i + (uint32_t)j]);
                                 GOTOFAILURE
                             }
                         }
