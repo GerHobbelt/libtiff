@@ -49,11 +49,15 @@ static const uint16_t photometric = PHOTOMETRIC_RGB;
 static const uint16_t rows_per_strip = 1;
 static const uint16_t planarconfig = PLANARCONFIG_CONTIG;
 
+#define TIFFTAG_SINT8 65100
+
 static TIFFField customFields[] = {
     {TIFFTAG_IMAGEWIDTH, -1, -1, TIFF_ASCII, 0, TIFF_SETGET_ASCII, FIELD_CUSTOM,
      1, 0, "Custom1", NULL},
     {TIFFTAG_DOTRANGE, -1, -1, TIFF_ASCII, 0, TIFF_SETGET_ASCII, FIELD_CUSTOM,
      1, 0, "Custom2", NULL},
+    {TIFFTAG_SINT8, -1, -1, TIFF_SBYTE, 0, TIFF_SETGET_SINT8, FIELD_CUSTOM, 1,
+     0, "SINT8", NULL},
 };
 
 static TIFFFieldArray customFieldArray = {tfiatOther, 0, 2, customFields};
@@ -153,10 +157,33 @@ int main(void)
     }
 
     /*
+     * Test for NULL pointer dereference handling for TIFFFieldInfoArray
+     * parameter. See issue #916.
+     * A default directory is returned on error.
+     */
+    if (TIFFCreateCustomDirectory(tif, NULL) == 0)
+    {
+        fprintf(stderr, "TIFFCreateEXIFDirectory() NULL pointer FieldArray is "
+                        "not correctly handled as error.\n");
+        goto failure;
+    }
+    /* Test for default directory and custom directory. */
+    if (!TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, width))
+    {
+        fprintf(stderr, "Can't set ImageWidth tag.\n");
+        goto failure;
+    }
+    if (TIFFSetField(tif, TIFFTAG_SINT8, 15))
+    {
+        fprintf(stderr, "TIFFSetField for TIFFTAG_SINT8 did not correctly "
+                        "return an error.\n");
+        goto failure;
+    }
+
+    /*
      * Now create a custom directory with tags that conflict with mainline
      * TIFF tags.
      */
-
     TIFFFreeDirectory(tif);
     if (TIFFCreateCustomDirectory(tif, &customFieldArray) != 0)
     {
