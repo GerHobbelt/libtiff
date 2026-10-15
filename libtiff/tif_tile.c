@@ -54,8 +54,7 @@ uint32_t TIFFComputeTile(TIFF *tif, uint32_t x, uint32_t y, uint32_t z,
         uint32_t xpt = TIFFhowmany_32(td->td_imagewidth, dx);
         uint32_t ypt = TIFFhowmany_32(td->td_imagelength, dy);
         uint32_t zpt = TIFFhowmany_32(td->td_imagedepth, dz);
-        uint32_t xpt_ypt =
-            _TIFFMultiply32(tif, xpt, ypt, "TIFFComputeTile");
+        uint32_t xpt_ypt = _TIFFMultiply32(tif, xpt, ypt, "TIFFComputeTile");
         uint32_t xpt_ypt_zpt =
             _TIFFMultiply32(tif, xpt_ypt, zpt, "TIFFComputeTile");
 

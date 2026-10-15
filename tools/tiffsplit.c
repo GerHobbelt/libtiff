@@ -71,7 +71,7 @@ static int cpTiles(TIFF *, TIFF *);
 
 static void usage(int);
 
-#define	MAXFILES	9999999U
+#define MAXFILES 9999999U
 
 /**
  * This custom malloc function enforce a maximum allocation size

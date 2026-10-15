@@ -911,13 +911,15 @@ static int TIFFAppendToStrip(TIFF *tif, uint32_t strip, uint8_t *data,
         /* Move data written by previous calls to us at end of file */
         while (toCopy > 0)
         {
+            tmsize_t chunkSize =
+                toCopy < (uint64_t)tempSize ? (tmsize_t)toCopy : tempSize;
             if (!SeekOK(tif, offsetRead))
             {
                 TIFFErrorExtR(tif, module, "Seek error");
                 _TIFFfreeExt(tif, temp);
                 return (0);
             }
-            if (!ReadOK(tif, temp, tempSize))
+            if (!ReadOK(tif, temp, chunkSize))
             {
                 TIFFErrorExtR(tif, module, "Cannot read");
                 _TIFFfreeExt(tif, temp);
@@ -929,16 +931,16 @@ static int TIFFAppendToStrip(TIFF *tif, uint32_t strip, uint8_t *data,
                 _TIFFfreeExt(tif, temp);
                 return (0);
             }
-            if (!WriteOK(tif, temp, tempSize))
+            if (!WriteOK(tif, temp, chunkSize))
             {
                 TIFFErrorExtR(tif, module, "Cannot write");
                 _TIFFfreeExt(tif, temp);
                 return (0);
             }
-            offsetRead += (uint64_t)tempSize;
-            offsetWrite += (uint64_t)tempSize;
-            td->td_stripbytecount_p[strip] += (uint64_t)tempSize;
-            toCopy -= (uint64_t)tempSize;
+            offsetRead += (uint64_t)chunkSize;
+            offsetWrite += (uint64_t)chunkSize;
+            td->td_stripbytecount_p[strip] += (uint64_t)chunkSize;
+            toCopy -= (uint64_t)chunkSize;
         }
         _TIFFfreeExt(tif, temp);
 

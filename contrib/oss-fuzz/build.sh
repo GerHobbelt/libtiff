@@ -60,14 +60,15 @@ make install
 
 for fuzzer in $(ls $SRC/libtiff/contrib/oss-fuzz/*fuzzer.cc); do
     name=$(basename $fuzzer | cut -f1 -d'.')
-
+    # The fuzzers include libFuzzer's FuzzedDataProvider.h which needs
+    # -std=c++17 or higher.
     if [ "$ARCHITECTURE" = "i386" ]; then
-        $CXX $CXXFLAGS -std=c++11 -I$WORK/include \
+        $CXX $CXXFLAGS -std=c++17 -I$WORK/include \
             $SRC/libtiff/contrib/oss-fuzz/$name.cc -o $OUT/$name \
             $LIB_FUZZING_ENGINE $WORK/lib/libtiffxx.a $WORK/lib/libtiff.a $WORK/lib/libz.a $WORK/lib/libjpeg.a \
             $WORK/lib/libjbig.a $WORK/lib/libjbig85.a
     else
-        $CXX $CXXFLAGS -std=c++11 -I$WORK/include \
+        $CXX $CXXFLAGS -std=c++17 -I$WORK/include \
             $SRC/libtiff/contrib/oss-fuzz/$name.cc -o $OUT/$name \
             $LIB_FUZZING_ENGINE $WORK/lib/libtiffxx.a $WORK/lib/libtiff.a $WORK/lib/libz.a $WORK/lib/libjpeg.a \
             $WORK/lib/libjbig.a $WORK/lib/libjbig85.a -Wl,-Bstatic -llzma -Wl,-Bdynamic

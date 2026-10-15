@@ -3097,14 +3097,36 @@ tsize_t t2p_readwrite_pdf_image(T2P *t2p, TIFF *input, TIFF *output)
 
         if (t2p->pdf_sample & T2P_SAMPLE_RGBA_TO_RGB)
         {
-            t2p->tiff_datasize = t2p_sample_rgba_to_rgb(
-                (tdata_t)buffer, t2p->tiff_width * t2p->tiff_length);
+            uint32_t samplecount =
+                TIFFSafeMultiply(uint32_t, t2p->tiff_width, t2p->tiff_length);
+            if (samplecount == 0)
+            {
+                TIFFError(TIFF2PDF_MODULE,
+                          "Integer overflow computing sample count for %s",
+                          TIFFFileName(input));
+                t2p->t2p_error = T2P_ERR_ERROR;
+                _TIFFfree(buffer);
+                return (0);
+            }
+            t2p->tiff_datasize =
+                t2p_sample_rgba_to_rgb((tdata_t)buffer, samplecount);
         }
 
         if (t2p->pdf_sample & T2P_SAMPLE_RGBAA_TO_RGB)
         {
-            t2p->tiff_datasize = t2p_sample_rgbaa_to_rgb(
-                (tdata_t)buffer, t2p->tiff_width * t2p->tiff_length);
+            uint32_t samplecount =
+                TIFFSafeMultiply(uint32_t, t2p->tiff_width, t2p->tiff_length);
+            if (samplecount == 0)
+            {
+                TIFFError(TIFF2PDF_MODULE,
+                          "Integer overflow computing sample count for %s",
+                          TIFFFileName(input));
+                t2p->t2p_error = T2P_ERR_ERROR;
+                _TIFFfree(buffer);
+                return (0);
+            }
+            t2p->tiff_datasize =
+                t2p_sample_rgbaa_to_rgb((tdata_t)buffer, samplecount);
         }
 
         if (t2p->pdf_sample & T2P_SAMPLE_YCBCR_TO_RGB)
@@ -3662,18 +3684,38 @@ tsize_t t2p_readwrite_pdf_image_tile(T2P *t2p, TIFF *input, TIFF *output,
 
         if (t2p->pdf_sample & T2P_SAMPLE_RGBA_TO_RGB)
         {
-            t2p->tiff_datasize = t2p_sample_rgba_to_rgb(
-                (tdata_t)buffer,
-                t2p->tiff_tiles[t2p->pdf_page].tiles_tilewidth *
-                    t2p->tiff_tiles[t2p->pdf_page].tiles_tilelength);
+            uint32_t samplecount = TIFFSafeMultiply(
+                uint32_t, t2p->tiff_tiles[t2p->pdf_page].tiles_tilewidth,
+                t2p->tiff_tiles[t2p->pdf_page].tiles_tilelength);
+            if (samplecount == 0)
+            {
+                TIFFError(TIFF2PDF_MODULE,
+                          "Integer overflow computing tile sample count for %s",
+                          TIFFFileName(input));
+                t2p->t2p_error = T2P_ERR_ERROR;
+                _TIFFfree(buffer);
+                return (0);
+            }
+            t2p->tiff_datasize =
+                t2p_sample_rgba_to_rgb((tdata_t)buffer, samplecount);
         }
 
         if (t2p->pdf_sample & T2P_SAMPLE_RGBAA_TO_RGB)
         {
-            t2p->tiff_datasize = t2p_sample_rgbaa_to_rgb(
-                (tdata_t)buffer,
-                t2p->tiff_tiles[t2p->pdf_page].tiles_tilewidth *
-                    t2p->tiff_tiles[t2p->pdf_page].tiles_tilelength);
+            uint32_t samplecount = TIFFSafeMultiply(
+                uint32_t, t2p->tiff_tiles[t2p->pdf_page].tiles_tilewidth,
+                t2p->tiff_tiles[t2p->pdf_page].tiles_tilelength);
+            if (samplecount == 0)
+            {
+                TIFFError(TIFF2PDF_MODULE,
+                          "Integer overflow computing tile sample count for %s",
+                          TIFFFileName(input));
+                t2p->t2p_error = T2P_ERR_ERROR;
+                _TIFFfree(buffer);
+                return (0);
+            }
+            t2p->tiff_datasize =
+                t2p_sample_rgbaa_to_rgb((tdata_t)buffer, samplecount);
         }
 
         if (t2p->pdf_sample & T2P_SAMPLE_YCBCR_TO_RGB)

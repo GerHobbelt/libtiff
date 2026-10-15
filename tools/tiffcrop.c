@@ -7966,11 +7966,29 @@ static int extractImageSection(struct image_data *image,
      * according to COMPRESSION=1 and FILLORDER=1
      */
     /* row size in full bytes of source image */
-    img_rowsize = (((img_width * spp * bps) + 7) / 8);
+    {
+        uint64_t img_bits = (uint64_t)img_width * spp * bps;
+        if (img_bits > UINT32_MAX - 7)
+        {
+            TIFFError("extractImageSection",
+                      "Integer overflow computing image row size");
+            return (1);
+        }
+        img_rowsize = (uint32_t)((img_bits + 7) / 8);
+    }
     /* number of COMPLETE bytes per row in section */
-    full_bytes = (sect_width * spp * bps) / 8;
-    /* trailing bits within the last byte of destination buffer */
-    trailing_bits = (sect_width * spp * bps) % 8;
+    {
+        uint64_t sect_bits = (uint64_t)sect_width * spp * bps;
+        if (sect_bits > UINT32_MAX)
+        {
+            TIFFError("extractImageSection",
+                      "Integer overflow computing section size");
+            return (1);
+        }
+        full_bytes = (uint32_t)(sect_bits / 8);
+        /* trailing bits within the last byte of destination buffer */
+        trailing_bits = (uint32_t)(sect_bits % 8);
+    }
 
 #ifdef DEVELMODE
     TIFFError("",

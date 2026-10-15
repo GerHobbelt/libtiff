@@ -54,9 +54,8 @@ uint32_t TIFFComputeStrip(TIFF *tif, uint32_t row, uint16_t sample)
                           (unsigned long)td->td_samplesperpixel);
             return (0);
         }
-        uint32_t sample_offset =
-            _TIFFMultiply32(tif, (uint32_t)sample, td->td_stripsperimage,
-                            "TIFFComputeStrip");
+        uint32_t sample_offset = _TIFFMultiply32(
+            tif, (uint32_t)sample, td->td_stripsperimage, "TIFFComputeStrip");
         if (sample_offset == 0 && sample != 0 && td->td_stripsperimage != 0)
             return (0);
         strip += sample_offset;
