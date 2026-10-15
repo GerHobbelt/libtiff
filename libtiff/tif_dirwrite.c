@@ -1384,6 +1384,7 @@ static int TIFFWriteDirectorySec(TIFF *tif, int isimage, int imagedone,
         goto bad;
     }
     _TIFFfreeExt(tif, dirmem);
+    dirmem = NULL;
 
     /* Increment tif_curdir if IFD wasn't already written to file and no error
      * occurred during IFD writing above. */

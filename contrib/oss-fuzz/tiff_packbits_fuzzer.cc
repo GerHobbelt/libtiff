@@ -83,10 +83,17 @@ toff_t memSeek(thandle_t handle, toff_t off, int whence)
     toff_t base;
     switch (whence)
     {
-        case SEEK_SET: base = 0; break;
-        case SEEK_CUR: base = m->pos; break;
-        case SEEK_END: base = m->size; break;
-        default: return static_cast<toff_t>(-1);
+        case SEEK_SET:
+            base = 0;
+            break;
+        case SEEK_CUR:
+            base = m->pos;
+            break;
+        case SEEK_END:
+            base = m->size;
+            break;
+        default:
+            return static_cast<toff_t>(-1);
     }
     /* Refuse wrap-around rather than silently aliasing a valid offset. */
     if (off > static_cast<toff_t>(-1) - base)
@@ -158,17 +165,17 @@ std::vector<uint8_t> buildPackBitsTiff(uint32_t width, uint32_t height,
     put32(t, IFD_OFFSET);
 
     put16(t, ENTRY_COUNT); /* entries must be in ascending tag order */
-    putEntry(t, 256, TIFF_TYPE_LONG, 1, width);        /* ImageWidth      */
-    putEntry(t, 257, TIFF_TYPE_LONG, 1, height);       /* ImageLength     */
-    putEntry(t, 258, TIFF_TYPE_SHORT, 1, 8);           /* BitsPerSample   */
+    putEntry(t, 256, TIFF_TYPE_LONG, 1, width);  /* ImageWidth      */
+    putEntry(t, 257, TIFF_TYPE_LONG, 1, height); /* ImageLength     */
+    putEntry(t, 258, TIFF_TYPE_SHORT, 1, 8);     /* BitsPerSample   */
     putEntry(t, 259, TIFF_TYPE_SHORT, 1, COMPRESSION_PACKBITS);
     putEntry(t, 262, TIFF_TYPE_SHORT, 1, PHOTOMETRIC_MINISBLACK);
     putEntry(t, 273, TIFF_TYPE_LONG, 1, STRIP_OFFSET); /* StripOffsets    */
     putEntry(t, 277, TIFF_TYPE_SHORT, 1, 1);           /* SamplesPerPixel */
     putEntry(t, 278, TIFF_TYPE_LONG, 1, height);       /* RowsPerStrip    */
     putEntry(t, 279, TIFF_TYPE_LONG, 1,
-             static_cast<uint32_t>(payload.size()));   /* StripByteCounts */
-    put32(t, 0);                                       /* no next IFD     */
+             static_cast<uint32_t>(payload.size())); /* StripByteCounts */
+    put32(t, 0);                                     /* no next IFD     */
 
     t.insert(t.end(), payload.begin(), payload.end());
     return t;
@@ -210,7 +217,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
         if (buf)
         {
             /* The decode itself: PackBitsDecode() expands `payload` into a
-             * buffer of exactly stripSize bytes and must not step outside it. */
+             * buffer of exactly stripSize bytes and must not step outside it.
+             */
             TIFFReadEncodedStrip(tif, 0, buf, stripSize);
             _TIFFfree(buf);
         }

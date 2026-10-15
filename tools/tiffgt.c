@@ -453,7 +453,10 @@ static void raster_special(int key, int x, int y)
         case GLUT_KEY_END: /* last image in current file */
             TIFFRGBAImageEnd(&img);
             while (!TIFFLastDirectory(tif))
-                TIFFReadDirectory(tif);
+            {
+                if (!TIFFReadDirectory(tif))
+                    break;
+            }
             initImage();
             setWindowSize();
             break;
