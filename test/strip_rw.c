@@ -35,9 +35,10 @@
 #include <unistd.h>
 #endif
 
-#include "test_arrays.h"
 #include "strip.h"
+#include "test_arrays.h"
 #include "tifftest.h"
+
 static const char *filename = "strip_test.tiff";
 
 #if defined(BUILD_MONOLITHIC)

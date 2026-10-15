@@ -412,6 +412,7 @@ extern void _TIFFSwab32BitData(TIFF* tif, uint8_t* buf, tmsize_t cc);
 extern void _TIFFSwab64BitData(TIFF* tif, uint8_t* buf, tmsize_t cc);
 extern int TIFFFlushData1(TIFF* tif);
 extern int TIFFDefaultDirectory(TIFF* tif);
+extern void _TIFFSetDefaultPostDecode(TIFF *tif);
 extern void _TIFFSetDefaultCompressionState(TIFF* tif);
 extern int _TIFFRewriteField(TIFF *, uint16_t, TIFFDataType, tmsize_t, void *);
 extern int TIFFSetCompressionScheme(TIFF* tif, int scheme);
