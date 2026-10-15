@@ -452,6 +452,8 @@ extern uint32_t _TIFFClampDoubleToUInt32(double);
 
 extern void _TIFFCleanupIFDOffsetAndNumberMaps(TIFF *tif);
 
+extern uint64_t _TIFFStrileSize64(TIFF *tif, uint32_t nrows, int isStrip);
+
 extern tmsize_t
 _TIFFReadEncodedStripAndAllocBuffer(TIFF* tif, uint32_t strip,
                                     void **buf, tmsize_t bufsizetoalloc,
