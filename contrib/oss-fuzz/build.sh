@@ -58,31 +58,26 @@ cmake . -DCMAKE_INSTALL_PREFIX=$WORK -DBUILD_SHARED_LIBS=off
 make -j$(nproc)
 make install
 
-$CXX $CXXFLAGS \
-    -I $SRC/libtiff/contrib/stream -I $WORK/include \
-    $SRC/libtiff/contrib/stream/tiffstream.cpp \
-    -c -o tiffstream.o
-ar -q $WORK/lib/libtiff.a tiffstream.o
+for fuzzer in $(ls $SRC/libtiff/contrib/oss-fuzz/*fuzzer.cc); do
+    name=$(basename $fuzzer | cut -f1 -d'.')
 
-EXTRA_ARGS=""
-if [ "$ARCHITECTURE" != "i386" ]; then
-    EXTRA_ARGS="-Wl,-Bstatic -llzma -Wl,-Bdynamic"
-fi
+    if [ "$ARCHITECTURE" = "i386" ]; then
+        $CXX $CXXFLAGS -std=c++11 -I$WORK/include \
+            $SRC/libtiff/contrib/oss-fuzz/$name.cc -o $OUT/$name \
+            $LIB_FUZZING_ENGINE $WORK/lib/libtiffxx.a $WORK/lib/libtiff.a $WORK/lib/libz.a $WORK/lib/libjpeg.a \
+            $WORK/lib/libjbig.a $WORK/lib/libjbig85.a
+    else
+        $CXX $CXXFLAGS -std=c++11 -I$WORK/include \
+            $SRC/libtiff/contrib/oss-fuzz/$name.cc -o $OUT/$name \
+            $LIB_FUZZING_ENGINE $WORK/lib/libtiffxx.a $WORK/lib/libtiff.a $WORK/lib/libz.a $WORK/lib/libjpeg.a \
+            $WORK/lib/libjbig.a $WORK/lib/libjbig85.a -Wl,-Bstatic -llzma -Wl,-Bdynamic
+    fi
+done
 
 mkdir afl_testcases
 (cd afl_testcases; tar xf "$SRC/afl_testcases.tgz")
 mkdir tif
 find afl_testcases -type f -name '*.tif' -exec mv -n {} tif/ \;
 zip -rj tif.zip tif/
-
-for fuzzer in $SRC/libtiff/contrib/oss-fuzz/*_fuzzer.cc; do
-  fuzzer_basename=$(basename -s .cc $fuzzer)
-  $CXX $CXXFLAGS -std=c++11 \
-      -I $WORK/include -I $SRC/libtiff \
-      $fuzzer -o $OUT/$fuzzer_basename $LIB_FUZZING_ENGINE \
-      $WORK/lib/libtiffxx.a $WORK/lib/libtiff.a $WORK/lib/libz.a \
-      $WORK/lib/libjpeg.a $WORK/lib/libjbig.a $WORK/lib/libjbig85.a $EXTRA_ARGS
-  cp tif.zip "$OUT/${fuzzer_basename}_seed_corpus.zip"
-  cp $SRC/tiff.dict "$OUT/${fuzzer_basename}.dict"
-
-done
+cp tif.zip "$OUT/tiff_read_rgba_fuzzer_seed_corpus.zip"
+cp "$SRC/tiff.dict" "$OUT/tiff_read_rgba_fuzzer.dict"
