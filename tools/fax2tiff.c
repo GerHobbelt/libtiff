@@ -56,7 +56,7 @@
 #endif
 
 #define TIFFhowmany8(x)                                                        \
-    (((x)&0x07) ? ((uint32_t)(x) >> 3) + 1 : (uint32_t)(x) >> 3)
+    (((x) & 0x07) ? ((uint32_t)(x) >> 3) + 1 : (uint32_t)(x) >> 3)
 
 static TIFF *faxTIFF;
 static char *rowbuf;

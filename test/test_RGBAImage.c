@@ -295,8 +295,8 @@ static int write_image_data(TIFF *tif, uint32_t width, uint32_t length,
                                TIFFmin(bufLen, (size_t)lastlinebytesmax));
                     }
                 } /* rowtile */
-            }     /* coltile */
-        }         /* s sample in pixel */
+            } /* coltile */
+        } /* s sample in pixel */
     }
     else
     {
@@ -746,10 +746,12 @@ static int testRGBAImageReadFunctions(TIFF *tif, uint32_t imgWidth,
     /* Just for debugging output in printRaster() */
     bool tiledlocal = TIFFIsTiled(tif);
 
-    tmsize_t rasterSize = (tmsize_t)(sizeof(uint32_t) * (size_t)rWidth * (size_t)rHeight);
+    tmsize_t rasterSize =
+        (tmsize_t)(sizeof(uint32_t) * (size_t)rWidth * (size_t)rHeight);
     if (rasterSize == 0)
     {
-        rasterSize = (tmsize_t)(sizeof(uint32_t) * (size_t)imgWidth * (size_t)imgLength);
+        rasterSize =
+            (tmsize_t)(sizeof(uint32_t) * (size_t)imgWidth * (size_t)imgLength);
     }
     raster1 = (uint32_t *)_TIFFmalloc(rasterSize);
     raster2 = (uint32_t *)_TIFFmalloc(rasterSize);
@@ -814,10 +816,12 @@ static int testRGBAImageReadWithOffsets(TIFF *tif, uint32_t imgWidth,
     /* Just for debugging output in printRaster() */
     bool tiledlocal = TIFFIsTiled(tif);
 
-    tmsize_t rasterSize = (tmsize_t)(sizeof(uint32_t) * (size_t)rWidth * (size_t)rHeight);
+    tmsize_t rasterSize =
+        (tmsize_t)(sizeof(uint32_t) * (size_t)rWidth * (size_t)rHeight);
     if (rasterSize == 0)
     {
-        rasterSize = (tmsize_t)(sizeof(uint32_t) * (size_t)imgWidth * (size_t)imgLength);
+        rasterSize =
+            (tmsize_t)(sizeof(uint32_t) * (size_t)imgWidth * (size_t)imgLength);
     }
     raster1 = (uint32_t *)_TIFFmalloc(rasterSize);
     if (raster1 == NULL)
@@ -1160,7 +1164,8 @@ int main(void)
         {
             if (blnMultipleLogFiles)
             {
-                unsigned int n = (unsigned int)tiled * 2 + (unsigned int)(planarconfig - 1);
+                unsigned int n =
+                    (unsigned int)tiled * 2 + (unsigned int)(planarconfig - 1);
                 assert(n <
                        (sizeof(arrLogFilenames) / sizeof(arrLogFilenames[0])));
                 logFilename = arrLogFilenames[n];

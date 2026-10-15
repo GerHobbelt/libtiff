@@ -645,7 +645,7 @@ int _TIFFMergeFields(TIFF *tif, const TIFFField info[], uint32_t n)
 
     tif->tif_foundfield = NULL;
 
-    TIFFField ** tif_newfields = NULL;
+    TIFFField **tif_newfields = NULL;
 
     if (tif->tif_fields && tif->tif_nfields > 0)
     {
@@ -1281,7 +1281,7 @@ int TIFFMergeFieldInfo(TIFF *tif, const TIFFFieldInfo info[], uint32_t n)
     size_t nfields;
     uint32_t i;
 
-    TIFFFieldArray * tif_newfieldscompat = NULL;
+    TIFFFieldArray *tif_newfieldscompat = NULL;
 
     if (tif->tif_nfieldscompat > 0)
     {

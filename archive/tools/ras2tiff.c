@@ -40,7 +40,7 @@
 #include "tiffio.h"
 
 #ifndef howmany
-#define howmany(x, y) (((x) + ((y)-1)) / (y))
+#define howmany(x, y) (((x) + ((y) - 1)) / (y))
 #endif
 #define streq(a, b) (strcmp(a, b) == 0)
 #define strneq(a, b, n) (strncmp(a, b, n) == 0)
@@ -100,7 +100,7 @@ int main(int argc, const char **argv)
     }
     if (strcmp(h.ras_magic, RAS_MAGIC) == 0)
     {
-#ifndef WORDS_BIGENDIAN
+#if !WORDS_BIGENDIAN
         TIFFSwabLong((uint32_t *)&h.ras_width);
         TIFFSwabLong((uint32_t *)&h.ras_height);
         TIFFSwabLong((uint32_t *)&h.ras_depth);
@@ -112,7 +112,7 @@ int main(int argc, const char **argv)
     }
     else if (strcmp(h.ras_magic, RAS_MAGIC_INV) == 0)
     {
-#ifdef WORDS_BIGENDIAN
+#if WORDS_BIGENDIAN
         TIFFSwabLong((uint32_t *)&h.ras_width);
         TIFFSwabLong((uint32_t *)&h.ras_height);
         TIFFSwabLong((uint32_t *)&h.ras_depth);

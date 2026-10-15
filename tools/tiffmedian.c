@@ -328,9 +328,9 @@ int main(int argc, const char **argv)
         quant_fsdither(in, out);
     else
         quant(in, out);
-        /*
-         * Scale colormap to TIFF-required 16-bit values.
-         */
+    /*
+     * Scale colormap to TIFF-required 16-bit values.
+     */
 #define SCALE(x) ((uint16_t)(((x) * ((1 << 16) - 1)) / 255))
     for (i = 0; i < MAX_CMAP_SIZE; ++i)
     {
@@ -941,8 +941,10 @@ static void quant_fsdither(TIFF *local_in, TIFF *local_out)
     imax = imagelength - 1;
     jmax = imagewidth - 1;
     inputline = (unsigned char *)_TIFFmalloc(TIFFScanlineSize(local_in));
-    thisline = (short *)_TIFFmalloc((tmsize_t)((size_t)imagewidth * 3 * sizeof(short)));
-    nextline = (short *)_TIFFmalloc((tmsize_t)((size_t)imagewidth * 3 * sizeof(short)));
+    thisline = (short *)_TIFFmalloc(
+        (tmsize_t)((size_t)imagewidth * 3 * sizeof(short)));
+    nextline = (short *)_TIFFmalloc(
+        (tmsize_t)((size_t)imagewidth * 3 * sizeof(short)));
     outline = (unsigned char *)_TIFFmalloc(TIFFScanlineSize(local_out));
 
     GetInputLine(local_in, 0, goto bad); /* get first line */

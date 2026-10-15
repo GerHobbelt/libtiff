@@ -294,15 +294,15 @@ struct TIFFOpenOptions
  * Default Read/Seek/Write definitions.
  */
 #ifndef ReadOK
-#define ReadOK(tif, buf, size) \
-    (TIFFReadFile((tif),(buf),(size))==(size))
+#define ReadOK(tif, buf, size)                                                 \
+    (TIFFReadFile((tif), (buf), (size)) == (tmsize_t)(size))
 #endif
 #ifndef SeekOK
 #define SeekOK(tif, off) _TIFFSeekOK(tif, off)
 #endif
 #ifndef WriteOK
-#define WriteOK(tif, buf, size) \
-    (TIFFWriteFile((tif),(buf),(size))==(size))
+#define WriteOK(tif, buf, size)                                                \
+    (TIFFWriteFile((tif), (buf), (size)) == (tmsize_t)(size))
 #endif
 
 /* NB: the uint32_t casts are to silence certain ANSI-C compilers */
@@ -313,10 +313,13 @@ struct TIFFOpenOptions
 /* Caution: TIFFhowmany_32_maxuint_compat(x,y)*y might overflow */
 #define TIFFhowmany_32_maxuint_compat(x, y) \
                (((uint32_t)(x) / (uint32_t)(y)) + ((((uint32_t)(x) % (uint32_t)(y)) != 0) ? 1 : 0))
-#define TIFFhowmany8_32(x) (((x)&0x07)?((uint32_t)(x)>>3)+1:(uint32_t)(x)>>3)
+#define TIFFhowmany8_32(x)                                                     \
+    (((x) & 0x07) ? ((uint32_t)(x) >> 3) + 1 : (uint32_t)(x) >> 3)
 #define TIFFroundup_32(x, y) ((uint32_t)(TIFFhowmany_32(x, y) * (uint32_t)(y)))
-#define TIFFhowmany_64(x, y) ((((uint64_t)(x))+(((uint64_t)(y))-1))/((uint64_t)(y)))
-#define TIFFhowmany8_64(x) (((x)&0x07)?((uint64_t)(x)>>3)+1:(uint64_t)(x)>>3)
+#define TIFFhowmany_64(x, y)                                                   \
+    ((((uint64_t)(x)) + (((uint64_t)(y)) - 1)) / ((uint64_t)(y)))
+#define TIFFhowmany8_64(x)                                                     \
+    (((x) & 0x07) ? ((uint64_t)(x) >> 3) + 1 : (uint64_t)(x) >> 3)
 #define TIFFroundup_64(x, y) ((uint64_t)(TIFFhowmany_64(x, y) * (uint64_t)(y)))
 
 /* Safe multiply which returns zero if there is an *unsigned* integer overflow.

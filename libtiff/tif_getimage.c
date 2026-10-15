@@ -426,12 +426,12 @@ int TIFFRGBAImageBegin(TIFFRGBAImage *img, TIFF *tif, int stop,
 
             /* copy the colormaps so we can modify them */
             n_color = (uint32_t)(1U << img->bitspersample);
-            img->redcmap =
-                (uint16_t *)_TIFFmallocExt(tif, (tmsize_t)(sizeof(uint16_t) * (size_t)n_color));
-            img->greencmap =
-                (uint16_t *)_TIFFmallocExt(tif, (tmsize_t)(sizeof(uint16_t) * (size_t)n_color));
-            img->bluecmap =
-                (uint16_t *)_TIFFmallocExt(tif, (tmsize_t)(sizeof(uint16_t) * (size_t)n_color));
+            img->redcmap = (uint16_t *)_TIFFmallocExt(
+                tif, (tmsize_t)(sizeof(uint16_t) * (size_t)n_color));
+            img->greencmap = (uint16_t *)_TIFFmallocExt(
+                tif, (tmsize_t)(sizeof(uint16_t) * (size_t)n_color));
+            img->bluecmap = (uint16_t *)_TIFFmallocExt(
+                tif, (tmsize_t)(sizeof(uint16_t) * (size_t)n_color));
             if (!img->redcmap || !img->greencmap || !img->bluecmap)
             {
                 snprintf(emsg, EMSG_BUF_SIZE,
@@ -1703,7 +1703,7 @@ DECLAREContigPutFunc(putagreytile)
     {
         for (x = w; x > 0; --x)
         {
-            *cp++ = BWmap[*pp][0] & ((uint32_t) * (pp + 1) << 24 | ~A1);
+            *cp++ = BWmap[*pp][0] & ((uint32_t)*(pp + 1) << 24 | ~A1);
             pp += samplesperpixel;
         }
         cp += toskew;
@@ -2283,7 +2283,7 @@ DECLAREContigPutFunc(putcontig8bitYCbCr44tile)
                                 YCbCrtoRGB(cp1[3], pp[7]); /* FALLTHROUGH */
                             case 1:
                                 YCbCrtoRGB(cp[3], pp[3]); /* FALLTHROUGH */
-                        }                                 /* FALLTHROUGH */
+                        } /* FALLTHROUGH */
                     case 3:
                         switch (h)
                         {
@@ -2295,7 +2295,7 @@ DECLAREContigPutFunc(putcontig8bitYCbCr44tile)
                                 YCbCrtoRGB(cp1[2], pp[6]); /* FALLTHROUGH */
                             case 1:
                                 YCbCrtoRGB(cp[2], pp[2]); /* FALLTHROUGH */
-                        }                                 /* FALLTHROUGH */
+                        } /* FALLTHROUGH */
                     case 2:
                         switch (h)
                         {
@@ -2307,7 +2307,7 @@ DECLAREContigPutFunc(putcontig8bitYCbCr44tile)
                                 YCbCrtoRGB(cp1[1], pp[5]); /* FALLTHROUGH */
                             case 1:
                                 YCbCrtoRGB(cp[1], pp[1]); /* FALLTHROUGH */
-                        }                                 /* FALLTHROUGH */
+                        } /* FALLTHROUGH */
                     case 1:
                         switch (h)
                         {
@@ -2319,7 +2319,7 @@ DECLAREContigPutFunc(putcontig8bitYCbCr44tile)
                                 YCbCrtoRGB(cp1[0], pp[4]); /* FALLTHROUGH */
                             case 1:
                                 YCbCrtoRGB(cp[0], pp[0]); /* FALLTHROUGH */
-                        }                                 /* FALLTHROUGH */
+                        } /* FALLTHROUGH */
                 }
                 if (x < 4)
                 {
@@ -2406,7 +2406,7 @@ DECLAREContigPutFunc(putcontig8bitYCbCr42tile)
                                 YCbCrtoRGB(cp1[3], pp[7]); /* FALLTHROUGH */
                             case 1:
                                 YCbCrtoRGB(cp[3], pp[3]); /* FALLTHROUGH */
-                        }                                 /* FALLTHROUGH */
+                        } /* FALLTHROUGH */
                     case 3:
                         switch (h)
                         {
@@ -2414,7 +2414,7 @@ DECLAREContigPutFunc(putcontig8bitYCbCr42tile)
                                 YCbCrtoRGB(cp1[2], pp[6]); /* FALLTHROUGH */
                             case 1:
                                 YCbCrtoRGB(cp[2], pp[2]); /* FALLTHROUGH */
-                        }                                 /* FALLTHROUGH */
+                        } /* FALLTHROUGH */
                     case 2:
                         switch (h)
                         {
@@ -2422,7 +2422,7 @@ DECLAREContigPutFunc(putcontig8bitYCbCr42tile)
                                 YCbCrtoRGB(cp1[1], pp[5]); /* FALLTHROUGH */
                             case 1:
                                 YCbCrtoRGB(cp[1], pp[1]); /* FALLTHROUGH */
-                        }                                 /* FALLTHROUGH */
+                        } /* FALLTHROUGH */
                     case 1:
                         switch (h)
                         {
@@ -2430,7 +2430,7 @@ DECLAREContigPutFunc(putcontig8bitYCbCr42tile)
                                 YCbCrtoRGB(cp1[0], pp[4]); /* FALLTHROUGH */
                             case 1:
                                 YCbCrtoRGB(cp[0], pp[0]); /* FALLTHROUGH */
-                        }                                 /* FALLTHROUGH */
+                        } /* FALLTHROUGH */
                 }
                 if (x < 4)
                 {
@@ -3561,9 +3561,10 @@ int TIFFReadRGBATileExt(TIFF *tif, uint32_t col, uint32_t row, uint32_t *raster,
         memmove(raster + (size_t)(tile_ysize - i_row - 1) * tile_xsize,
                 raster + (size_t)(read_ysize - i_row - 1) * read_xsize,
                 read_xsize * sizeof(uint32_t));
-        _TIFFmemset(raster + (size_t)(tile_ysize - i_row - 1) * tile_xsize +
-                        read_xsize,
-                    0, (tmsize_t)(sizeof(uint32_t) * (size_t)(tile_xsize - read_xsize)));
+        _TIFFmemset(
+            raster + (size_t)(tile_ysize - i_row - 1) * tile_xsize + read_xsize,
+            0,
+            (tmsize_t)(sizeof(uint32_t) * (size_t)(tile_xsize - read_xsize)));
     }
 
     for (i_row = read_ysize; i_row < tile_ysize; i_row++)

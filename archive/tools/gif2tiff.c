@@ -426,9 +426,11 @@ static int readraster(void)
                 datum >>= codesize;
                 bits -= codesize;
                 if (code == eoi)
-                {                  /* This kludge put in */
-                    goto exitloop; /* because some GIF files*/
-                }                  /* aren't standard */
+                {
+                    /* This kludge put in  because some GIF files
+                     * aren't standard */
+                    goto exitloop;
+                }
                 if (!process(code, &fill))
                 {
                     status = 0;

@@ -33,7 +33,7 @@
 #include <string.h>
 #include <time.h>
 
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
@@ -1177,8 +1177,10 @@ void t2p_validate(T2P *t2p)
         }
         if (t2p->pdf_defaultcompressionquality % 100 != 0)
         {
-            t2p->pdf_defaultcompressionquality = (uint16_t)(t2p->pdf_defaultcompressionquality / 100);
-            t2p->pdf_defaultcompressionquality = (uint16_t)(t2p->pdf_defaultcompressionquality * 100);
+            t2p->pdf_defaultcompressionquality =
+                (uint16_t)(t2p->pdf_defaultcompressionquality / 100);
+            t2p->pdf_defaultcompressionquality =
+                (uint16_t)(t2p->pdf_defaultcompressionquality * 100);
             TIFFError(TIFF2PDF_MODULE,
                       "PNG Group predictor differencing not implemented, "
                       "assuming compression quality %" PRIu16,
@@ -1232,7 +1234,8 @@ void t2p_read_tiff_init(T2P *t2p, TIFF *input)
         t2p->t2p_error = T2P_ERR_ERROR;
         return;
     }
-    _TIFFmemset(t2p->tiff_pages, 0x00, (tmsize_t)((size_t)directorycount * sizeof(T2P_PAGE)));
+    _TIFFmemset(t2p->tiff_pages, 0x00,
+                (tmsize_t)((size_t)directorycount * sizeof(T2P_PAGE)));
     t2p->tiff_tiles = (T2P_TILES *)_TIFFmalloc(
         TIFFSafeMultiply(tmsize_t, directorycount, sizeof(T2P_TILES)));
     if (t2p->tiff_tiles == NULL)
@@ -1244,7 +1247,8 @@ void t2p_read_tiff_init(T2P *t2p, TIFF *input)
         t2p->t2p_error = T2P_ERR_ERROR;
         return;
     }
-    _TIFFmemset(t2p->tiff_tiles, 0x00, (tmsize_t)((size_t)directorycount * sizeof(T2P_TILES)));
+    _TIFFmemset(t2p->tiff_tiles, 0x00,
+                (tmsize_t)((size_t)directorycount * sizeof(T2P_TILES)));
     for (i = 0; i < directorycount; i++)
     {
         uint32_t subfiletype = 0;
@@ -4450,8 +4454,10 @@ tsize_t t2p_sample_rgba_to_rgb(tdata_t data, uint32_t samplecount)
     {
         sample = ((uint32_t *)data)[i];
         alpha = (uint8_t)((255 - ((sample >> 24) & 0xff)));
-        ((uint8_t *)data)[i * 3 + 2] = (uint8_t)(((sample >> 16) & 0xff) + alpha);
-        ((uint8_t *)data)[i * 3 + 1] = (uint8_t)(((sample >> 8) & 0xff) + alpha);
+        ((uint8_t *)data)[i * 3 + 2] =
+            (uint8_t)(((sample >> 16) & 0xff) + alpha);
+        ((uint8_t *)data)[i * 3 + 1] =
+            (uint8_t)(((sample >> 8) & 0xff) + alpha);
         ((uint8_t *)data)[i * 3] = (uint8_t)((sample & 0xff) + alpha);
     }
 
@@ -5140,19 +5146,23 @@ tsize_t t2p_write_pdf_page(uint32_t object, T2P *t2p, TIFF *output)
     add_t2pWriteFile_check(output, (tdata_t)buffer, buflen, mod, written);
     add_t2pWriteFile_check(output, (tdata_t) " 0 R \n", 6, mod, written);
     add_t2pWriteFile_check(output, (tdata_t) "/MediaBox [", 11, mod, written);
-    buflen = snprintf(buffer, sizeof(buffer), "%.4f", (double)t2p->pdf_mediabox.x1);
+    buflen =
+        snprintf(buffer, sizeof(buffer), "%.4f", (double)t2p->pdf_mediabox.x1);
     check_snprintf_ret(t2p, buflen, buffer);
     add_t2pWriteFile_check(output, (tdata_t)buffer, buflen, mod, written);
     add_t2pWriteFile_check(output, (tdata_t) " ", 1, mod, written);
-    buflen = snprintf(buffer, sizeof(buffer), "%.4f", (double)t2p->pdf_mediabox.y1);
+    buflen =
+        snprintf(buffer, sizeof(buffer), "%.4f", (double)t2p->pdf_mediabox.y1);
     check_snprintf_ret(t2p, buflen, buffer);
     add_t2pWriteFile_check(output, (tdata_t)buffer, buflen, mod, written);
     add_t2pWriteFile_check(output, (tdata_t) " ", 1, mod, written);
-    buflen = snprintf(buffer, sizeof(buffer), "%.4f", (double)t2p->pdf_mediabox.x2);
+    buflen =
+        snprintf(buffer, sizeof(buffer), "%.4f", (double)t2p->pdf_mediabox.x2);
     check_snprintf_ret(t2p, buflen, buffer);
     add_t2pWriteFile_check(output, (tdata_t)buffer, buflen, mod, written);
     add_t2pWriteFile_check(output, (tdata_t) " ", 1, mod, written);
-    buflen = snprintf(buffer, sizeof(buffer), "%.4f", (double)t2p->pdf_mediabox.y2);
+    buflen =
+        snprintf(buffer, sizeof(buffer), "%.4f", (double)t2p->pdf_mediabox.y2);
     check_snprintf_ret(t2p, buflen, buffer);
     add_t2pWriteFile_check(output, (tdata_t)buffer, buflen, mod, written);
     add_t2pWriteFile_check(output, (tdata_t) "] \n", 3, mod, written);
@@ -5779,7 +5789,7 @@ tsize_t t2p_write_pdf_xobject_stream_dict(ttile_t tile, T2P *t2p, TIFF *output)
 #define normalizePoint(x, y, z)                                                \
     do                                                                         \
     {                                                                          \
-        if (!TIFF_FLOAT_EQ(y, 0.0f))                                             \
+        if (!TIFF_FLOAT_EQ(y, 0.0f))                                           \
         {                                                                      \
             x /= y;                                                            \
             z /= y;                                                            \
