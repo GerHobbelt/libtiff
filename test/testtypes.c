@@ -49,6 +49,10 @@
 
 int main(void)
 {
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4127) /* conditional expression is constant */
+#endif
     CHECK_TYPE(int8_t, 1)
     CHECK_TYPE(int16_t, 2)
     CHECK_TYPE(int32_t, 4)
@@ -58,5 +62,8 @@ int main(void)
     CHECK_TYPE(uint32_t, 4)
     CHECK_TYPE(uint64_t, 8)
     CHECK_TYPE(tmsize_t, sizeof(size_t))
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
     return 0;
 }

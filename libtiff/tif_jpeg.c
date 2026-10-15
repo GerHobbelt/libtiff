@@ -191,6 +191,10 @@ typedef struct jpeg_error_mgr jpeg_error_mgr;
  *     so we can safely cast JPEGState* -> jpeg_xxx_struct*
  *     and vice versa!
  */
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4324) /* structure padding due to alignment */
+#endif
 typedef struct
 {
     union
@@ -226,6 +230,9 @@ typedef struct
 
     int encode_raw_error;
 } JPEGState;
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 #define JState(tif) ((JPEGState *)(tif)->tif_data)
 
@@ -1679,9 +1686,9 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s)
         int samples_per_clump = sp->samplesperclump;
 
 #if defined(JPEG_LIB_MK1_OR_12BIT)
-        tmpbuf = _TIFFmallocExt(tif, sizeof(unsigned short) *
-                                         sp->cinfo.d.output_width *
-                                         sp->cinfo.d.num_components);
+        tmpbuf = (unsigned short *)_TIFFmallocExt(
+            tif, sizeof(unsigned short) * sp->cinfo.d.output_width *
+                     sp->cinfo.d.num_components);
         if (tmpbuf == NULL)
         {
             TIFFErrorExtR(tif, "JPEGDecodeRaw", "Out of memory");

@@ -461,7 +461,7 @@ static void setupBitsTables(void)
             n++;
         if (i & 0x80)
             n++;
-        bits[i] = n;
+        bits[i] = (uint8_t)n;
     }
 }
 
@@ -518,11 +518,11 @@ static void setupCmap(void)
     {
         case PHOTOMETRIC_MINISWHITE:
             for (i = 0; i < 256; i++)
-                cmap[i] = clamp(255 * pct[(256 - 1) - i], 0, 255);
+                cmap[i] = (uint8_t)clamp(255 * pct[(256 - 1) - i], 0, 255);
             break;
         case PHOTOMETRIC_MINISBLACK:
             for (i = 0; i < 256; i++)
-                cmap[i] = clamp(255 * pct[i], 0, 255);
+                cmap[i] = (uint8_t)clamp(255 * pct[i], 0, 255);
             break;
     }
 }
@@ -569,7 +569,7 @@ static void setupStepTables(uint32_t sw)
             fw -= 8 - (sx0 & 7);
             if (fw < 0)
                 fw = 0;
-            src1[x] = fw >> 3;
+            src1[x] = (uint8_t)(fw >> 3);
             fw -= (fw >> 3) << 3;
             src2[x] = 0xff << (8 - fw);
         }
