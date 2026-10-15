@@ -133,6 +133,8 @@ int main(int argc, const char **argv)
                 usage(EXIT_FAILURE);
                 /*NOTREACHED*/
                 break;
+            default:
+                break;
         }
 
     if (argc - optind < 2)

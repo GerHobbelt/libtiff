@@ -373,6 +373,8 @@ int TIFFRGBAImageBegin(TIFFRGBAImage *img, TIFF *tif, int stop,
             case EXTRASAMPLE_UNASSALPHA: /* data is not pre-multiplied */
                 img->alpha = sampleinfo[0];
                 break;
+            default:
+                break;
         }
     }
 
@@ -1477,6 +1479,9 @@ static int gtStripSeparate(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
             op; /*-fallthrough*/                                               \
         case 1:                                                                \
             op;                                                                \
+            break;                                                             \
+        default:                                                               \
+            break;                                                             \
     }
 #define CASE4(x, op)                                                           \
     switch (x)                                                                 \
@@ -1487,6 +1492,9 @@ static int gtStripSeparate(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
             op; /*-fallthrough*/                                               \
         case 1:                                                                \
             op;                                                                \
+            break;                                                             \
+        default:                                                               \
+            break;                                                             \
     }
 #define NOP
 
@@ -2467,6 +2475,8 @@ DECLAREContigPutFunc(putcontig8bitYCbCr41tile)
                     YCbCrtoRGB(cp[0], pp[0]); /*-fallthrough*/
                 case 0:
                     break;
+                default:
+                    break;
             }
 
             cp += (w & 3);
@@ -2833,6 +2843,8 @@ static int makebwmap(TIFFRGBAImage *img)
             case 16:
                 GREY(i);
                 break;
+            default:
+                break;
         }
 #undef GREY
     }
@@ -2978,6 +2990,8 @@ static int makecmap(TIFFRGBAImage *img)
             case 8:
                 CMAP(i);
                 break;
+            default:
+                break;
         }
 #undef CMAP
     }
@@ -3019,6 +3033,8 @@ static int buildMap(TIFFRGBAImage *img)
              */
             if (img->bitspersample <= 8 && !makecmap(img))
                 return (0);
+            break;
+        default:
             break;
     }
     return (1);
@@ -3068,6 +3084,8 @@ static int PickContigCase(TIFFRGBAImage *img)
                             img->put.contig = putRGBcontig16bittile;
                     }
                     break;
+                default:
+                    break;
             }
             break;
         case PHOTOMETRIC_SEPARATED:
@@ -3099,6 +3117,8 @@ static int PickContigCase(TIFFRGBAImage *img)
                     case 1:
                         img->put.contig = put1bitcmaptile;
                         break;
+                    default:
+                        break;
                 }
             }
             break;
@@ -3125,6 +3145,8 @@ static int PickContigCase(TIFFRGBAImage *img)
                         break;
                     case 1:
                         img->put.contig = put1bitbwtile;
+                        break;
+                    default:
                         break;
                 }
             }
@@ -3183,6 +3205,8 @@ static int PickContigCase(TIFFRGBAImage *img)
                         case 0x11:
                             img->put.contig = putcontig8bitYCbCr11tile;
                             break;
+                        default:
+                            break;
                     }
                 }
             }
@@ -3194,6 +3218,9 @@ static int PickContigCase(TIFFRGBAImage *img)
                     img->put.contig = initCIELabConversion(img);
                 break;
             }
+            break;
+        default:
+            break;
     }
     return ((img->get != NULL) && (img->put.contig != NULL));
 }
@@ -3245,6 +3272,8 @@ static int PickSeparateCase(TIFFRGBAImage *img)
                             img->put.separate = putRGBseparate16bittile;
                     }
                     break;
+                default:
+                    break;
             }
             break;
         case PHOTOMETRIC_SEPARATED:
@@ -3269,9 +3298,13 @@ static int PickSeparateCase(TIFFRGBAImage *img)
                             img->put.separate = putseparate8bitYCbCr11tile;
                             break;
                             /* TODO: add other cases here */
+                        default:
+                            break;
                     }
                 }
             }
+            break;
+        default:
             break;
     }
     return ((img->get != NULL) && (img->put.separate != NULL));

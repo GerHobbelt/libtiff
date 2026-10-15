@@ -64,8 +64,7 @@ static const char *openModeText[] = {"non-BigTIFF and LE", "non-BigTIFF and BE",
                         "BigTIFF and LE", "BigTIFF and BE"};
 
 /* Some functions and macros to get more readable test code. */
-static
-int CheckCurDirNum(TIFF *tif, tdir_t expected_dirnum, int line)
+static int CheckCurDirNum(TIFF *tif, tdir_t expected_dirnum, int line)
 {
 
     tdir_t curdir = TIFFCurrentDirectory(tif);
@@ -112,8 +111,7 @@ int CheckCurDirNum(TIFF *tif, tdir_t expected_dirnum, int line)
 /* Writes basic tags to current directory (IFD) as well one pixel to the file.
  * For is_corrupted = TRUE a corrupted IFD (missing image width tag) is
  * generated. */
-static
-int write_data_to_current_directory(TIFF *tif, int i, bool is_corrupted)
+static int write_data_to_current_directory(TIFF *tif, int i, bool is_corrupted)
 {
     unsigned char buf[SPP] = {0, 127, 255};
     char auxString[128];
@@ -181,9 +179,8 @@ int write_data_to_current_directory(TIFF *tif, int i, bool is_corrupted)
 
 /* Fills a new IFD and appends it to a file by opening a file and closing it
  * again after writing. */
-static
-int write_directory_to_closed_file(const char *filename, unsigned int openMode,
-                                   int i)
+static int write_directory_to_closed_file(const char *filename,
+                                          unsigned int openMode, int i)
 {
     TIFF *tif;
     /* Replace 'w' for write by 'a' for append. */
@@ -218,8 +215,7 @@ int write_directory_to_closed_file(const char *filename, unsigned int openMode,
 }
 
 /* Opens a file and counts its directories. */
-static
-int count_directories(const char *filename, int *count)
+static int count_directories(const char *filename, int *count)
 {
     TIFF *tif;
     *count = 0;
@@ -243,9 +239,8 @@ failure:
 
 /* Compare 'requested_dir_number' with number written in PageName tag
  * into the IFD to identify that IFD.  */
-static
-int is_requested_directory(TIFF *tif, int requested_dir_number,
-                           const char *filename)
+static int is_requested_directory(TIFF *tif, int requested_dir_number,
+                                  const char *filename)
 {
     char *ptr = NULL;
     char *auxStr = NULL;
@@ -290,9 +285,8 @@ enum DirWalkMode
  * N_DIRECTORIES directories.
  * There are three methods to test walking through the IFD chain.
  * This tests the optimization of faster SetDirectory(). */
-static
-int get_dir_offsets(const char *filename, uint64_t *offsets,
-                    enum DirWalkMode dirWalkMode)
+static int get_dir_offsets(const char *filename, uint64_t *offsets,
+                           enum DirWalkMode dirWalkMode)
 {
     TIFF *tif;
     int i;
@@ -352,8 +346,7 @@ int get_dir_offsets(const char *filename, uint64_t *offsets,
  * Also the case where directly after TIFFWriteDirectory() that directory
  * is re-read using TIFFSetDirectory() is tested.
  */
-static
-int test_arbitrary_directrory_loading(unsigned int openMode)
+static int test_arbitrary_directrory_loading(unsigned int openMode)
 {
     char filename[128] = {0};
     TIFF *tif;
@@ -802,8 +795,7 @@ failure:
  *
  *
  */
-static
-int test_SubIFD_directrory_handling(unsigned int openMode)
+static int test_SubIFD_directrory_handling(unsigned int openMode)
 {
     char filename[128] = {0};
 
@@ -1085,8 +1077,7 @@ failure:
  * by opening an invalid SubIFD directory (e.g. w/o required ImageLength tag).
  * The issue was fixed by MR !543.
  */
-static
-int test_SetSubDirectory_failure(unsigned int openMode)
+static int test_SetSubDirectory_failure(unsigned int openMode)
 {
     char filename[128] = {0};
 
@@ -1235,8 +1226,7 @@ failure:
  * Rewriting the first directory requires an additional test, because it is
  * treated differently from the directories that have a predecessor in the list.
  */
-static
-int test_rewrite_lastdir_offset(unsigned int openMode)
+static int test_rewrite_lastdir_offset(unsigned int openMode)
 {
     char filename[128] = {0};
     int i, count;
@@ -1394,8 +1384,7 @@ failure:
 
 /* Compares multi-directory files written with and without the lastdir
  * optimization */
-static
-int test_lastdir_offset(unsigned int openMode)
+static int test_lastdir_offset(unsigned int openMode)
 {
     char filename_optimized[128] = {0};
     char filename_non_optimized[128] = {0};
@@ -1544,9 +1533,8 @@ failure:
 
 /* Adds an EXIF IFD with some default values to the active IFD.
  */
-static
-int write_EXIF_data_to_current_directory(TIFF *tif, int i,
-                                         uint64_t *dir_offset_EXIF)
+static int write_EXIF_data_to_current_directory(TIFF *tif, int i,
+                                                uint64_t *dir_offset_EXIF)
 {
     char auxString[128];
 
@@ -1593,8 +1581,7 @@ int write_EXIF_data_to_current_directory(TIFF *tif, int i,
  * incorrectly, depending on the previous history. This function shows some of
  * these cases and tests them after the improvements.
  */
-static
-int test_current_dirnum_incrementing(int testcase, unsigned int openMode)
+static int test_current_dirnum_incrementing(int testcase, unsigned int openMode)
 {
 #define N_DIRECTORIES_2 2
     char filename[128] = {0};
@@ -2124,8 +2111,7 @@ failure:
 /* Test correct setting of tif_curdircount.
  *
  */
-static
-int test_curdircount_setting(unsigned int openMode)
+static int test_curdircount_setting(unsigned int openMode)
 {
 #define N_DIRECTORIES_2 2
     char filename[128] = {0};
@@ -2222,8 +2208,7 @@ failure:
  *   TIFFSetField() or TIFFGetField() within TIFFReadCustomDirectory() will then
  *   fail or cause a SegFault.
  */
-static
-int test_solitary_custom_directory(unsigned int openMode)
+static int test_solitary_custom_directory(unsigned int openMode)
 {
     char filename[128] = {0};
 

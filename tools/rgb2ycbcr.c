@@ -126,6 +126,9 @@ int main(int argc, const char **argv)
             case '?':
                 usage(EXIT_FAILURE);
                 /*NOTREACHED*/
+                break;
+            default:
+                break;
         }
     if (argc - optind < 2)
         usage(EXIT_FAILURE);

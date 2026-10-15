@@ -126,6 +126,8 @@ int main(int argc, const char **argv)
                                      (gray_index << 2) + gray_index);
                     j += 4;
                     break;
+                default:
+                    break;
             }
         }
         TIFFWriteScanline(tif, scan_line, i, 0);

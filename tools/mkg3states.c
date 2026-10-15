@@ -157,7 +157,7 @@ static int packoutput = 1;
 static const char *prebrace = "";
 static const char *postbrace = "";
 
-void WriteTable(FILE *fd, const TIFFFaxTabEnt *T, int Size, const char *name)
+static void WriteTable(FILE *fd, const TIFFFaxTabEnt *T, int Size, const char *name)
 {
     int i;
     char *sep;
@@ -227,6 +227,8 @@ int main(int argc, const char **argv)
                         "usage: %s [-c const] [-s storage] [-p] [-b] file\n",
                         argv[0]);
                 return (-1);
+            default:
+                break;
         }
     outputfile = optind < argc ? argv[optind] : "g3states.h";
     fd = fopen(outputfile, "w");

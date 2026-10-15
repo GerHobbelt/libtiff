@@ -275,6 +275,8 @@ int main(int argc, const char **argv)
                 usage(EXIT_FAILURE);
                 /*NOTREACHED*/
                 break;
+            default:
+                break;
         }
     if (argc - optind < 2)
         usage(EXIT_FAILURE);
@@ -335,6 +337,8 @@ int main(int argc, const char **argv)
             case COMPRESSION_DEFLATE:
                 if (predictor)
                     TIFFSetField(out, TIFFTAG_PREDICTOR, predictor);
+                break;
+            default:
                 break;
         }
         fsdither(in, out);

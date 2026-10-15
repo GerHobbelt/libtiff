@@ -153,6 +153,8 @@ int main(int argc, const char **argv)
                 usage(EXIT_FAILURE);
                 /*NOTREACHED*/
                 break;
+            default:
+                break;
         }
     if (optind >= argc)
         usage(EXIT_FAILURE);
@@ -323,7 +325,7 @@ static void ShowStrip(tstrip_t strip, unsigned char *pp, uint32_t nrow,
     }
 }
 
-void TIFFReadContigStripData(TIFF *tif)
+static void TIFFReadContigStripData(TIFF *tif)
 {
     unsigned char *buf;
     tsize_t scanline = TIFFScanlineSize(tif);
@@ -366,7 +368,7 @@ void TIFFReadContigStripData(TIFF *tif)
     }
 }
 
-void TIFFReadSeparateStripData(TIFF *tif)
+static void TIFFReadSeparateStripData(TIFF *tif)
 {
     unsigned char *buf;
     tsize_t scanline = TIFFScanlineSize(tif);
@@ -436,7 +438,7 @@ static void ShowTile(uint32_t row, uint32_t col, tsample_t sample,
     }
 }
 
-void TIFFReadContigTileData(TIFF *tif)
+static void TIFFReadContigTileData(TIFF *tif)
 {
     unsigned char *buf;
     tmsize_t rowsize = TIFFTileRowSize(tif);
@@ -488,7 +490,7 @@ void TIFFReadContigTileData(TIFF *tif)
     }
 }
 
-void TIFFReadSeparateTileData(TIFF *tif)
+static void TIFFReadSeparateTileData(TIFF *tif)
 {
     unsigned char *buf;
     tmsize_t rowsize = TIFFTileRowSize(tif);
@@ -545,7 +547,7 @@ void TIFFReadSeparateTileData(TIFF *tif)
     }
 }
 
-void TIFFReadData(TIFF *tif)
+static void TIFFReadData(TIFF *tif)
 {
     uint16_t config = PLANARCONFIG_CONTIG;
 
@@ -725,7 +727,7 @@ static void TIFFReadRawDataTiled(TIFF *tif, int bitrev)
     }
 }
 
-void TIFFReadRawData(TIFF *tif, int bitrev)
+static void TIFFReadRawData(TIFF *tif, int bitrev)
 {
     if (TIFFIsTiled(tif))
     {

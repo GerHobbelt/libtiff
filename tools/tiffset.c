@@ -261,7 +261,6 @@ int main(int argc, const char **argv)
                         case TIFF_ASCII:
                         case TIFF_SBYTE:
                         case TIFF_UNDEFINED:
-                        default:
                             size = 1;
                             break;
 
@@ -284,6 +283,10 @@ int main(int argc, const char **argv)
                         case TIFF_IFD8:
                         case TIFF_DOUBLE:
                             size = 8;
+                            break;
+                        case TIFF_NOTYPE:
+                        default:
+                            size = 1;
                             break;
                     }
 
@@ -350,6 +353,9 @@ int main(int argc, const char **argv)
                                 ((float *)array)[i] =
                                     (float)atof(argv[arg_index + i]);
                             break;
+                        case TIFF_NOTYPE:
+                        case TIFF_ASCII:
+                        case TIFF_UNDEFINED:
                         default:
                             break;
                     }
@@ -417,6 +423,9 @@ int main(int argc, const char **argv)
                             ret = TIFFSetField(tiff, TIFFFieldTag(fip),
                                                (float)atof(argv[arg_index++]));
                             break;
+                        case TIFF_NOTYPE:
+                        case TIFF_ASCII:
+                        case TIFF_UNDEFINED:
                         default:
                             break;
                     }

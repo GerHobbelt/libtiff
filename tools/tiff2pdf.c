@@ -384,8 +384,10 @@ void t2p_compose_pdf_page(T2P *);
 void t2p_compose_pdf_page_orient(T2P_BOX *, uint16_t);
 void t2p_compose_pdf_page_orient_flip(T2P_BOX *, uint16_t);
 tsize_t t2p_write_pdf_page_content(T2P *, TIFF *);
+tsize_t t2p_write_pdf_page_content_stream(T2P *, TIFF *);
 tsize_t t2p_write_pdf_xobject_stream_dict(ttile_t, T2P *, TIFF *);
 tsize_t t2p_write_pdf_xobject_cs(T2P *, TIFF *);
+tsize_t t2p_write_pdf_xobject_palettecs_stream(T2P *, TIFF *);
 tsize_t t2p_write_pdf_transfer(T2P *, TIFF *);
 tsize_t t2p_write_pdf_transfer_dict(T2P *, TIFF *, uint16_t);
 tsize_t t2p_write_pdf_transfer_stream(T2P *, TIFF *, uint16_t);
@@ -874,6 +876,8 @@ int main(int argc, const char **argv)
             case '?':
                 usage_info(EXIT_FAILURE);
                 goto fail;
+            default:
+                break;
         }
     }
 
@@ -5481,6 +5485,8 @@ void t2p_compose_pdf_page_orient(T2P_BOX *boxp, uint16_t orientation)
             boxp->mat[4] = 0.0F;
             boxp->mat[6] += m1[4];
             break;
+        default:
+            break;
     }
 
     return;
@@ -5542,6 +5548,8 @@ void t2p_compose_pdf_page_orient_flip(T2P_BOX *boxp, uint16_t orientation)
             boxp->mat[3] = 0.0F - m1[0];
             boxp->mat[4] = 0.0F;
             boxp->mat[6] += m1[0];
+            break;
+        default:
             break;
     }
 
@@ -6110,6 +6118,8 @@ tsize_t t2p_write_pdf_xobject_stream_filter(ttile_t tile, T2P *t2p,
     add_t2pWriteFile_check(output, (tdata_t) "/Filter ", 8, mod, written);
     switch (t2p->pdf_compression)
     {
+        case T2P_COMPRESS_NONE:
+            break;
 #ifdef CCITT_SUPPORT
         case T2P_COMPRESS_G4:
             add_t2pWriteFile_check(output, (tdata_t) "/CCITTFaxDecode ", 16,

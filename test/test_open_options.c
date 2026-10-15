@@ -311,9 +311,8 @@ static int test_header_byte_order(TIFF *tif, char *openModeString)
     return 0;
 }
 
-static
-int open_file_and_write(const char *filename, char *openModeString,
-                        int blnWriteIFD, int blnClose, TIFF **tifOut)
+static int open_file_and_write(const char *filename, char *openModeString,
+                               int blnWriteIFD, int blnClose, TIFF **tifOut)
 {
     TIFF *tif = TIFFOpen(filename, openModeString);
     if (tifOut != NULL)

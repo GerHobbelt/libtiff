@@ -457,6 +457,9 @@ int main(int argc, const char **argv)
                 break;
             case '?':
                 usage(EXIT_FAILURE);
+                break;
+            default:
+                break;
         }
 
     if (useImagemask == TRUE)
@@ -792,8 +795,7 @@ static char *hex = "0123456789abcdef";
  * Only one of maxPageHeight or maxPageWidth can be used.
  * These are global variables unfortunately.
  */
-static 
-int get_subimage_count(double pagewidth, double pageheight, double imagewidth,
+static int get_subimage_count(double pagewidth, double pageheight, double imagewidth,
                        double imageheight, int *ximages, int *yimages,
                        int rotation, double scale)
 {
@@ -1843,6 +1845,8 @@ int TIFF2PS(FILE *fd, TIFF *tif, double pgwidth, double pgheight, double lm,
                 case 4:
                     photometric = PHOTOMETRIC_SEPARATED;
                     break;
+                default:
+                    break;
             }
         }
 
@@ -2293,6 +2297,8 @@ static int PS_Lvl2ImageDict(FILE *fd, TIFF *tif, uint32_t w, uint32_t h)
              */
             fputs("  /Decode [0 1 0 1 0 1 0 1]\n", fd);
             break;
+        default:
+            break;
     }
     fputs("  /DataSource", fd);
     if (planarconfiguration == PLANARCONFIG_SEPARATE && samplesperpixel > 1)
@@ -2493,8 +2499,7 @@ static void PS_FlipBytes(unsigned char *buf, tsize_t count)
 
 #define MAXLINE 36
 
-static 
-int PS_Lvl2page(FILE *fd, TIFF *tif, uint32_t w, uint32_t h)
+static int PS_Lvl2page(FILE *fd, TIFF *tif, uint32_t w, uint32_t h)
 {
     uint16_t fillorder;
     int use_rawdata, tiled_image, breaklen = MAXLINE;
@@ -2655,6 +2660,8 @@ int PS_Lvl2page(FILE *fd, TIFF *tif, uint32_t w, uint32_t h)
                         buf_data[j++] = (unsigned char)(buf_data[i + 1] + adjust);
                         buf_data[j++] = (unsigned char)(buf_data[i + 2] + adjust);
                         break;
+                    default:
+                        break;
                 }
             }
             byte_count -= j;
@@ -2787,6 +2794,8 @@ void PSpage(FILE *fd, TIFF *tif, uint32_t w, uint32_t h)
             fprintf(fd, "{currentfile scanLine readhexstring pop} bind\n");
             fprintf(fd, "%s\n", imageOp);
             PSDataBW(fd, tif, w, h);
+            break;
+        default:
             break;
     }
     putc('\n', fd);
@@ -3048,6 +3057,8 @@ void PSDataPalette(FILE *fd, TIFF *tif, uint32_t w, uint32_t h)
                     PUTRGBHEX(c & 0x1, fd);
                     c >>= 1;
                     PUTRGBHEX(c, fd);
+                    break;
+                default:
                     break;
             }
         }

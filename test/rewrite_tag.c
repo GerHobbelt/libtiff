@@ -143,8 +143,8 @@ failure:
 /************************************************************************/
 /*                            rewrite_test()                            */
 /************************************************************************/
-static int rewrite_test(const char *filename, uint32_t width, int length, int bigtiff,
-                 uint64_t base_value)
+static int rewrite_test(const char *filename, uint32_t width, int length,
+                        int bigtiff, uint64_t base_value)
 
 {
     TIFF *tif;
