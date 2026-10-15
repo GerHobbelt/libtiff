@@ -56,13 +56,11 @@ static int processCompressOptions(const char *);
 
 static void compresscontig(unsigned char *out, unsigned char *rgb, uint32_t n)
 {
-    int v, red = RED, green = GREEN, blue = BLUE;
-
     while (n-- > 0)
     {
-        v = red * (*rgb++);
-        v += green * (*rgb++);
-        v += blue * (*rgb++);
+        int v = RED * (*rgb++);
+        v += GREEN * (*rgb++);
+        v += BLUE * (*rgb++);
         *out++ = (unsigned char)(v >> 8);
     }
 }
@@ -70,13 +68,10 @@ static void compresscontig(unsigned char *out, unsigned char *rgb, uint32_t n)
 static void compresssep(unsigned char *out, unsigned char *r, unsigned char *g,
                         unsigned char *b, uint32_t n)
 {
-    uint32_t red = (uint32_t)RED;
-    uint32_t green = (uint32_t)GREEN;
-    uint32_t blue = (uint32_t)BLUE;
 
     while (n-- > 0)
         *out++ =
-            (unsigned char)((red * (*r++) + green * (*g++) + blue * (*b++)) >>
+            (unsigned char)((RED * (*r++) + GREEN * (*g++) + BLUE * (*b++)) >>
                             8);
 }
 
@@ -92,14 +87,12 @@ static int checkcmap(TIFF *tif, int n, uint16_t *r, uint16_t *g, uint16_t *b)
 static void compresspalette(unsigned char *out, unsigned char *data, uint32_t n,
                             uint16_t *rmap, uint16_t *gmap, uint16_t *bmap)
 {
-    int v, red = RED, green = GREEN, blue = BLUE;
-
     while (n-- > 0)
     {
         unsigned int ix = *data++;
-        v = red * rmap[ix];
-        v += green * gmap[ix];
-        v += blue * bmap[ix];
+        int v = RED * rmap[ix];
+        v += GREEN * gmap[ix];
+        v += BLUE * bmap[ix];
         *out++ = (unsigned char)(v >> 8);
     }
 }
@@ -134,6 +127,9 @@ int main(int argc, const char **argv)
     unsigned char *inbuf, *outbuf;
     char thing[1024];
     int c;
+    int red_percent = 30;
+    int green_percent = 59;
+    int blue_percent = 11;
 
     in = (TIFF *)NULL;
     out = (TIFF *)NULL;
@@ -151,13 +147,22 @@ int main(int argc, const char **argv)
                 rowsperstrip = (uint32_t)atoi(optarg);
                 break;
             case 'R':
-                RED = PCT(atoi(optarg));
+                c = atoi(optarg);
+                if (c < 0 || c > 100)
+                    usage(EXIT_FAILURE);
+                red_percent = c;
                 break;
             case 'G':
-                GREEN = PCT(atoi(optarg));
+                c = atoi(optarg);
+                if (c < 0 || c > 100)
+                    usage(EXIT_FAILURE);
+                green_percent = c;
                 break;
             case 'B':
-                BLUE = PCT(atoi(optarg));
+                c = atoi(optarg);
+                if (c < 0 || c > 100)
+                    usage(EXIT_FAILURE);
+                blue_percent = c;
                 break;
             case 'h':
                 usage(EXIT_SUCCESS);
@@ -170,6 +175,11 @@ int main(int argc, const char **argv)
             default:
                 break;
         }
+    if (red_percent + green_percent + blue_percent != 100)
+        usage(EXIT_FAILURE);
+    RED = PCT(red_percent);
+    GREEN = PCT(green_percent);
+    BLUE = PCT(blue_percent);
     if (argc - optind < 2)
         usage(EXIT_FAILURE);
     in = TIFFOpen(argv[optind], "r");

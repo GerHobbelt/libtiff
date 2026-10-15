@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stddef.h>
 #include <stdlib.h>
 
 #include "tiffio.h"
@@ -91,6 +92,11 @@ static float *setupLuma(float c)
 {
     float *v = (float *)_TIFFmalloc(256 * sizeof(float));
     int i;
+    if (v == NULL)
+    {
+        printf("No space for luma table.\n");
+        exit(1);
+    }
     for (i = 0; i < 256; i++)
         v[i] = c * i;
     return (v);

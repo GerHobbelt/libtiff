@@ -216,7 +216,10 @@ toff_t TIFFWritePrivateDataSubDirectory(
      * of 95 tags in a directory.
      */
     fields_size = pdir_fields_last / (8 * sizeof(uint32_t)) + 1;
-    fields = _TIFFmalloc(fields_size * sizeof(uint32_t));
+    fields = _TIFFCheckMalloc(tif, fields_size, sizeof(uint32_t),
+                              "private subdirectory fields");
+    if (fields == NULL)
+        goto bad;
     _TIFFmemcpy(fields, pdir_fieldsset, fields_size * sizeof(uint32_t));
 
     /* Deleted "write out extra samples tag" code here. */
@@ -560,7 +563,12 @@ static int TIFFWritePerSampleShorts(TIFF *tif, ttag_t tag, TIFFDirEntry *dir)
     int i, status, samples = tif->tif_dir.td_samplesperpixel;
 
     if (samples > NITEMS(buf))
-        w = (uint16_t *)_TIFFmalloc(samples * sizeof(uint16_t));
+    {
+        w = (uint16_t *)_TIFFCheckMalloc(tif, samples, sizeof(uint16_t),
+                                         "per-sample values");
+        if (w == NULL)
+            return (0);
+    }
     TIFFGetField(tif, tag, &v);
     for (i = 0; i < samples; i++)
         w[i] = v;
@@ -584,7 +592,12 @@ static int TIFFWritePerSampleAnys(TIFF *tif, TIFFDataType type, ttag_t tag,
     int samples = (int)tif->tif_dir.td_samplesperpixel;
 
     if (samples > NITEMS(buf))
-        w = (double *)_TIFFmalloc(samples * sizeof(double));
+    {
+        w = (double *)_TIFFCheckMalloc(tif, samples, sizeof(double),
+                                       "per-sample values");
+        if (w == NULL)
+            return (0);
+    }
     TIFFGetField(tif, tag, &v);
     for (i = 0; i < samples; i++)
         w[i] = v;
@@ -708,7 +721,10 @@ static int TIFFWriteRationalArray(TIFF *tif, TIFFDataType type, ttag_t tag,
     dir->tdir_tag = tag;
     dir->tdir_type = (short)type;
     dir->tdir_count = n;
-    t = (uint32_t *)_TIFFmalloc(2 * n * sizeof(uint32_t));
+    t = (uint32_t *)_TIFFCheckMalloc(tif, n, 2 * sizeof(uint32_t),
+                                     "rational values");
+    if (t == NULL)
+        return (0);
     for (i = 0; i < n; i++)
     {
         float fv = v[i];
@@ -785,7 +801,12 @@ static int TIFFWriteAnyArray(TIFF *tif, TIFFDataType type, ttag_t tag,
     int i, status = 0;
 
     if (n * TIFFDataWidth(type) > sizeof buf)
-        w = (char *)_TIFFmalloc(n * TIFFDataWidth(type));
+    {
+        w = (char *)_TIFFCheckMalloc(tif, n, TIFFDataWidth(type),
+                                     "array values");
+        if (w == NULL)
+            return (0);
+    }
     switch (type)
     {
         case TIFF_BYTE:

@@ -87,6 +87,14 @@ int main(int argc, const char **argv)
     red = (uint16_t *)malloc((size_t)cmsize * sizeof(uint16_t));
     green = (uint16_t *)malloc((size_t)cmsize * sizeof(uint16_t));
     blue = (uint16_t *)malloc((size_t)cmsize * sizeof(uint16_t));
+    if (red == NULL || green == NULL || blue == NULL)
+    {
+        fprintf(stderr, "can't allocate colormap\n");
+        free(red);
+        free(green);
+        free(blue);
+        return 0;
+    }
 
     switch (bits_per_pixel)
     {
@@ -245,6 +253,15 @@ int main(int argc, const char **argv)
     TIFFSetField(tif, TIFFTAG_COLORMAP, red, green, blue);
 
     scan_line = (unsigned char *)malloc((size_t)(WIDTH / (8 / bits_per_pixel)));
+    if (scan_line == NULL)
+    {
+        fprintf(stderr, "can't allocate scanline buffer\n");
+        free(red);
+        free(green);
+        free(blue);
+        TIFFClose(tif);
+        return 0;
+    }
 
     for (i = 0; i < HEIGHT; i++)
     {

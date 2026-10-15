@@ -177,6 +177,8 @@ char *argv[];
                 if (Verbose)
                     fprintf(stderr, "%d graylevels (min=black), ", numcolors);
                 Map = (u_char *)malloc(numcolors * sizeof(u_char));
+                if (Map == NULL)
+                    error("%s: can't allocate memory for colormap...\n", NULL);
                 for (i = 0; i < numcolors; i++)
                     Map[i] = (255 * i) / numcolors;
                 Colormap.type = RMT_EQUAL_RGB;
@@ -187,6 +189,8 @@ char *argv[];
                 if (Verbose)
                     fprintf(stderr, "%d graylevels (min=white), ", numcolors);
                 Map = (u_char *)malloc(numcolors * sizeof(u_char));
+                if (Map == NULL)
+                    error("%s: can't allocate memory for colormap...\n", NULL);
                 for (i = 0; i < numcolors; i++)
                     Map[i] = 255 - ((255 * i) / numcolors);
                 Colormap.type = RMT_EQUAL_RGB;

@@ -160,10 +160,17 @@ static void svRGBSeparate(TIFF *tif, uint32_t *ss, int xsize, int ysize)
 {
     tsize_t stripsize = TIFFStripSize(tif);
     unsigned char *rbuf = (unsigned char *)_TIFFmalloc(3 * stripsize);
-    unsigned char *gbuf = rbuf + stripsize;
-    unsigned char *bbuf = gbuf + stripsize;
+    unsigned char *gbuf;
+    unsigned char *bbuf;
     register int y;
 
+    if (rbuf == NULL)
+    {
+        TIFFError(TIFFFileName(tif), "No space for strip buffers");
+        return;
+    }
+    gbuf = rbuf + stripsize;
+    bbuf = gbuf + stripsize;
     for (y = 0; y <= ysize; y += rowsperstrip)
     {
         unsigned char *rp, *gp, *bp;
@@ -207,6 +214,11 @@ static void svRGBContig(TIFF *tif, uint32_t *ss, int xsize, int ysize)
     tsize_t stripsize = TIFFStripSize(tif);
     unsigned char *strip = (unsigned char *)_TIFFmalloc(stripsize);
 
+    if (strip == NULL)
+    {
+        TIFFError(TIFFFileName(tif), "No space for strip buffer");
+        return;
+    }
     for (y = 0; y <= ysize; y += rowsperstrip)
     {
         register unsigned char *pp = strip;
@@ -247,6 +259,11 @@ static void svGrey(TIFF *tif, uint32_t *ss, int xsize, int ysize)
     register int x, y;
     unsigned char *buf = (unsigned char *)_TIFFmalloc(TIFFScanlineSize(tif));
 
+    if (buf == NULL)
+    {
+        TIFFError(TIFFFileName(tif), "No space for scanline buffer");
+        return;
+    }
     for (y = 0; y <= ysize; y++)
     {
         for (x = 0; x <= xsize; x++)
@@ -311,6 +328,12 @@ static void tiffsv(char *name, int x1, int x2, int y1, int y2)
     TIFFSetField(tif, TIFFTAG_ROWSPERSTRIP, rowsperstrip);
     scrbuf =
         (uint32_t *)_TIFFmalloc((xsize + 1) * (ysize + 1) * sizeof(uint32_t));
+    if (scrbuf == NULL)
+    {
+        TIFFError(TIFFFileName(tif), "No space for screen buffer");
+        TIFFClose(tif);
+        return;
+    }
     readdisplay(xorg, yorg, xorg + xsize, yorg + ysize, scrbuf, RD_FREEZE);
     if (photometric == PHOTOMETRIC_RGB)
     {

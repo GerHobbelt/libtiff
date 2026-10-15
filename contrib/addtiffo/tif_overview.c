@@ -398,12 +398,13 @@ static void TIFF_SetSample(unsigned char *pabyData, int nPixelBytes,
 /*      of downsampled data.                                            */
 /************************************************************************/
 
-static void TIFF_DownSample(unsigned char *pabySrcTile, uint32_t nBlockXSize,
-                            uint32_t nBlockYSize, int nPixelSkewBits,
-                            int nBitsPerPixel, unsigned char *pabyOTile,
-                            uint32_t nOBlockXSize, uint32_t nOBlockYSize,
-                            uint32_t nTXOff, uint32_t nTYOff, int nOMult,
-                            int nSampleFormat, const char *pszResampling)
+static void TIFF_DownSample(TIFF *hTIFF, unsigned char *pabySrcTile,
+                            uint32_t nBlockXSize, uint32_t nBlockYSize,
+                            int nPixelSkewBits, int nBitsPerPixel,
+                            unsigned char *pabyOTile, uint32_t nOBlockXSize,
+                            uint32_t nOBlockYSize, uint32_t nTXOff,
+                            uint32_t nTYOff, int nOMult, int nSampleFormat,
+                            const char *pszResampling)
 
 {
     uint32_t i, j;
@@ -455,6 +456,12 @@ static void TIFF_DownSample(unsigned char *pabySrcTile, uint32_t nBlockXSize,
     }
     padfSamples_size = padfSamples_count * sizeof(double);
     padfSamples = (double *)malloc(padfSamples_size);
+    if (padfSamples == NULL)
+    {
+        TIFFErrorExt(TIFFClientdata(hTIFF), "TIFF_DownSample",
+                     "Can't allocate sample buffer.");
+        return;
+    }
 
     /* ==================================================================== */
     /*      Loop over scanline chunks to process, establishing where the    */
@@ -1049,9 +1056,9 @@ void TIFF_ProcessFullResBlock(TIFF *hTIFF, int nPlanarConfig, int bSubsampled,
 #ifdef DBMALLOC
                 malloc_chain_check(1);
 #endif
-                TIFF_DownSample(pabySrcTile + nSampleByteOffset, nBlockXSize,
-                                nBlockYSize, nSkewBits, nBitsPerPixel,
-                                pabyOTile, poRBI->nBlockXSize,
+                TIFF_DownSample(hTIFF, pabySrcTile + nSampleByteOffset,
+                                nBlockXSize, nBlockYSize, nSkewBits,
+                                nBitsPerPixel, pabyOTile, poRBI->nBlockXSize,
                                 poRBI->nBlockYSize, nTXOff, nTYOff, (int)nOMult,
                                 nSampleFormat, pszResampling);
 #ifdef DBMALLOC

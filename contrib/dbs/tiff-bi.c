@@ -59,6 +59,12 @@ int main(int argc, const char **argv)
     TIFFSetField(tif, TIFFTAG_RESOLUTIONUNIT, RESUNIT_NONE);
 
     scan_line = (unsigned char *)malloc(WIDTH / 8);
+    if (scan_line == NULL)
+    {
+        fprintf(stderr, "can't allocate scanline buffer\n");
+        TIFFClose(tif);
+        return 0;
+    }
 
     for (i = 0; i < (WIDTH / 8) / 2; i++)
         scan_line[i] = 0;

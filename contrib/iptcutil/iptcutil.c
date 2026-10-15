@@ -463,6 +463,13 @@ int main(int argc, char *argv[])
         int inputlen = BUFFER_SZ;
 
         line = (char *)malloc((size_t)inputlen);
+        if (line == NULL)
+        {
+            printf("Memory allocation failed");
+            fclose(ifile);
+            fclose(ofile);
+            return 1;
+        }
         while ((line = super_fgets(line, &inputlen, ifile)) != NULL)
         {
             state = 0;
@@ -470,6 +477,16 @@ int main(int argc, char *argv[])
 
             token = (char *)malloc((size_t)inputlen);
             newstr = (char *)malloc((size_t)inputlen);
+            if (token == NULL || newstr == NULL)
+            {
+                printf("Memory allocation failed");
+                free(token);
+                free(newstr);
+                free(line);
+                fclose(ifile);
+                fclose(ofile);
+                return 1;
+            }
             while (tokenizer(0, token, inputlen, line, "", "=", "\"", 0,
                              &brkused, &next, &quoted) == 0)
             {

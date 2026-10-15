@@ -75,20 +75,68 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libtiff-4.pc
 
 # Special rules to assist with Coverity submissions.
-PACKAGE_CHANGE_DATE=`awk '/^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/ { print substr($$1,1,4) substr($$1,6,2) substr($$1,9,2); exit; }' $(top_srcdir)/ChangeLog`
-COVERITY_EMAIL=bfriesen@simple.dallas.tx.us
-COVERITY_TARBALL=libtiff.xz
+#
+# Put the Coverity submission key in $(HOME)/.coverity_key_tiff
+# Put your email address in $(HOME)/.coverity_email_tiff
+PACKAGE_CHANGE_DATE=`git -C $(top_srcdir) log -1 --format=%as`
+COVERITY_TARBALL=libtiff-cov.xz
 COVERITY_VERSION=devel-${PACKAGE_CHANGE_DATE}
 COVERITY_DESCRIPTION='libtiff development'
-coverity:
+COVERITY_COV_INT='cov-int'
+
+# Special cleaning rules
+clean-local:
+	$(RM) -rf $(COVERITY_COV_INT)
+
+# Build under Coverity
+coverity-build:
 	$(MAKE) clean
+	$(RM) -rf $(COVERITY_COV_INT)
 	cov-build --dir cov-int $(MAKE)
-	tar caf $(COVERITY_TARBALL) cov-int
-	curl --limit-rate 50K \
+
+coverity: coverity-build
+	tar caf $(COVERITY_TARBALL) $(COVERITY_COV_INT)
+	curl  \
 	--form token=`cat $$HOME/.coverity_key_tiff` \
-	--form email=$(COVERITY_EMAIL) \
+	--form email=`cat $$HOME/.coverity_email_tiff` \
 	--form file=@$(COVERITY_TARBALL) \
 	--form version=$(COVERITY_VERSION) \
 	--form description=$(COVERITY_DESCRIPTION) \
 	https://scan.coverity.com/builds?project=tiff
 	$(RM) $(COVERITY_TARBALL)
+
+# Run the Clang analyzer ('scan-build') on the project.
+#
+# In order for this to work, you must have first installed the 'clang'
+# and 'clang-tools' packages on your system.
+#
+# The project should be configured to use clang using something
+# like
+#
+# /path/to/libtiff/configure CC=clang CXX=clang++
+#
+# After doing a 'make scan-build' (which will issue additional
+# warnings for each issue found), watch for instructions at the end of
+# the build for how to run 'scan-view' with a provided local
+# path. Scan-view runs a local http server on your computer and opens
+# a (defaulted) browser window on it to view defects.
+#
+# The '-enable-checker
+# security.insecureAPI.DeprecatedOrUnsafeBufferHandling' option
+# deprecates the memcpy, memmove, memset, snprintf, sprintf, sscanf,
+# strncpy, vsnprintf, etc., ANSI C'11 "_s" functions, which GNU libc
+# did not implement and Microsoft's compiler has implemented
+# differently.  Don't bother trying to use it.
+#
+scan-build:
+	scan-build -k --html-title='libtiff scan-build' \
+	-maxloop 10000 \
+	-disable-checker deadcode.DeadStores \
+	-enable-checker security.insecureAPI.bcmp \
+	-enable-checker security.insecureAPI.bcopy \
+	-enable-checker security.insecureAPI.bzero \
+	-enable-checker security.insecureAPI.strcpy \
+	-enable-checker valist.CopyToSelf \
+	-enable-checker valist.Uninitialized \
+	-enable-checker valist.Unterminated \
+	--use-cc $(CC) $(MAKE)

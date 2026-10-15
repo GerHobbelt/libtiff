@@ -313,6 +313,8 @@ static void EstimateStripByteCounts(TIFF *tif, TIFFDirEntry *dir,
     td->td_stripbytecount =
         (uint32_t *)CheckMalloc(tif, td->td_nstrips * sizeof(uint32_t),
                                 "for \"StripByteCounts\" array");
+    if (td->td_stripbytecount == NULL)
+        return;
     if (td->td_compression != COMPRESSION_NONE)
     {
         uint32_t space =
@@ -962,7 +964,12 @@ static int TIFFFetchPerSampleShorts(TIFF *tif, TIFFDirEntry *dir, int *pl)
         uint16_t *v = buf;
 
         if (samples > NITEMS(buf))
-            v = (uint16_t *)_TIFFmalloc(samples * sizeof(uint16_t));
+        {
+            v = (uint16_t *)CheckMalloc(tif, samples * sizeof(uint16_t),
+                                        "for per-sample values");
+            if (v == NULL)
+                goto bad;
+        }
         if (TIFFFetchShortArray(tif, dir, v))
         {
             int i;
@@ -1002,7 +1009,12 @@ static int TIFFFetchPerSampleAnys(TIFF *tif, TIFFDirEntry *dir, double *pl)
         double *v = buf;
 
         if (samples > NITEMS(buf))
-            v = (double *)_TIFFmalloc(samples * sizeof(double));
+        {
+            v = (double *)CheckMalloc(tif, samples * sizeof(double),
+                                      "for per-sample values");
+            if (v == NULL)
+                goto bad;
+        }
         if (TIFFFetchAnyArray(tif, dir, v))
         {
             int i;
@@ -1081,7 +1093,12 @@ static int TIFFFetchExtraSamples(TIFF *tif, TIFFDirEntry *dir)
     int status;
 
     if (dir->tdir_count > NITEMS(buf))
-        v = (uint16_t *)_TIFFmalloc(dir->tdir_count * sizeof(uint16_t));
+    {
+        v = (uint16_t *)CheckMalloc(tif, dir->tdir_count * sizeof(uint16_t),
+                                    "for \"ExtraSamples\" values");
+        if (v == NULL)
+            return (0);
+    }
     if (dir->tdir_type == TIFF_BYTE)
         status = TIFFFetchByteArray(tif, dir, v);
     else

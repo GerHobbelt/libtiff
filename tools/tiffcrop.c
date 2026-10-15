@@ -7367,8 +7367,8 @@ static int getCropOffsets(struct image_data *image, struct crop_mask *crop,
                 crop->regionlist[i].y2 = offsets.endy;
 
                 crop->regionlist[i].x1 =
-                    offsets.startx + (uint32_t)(offsets.crop_width *
-                                                (total - seg) * 1.0 / total);
+                    offsets.startx + (uint32_t)((double)offsets.crop_width *
+                                                (double)(total - seg) / total);
                 /* FAULT: IMHO from here on, the calculation of y2 are based on
                  * wrong assumptions. The whole image is assumed and 'endy' and
                  * 'starty' are not respected anymore!*/
@@ -7400,6 +7400,11 @@ static int getCropOffsets(struct image_data *image, struct crop_mask *crop,
                 if (crop->regionlist[i].x2 < offsets.startx)
                 {
                     crop->regionlist[i].x2 = offsets.startx;
+                }
+                if (crop->regionlist[i].x2 < crop->regionlist[i].x1)
+                {
+                    TIFFError("getCropOffsets", "Invalid zone width");
+                    return -1;
                 }
                 zwidth = crop->regionlist[i].x2 - crop->regionlist[i].x1 + 1;
 

@@ -359,7 +359,14 @@ int main(int argc, const char **argv)
                 TIFFClose(out);
                 return (EXIT_FAILURE);
             }
-            buf = (unsigned char *)_TIFFmalloc(linebytes);
+            buf = (unsigned char *)_TIFFCheckMalloc(
+                out, linebytes, sizeof(unsigned char), "scanline buffer");
+            if (buf == NULL)
+            {
+                close(fd);
+                TIFFClose(out);
+                return (EXIT_FAILURE);
+            }
             break;
         }
         case PIXEL: /* pixel interleaved data */
@@ -395,7 +402,15 @@ int main(int argc, const char **argv)
             return (EXIT_FAILURE);
         }
     }
-    buf1 = (unsigned char *)_TIFFmalloc(bufsize);
+    buf1 = (unsigned char *)_TIFFCheckMalloc(
+        out, bufsize, sizeof(unsigned char), "input buffer");
+    if (buf1 == NULL)
+    {
+        _TIFFfree(buf);
+        close(fd);
+        TIFFClose(out);
+        return (EXIT_FAILURE);
+    }
 
     rowsperstrip = TIFFDefaultStripSize(out, rowsperstrip);
     if (rowsperstrip > length)
@@ -648,6 +663,13 @@ static int guessSize(int fd, TIFFDataType dtype, _TIFF_off_t hdr_size,
                  * compare line 0 and line 1 */
                 buf1 = (char *)_TIFFmalloc(scanlinesize);
                 buf2 = (char *)_TIFFmalloc(scanlinesize);
+                if (buf1 == NULL || buf2 == NULL)
+                {
+                    fprintf(stderr, "No space for scanline buffers.\n");
+                    _TIFFfree(buf1);
+                    _TIFFfree(buf2);
+                    return -1;
+                }
                 do
                 {
                     uint64_t seek_row = (uint32_t)((h - 1) / 2);

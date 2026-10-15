@@ -213,8 +213,10 @@ int main(int argc, const char **argv)
      * STEP 1:  create empty boxes
      */
     usedboxes = NULL;
-    box_list = freeboxes = (Colorbox *)_TIFFmalloc(
-        (tmsize_t)((size_t)num_colors * sizeof(Colorbox)));
+    box_list = freeboxes = (Colorbox *)_TIFFCheckMalloc(
+        in, num_colors, sizeof(Colorbox), "color boxes");
+    if (box_list == NULL)
+        exit(EXIT_FAILURE);
     freeboxes[0].next = &freeboxes[1];
     freeboxes[0].prev = NULL;
     for (i = 1; i < num_colors - 1; ++i)
@@ -269,8 +271,10 @@ int main(int argc, const char **argv)
      * STEP 5: scan histogram and map all values to closest color
      */
     /* 5a: create cell list as described in Heckbert[2] */
-    ColorCells =
-        (C_cell **)_TIFFmalloc(C_LEN * C_LEN * C_LEN * sizeof(C_cell *));
+    ColorCells = (C_cell **)_TIFFCheckMalloc(in, C_LEN * C_LEN * C_LEN,
+                                             sizeof(C_cell *), "color cells");
+    if (ColorCells == NULL)
+        exit(EXIT_FAILURE);
     _TIFFmemset(ColorCells, 0, C_LEN * C_LEN * C_LEN * sizeof(C_cell *));
     /* 5b: create mapping from truncated pixel space to color
        table entries */
@@ -749,6 +753,11 @@ static C_cell *create_colorcell(int red, int green, int blue)
     ig = green >> (COLOR_DEPTH - C_DEPTH);
     ib = blue >> (COLOR_DEPTH - C_DEPTH);
     ptr = (C_cell *)_TIFFmalloc(sizeof(C_cell));
+    if (ptr == NULL)
+    {
+        fprintf(stderr, "No space for color cell\n");
+        exit(EXIT_FAILURE);
+    }
     *(ColorCells + ir * C_LEN * C_LEN + ig * C_LEN + ib) = ptr;
     ptr->num_ents = 0;
 
@@ -886,8 +895,13 @@ static void quant(TIFF *local_in, TIFF *local_out)
     uint32_t i, j;
     int red, green, blue;
 
-    inputline = (unsigned char *)_TIFFmalloc(TIFFScanlineSize(local_in));
-    outline = (unsigned char *)_TIFFmalloc(imagewidth);
+    inputline = (unsigned char *)_TIFFCheckMalloc(
+        local_in, TIFFScanlineSize(local_in), sizeof(unsigned char),
+        "input scanline buffer");
+    outline = (unsigned char *)_TIFFCheckMalloc(
+        local_out, imagewidth, sizeof(unsigned char), "output scanline buffer");
+    if (inputline == NULL || outline == NULL)
+        exit(EXIT_FAILURE);
     for (i = 0; i < imagelength; i++)
     {
         if (TIFFReadScanline(local_in, inputline, i, 0) <= 0)
@@ -954,12 +968,19 @@ static void quant_fsdither(TIFF *local_in, TIFF *local_out)
 
     imax = imagelength - 1;
     jmax = imagewidth - 1;
-    inputline = (unsigned char *)_TIFFmalloc(TIFFScanlineSize(local_in));
-    thisline = (short *)_TIFFmalloc(
-        (tmsize_t)((size_t)imagewidth * 3 * sizeof(short)));
-    nextline = (short *)_TIFFmalloc(
-        (tmsize_t)((size_t)imagewidth * 3 * sizeof(short)));
-    outline = (unsigned char *)_TIFFmalloc(TIFFScanlineSize(local_out));
+    inputline = (unsigned char *)_TIFFCheckMalloc(
+        local_in, TIFFScanlineSize(local_in), sizeof(unsigned char),
+        "input scanline buffer");
+    thisline = (short *)_TIFFCheckMalloc(local_in, (tmsize_t)imagewidth * 3,
+                                         sizeof(short), "dither buffer");
+    nextline = (short *)_TIFFCheckMalloc(local_in, (tmsize_t)imagewidth * 3,
+                                         sizeof(short), "dither buffer");
+    outline = (unsigned char *)_TIFFCheckMalloc(
+        local_out, TIFFScanlineSize(local_out), sizeof(unsigned char),
+        "output scanline buffer");
+    if (inputline == NULL || thisline == NULL || nextline == NULL ||
+        outline == NULL)
+        exit(EXIT_FAILURE);
 
     GetInputLine(local_in, 0, goto bad); /* get first line */
     for (i = 0; i < imagelength; ++i)

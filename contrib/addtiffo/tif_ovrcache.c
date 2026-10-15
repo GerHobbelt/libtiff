@@ -47,6 +47,12 @@ TIFFOvrCache *TIFFCreateOvrCache(TIFF *hTIFF, toff_t nDirOffset)
     int nRet;
 
     psCache = (TIFFOvrCache *)_TIFFmalloc(sizeof(TIFFOvrCache));
+    if (psCache == NULL)
+    {
+        TIFFErrorExt(hTIFF->tif_clientdata, hTIFF->tif_name,
+                     "Can't allocate memory for overview cache.");
+        return NULL;
+    }
     psCache->nDirOffset = nDirOffset;
     psCache->hTIFF = hTIFF;
 

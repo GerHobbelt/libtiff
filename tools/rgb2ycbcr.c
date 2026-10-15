@@ -169,6 +169,11 @@ static float *setupLuma(float c)
 {
     float *v = (float *)_TIFFmalloc(256 * sizeof(float));
     int i;
+    if (v == NULL)
+    {
+        fprintf(stderr, "No space for luma table\n");
+        exit(EXIT_FAILURE);
+    }
     for (i = 0; i < 256; i++)
         v[i] = c * (float)i;
     return (v);
@@ -349,8 +354,10 @@ static int cvtRaster(TIFF *tif, uint32_t *raster, uint32_t width,
     cc = computeYCbCrStripSize(tif, rnrows, rwidth, "YCbCr strip size");
     if (cc == 0)
         return 0;
-    buf = (unsigned char *)_TIFFmalloc(cc);
-    // FIXME unchecked malloc
+    buf = (unsigned char *)_TIFFCheckMalloc(tif, cc, sizeof(unsigned char),
+                                            "YCbCr strip buffer");
+    if (buf == NULL)
+        return 0;
     for (y = height; (int32_t)y > 0; y -= nrows)
     {
         uint32_t nr = (y > nrows ? nrows : y);

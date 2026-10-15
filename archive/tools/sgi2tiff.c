@@ -205,11 +205,21 @@ static int cpContig(IMAGE *in, TIFF *out)
     short *r = NULL;
     int x, y;
 
+    if (buf == NULL)
+    {
+        fprintf(stderr, "No space for scanline buffer.\n");
+        goto bad;
+    }
     if (in->zsize == 3)
     {
         short *g, *b;
 
         r = (short *)_TIFFmalloc(3 * in->xsize * sizeof(short));
+        if (r == NULL)
+        {
+            fprintf(stderr, "No space for scanline buffer.\n");
+            goto bad;
+        }
         g = r + in->xsize;
         b = g + in->xsize;
         for (y = in->ysize - 1; y >= 0; y--)
@@ -235,6 +245,11 @@ static int cpContig(IMAGE *in, TIFF *out)
         short *g, *b, *a;
 
         r = (short *)_TIFFmalloc(4 * in->xsize * sizeof(short));
+        if (r == NULL)
+        {
+            fprintf(stderr, "No space for scanline buffer.\n");
+            goto bad;
+        }
         g = r + in->xsize;
         b = g + in->xsize;
         a = b + in->xsize;
@@ -263,6 +278,11 @@ static int cpContig(IMAGE *in, TIFF *out)
         uint8_t *pp = (uint8_t *)buf;
 
         r = (short *)_TIFFmalloc(in->xsize * sizeof(short));
+        if (r == NULL)
+        {
+            fprintf(stderr, "No space for scanline buffer.\n");
+            goto bad;
+        }
         for (y = in->ysize - 1; y >= 0; y--)
         {
             getrow(in, r, y, 0);
@@ -290,6 +310,11 @@ static int cpSeparate(IMAGE *in, TIFF *out)
     uint8_t *pp = (uint8_t *)buf;
     int x, y, z;
 
+    if (buf == NULL || r == NULL)
+    {
+        fprintf(stderr, "No space for scanline buffers.\n");
+        goto bad;
+    }
     for (z = 0; z < in->zsize; z++)
     {
         for (y = in->ysize - 1; y >= 0; y--)

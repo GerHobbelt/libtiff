@@ -246,12 +246,20 @@ int main(int argc, const char **argv)
     linebytes = ((h.ras_depth * h.ras_width + 15) >> 3) & ~1;
     scanline = TIFFScanlineSize(out);
     if (scanline > linebytes)
-    {
         buf = (unsigned char *)_TIFFmalloc(scanline);
-        _TIFFmemset(buf + linebytes, 0, scanline - linebytes);
-    }
     else
         buf = (unsigned char *)_TIFFmalloc(linebytes);
+    if (buf == NULL)
+    {
+        fprintf(stderr, "No space for scanline buffer.\n");
+        fclose(in);
+        TIFFClose(out);
+        /* -8 is already used for a colormap allocation failure; -9 indicates
+         * a scanline buffer allocation failure. */
+        return (-9);
+    }
+    if (scanline > linebytes)
+        _TIFFmemset(buf + linebytes, 0, scanline - linebytes);
     TIFFSetField(out, TIFFTAG_ROWSPERSTRIP,
                  TIFFDefaultStripSize(out, rowsperstrip));
     for (row = 0; row < h.ras_height; row++)
