@@ -435,7 +435,7 @@ static int readTestTiff(const char *szFileName, int isBigTiff)
     {
         fprintf(stdout,
                 "Error reading C16_SINT8: ret=%d; count=%d; pointer=%p\n", ret,
-                count, s8p);
+                count, (void*)s8p);
         GOTOFAILURE
     }
     else
@@ -459,7 +459,7 @@ static int readTestTiff(const char *szFileName, int isBigTiff)
     {
         fprintf(stdout,
                 "Error reading C16_SINT16: ret=%d; count=%d; pointer=%p\n", ret,
-                count, s16p);
+                count, (void*)s16p);
         GOTOFAILURE
     }
     else
@@ -483,7 +483,7 @@ static int readTestTiff(const char *szFileName, int isBigTiff)
     {
         fprintf(stdout,
                 "Error reading C16_SINT32: ret=%d; count=%d; pointer=%p\n", ret,
-                count, s32p);
+                count, (void*)s32p);
         GOTOFAILURE
     }
     else
@@ -550,7 +550,7 @@ static int readTestTiff(const char *szFileName, int isBigTiff)
         {
             fprintf(stdout,
                     "Error reading C16_SINT64: ret=%d; count=%d; pointer=%p\n",
-                    ret, count, s64p);
+                    ret, count, (void*)s64p);
             GOTOFAILURE
         }
         else
@@ -574,7 +574,7 @@ static int readTestTiff(const char *szFileName, int isBigTiff)
         {
             fprintf(stdout,
                     "Error reading C32_SINT64: ret=%d; count=%d; pointer=%p\n",
-                    ret, count, s64p);
+                    ret, count, (void*)s64p);
             GOTOFAILURE
         }
         else
@@ -801,7 +801,7 @@ static int readTestTiff_ignore_some_tags(const char *szFileName)
     if (ret != 0)
     {
         fprintf(stdout,
-                "Error: Tag %d, set to be ignored, has been read from file.\n",
+                "Error: Tag %u, set to be ignored, has been read from file.\n",
                 tiff_field_info[2].field_tag);
         GOTOFAILURE
     }
@@ -810,7 +810,7 @@ static int readTestTiff_ignore_some_tags(const char *szFileName)
     if (ret != 0)
     {
         fprintf(stdout,
-                "Error: Tag %d, set to be ignored, has been read from file.\n",
+                "Error: Tag %u, set to be ignored, has been read from file.\n",
                 tiff_field_info[4].field_tag);
         GOTOFAILURE
     }

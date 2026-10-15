@@ -785,7 +785,7 @@ static uint32_t _TIFFRand(void)
         (uint32_t)(((uint64_t)(nCounter)*1103515245U + 12345U) & UINT32_MAX);
     nCounter = nCounterLocal;
     return (nCounterLocal / 65536U) % (TIFF_RAND_MAX + 1);
-};
+}
 
 static int tiff_itrunc(double x, int m)
 {

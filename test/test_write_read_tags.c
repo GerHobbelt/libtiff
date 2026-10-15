@@ -572,8 +572,8 @@ int write_test_tiff(TIFF *tif, const char *filenameRead)
     {
         fprintf(stderr,
                 "Read value of IMAGEWIDTH %" PRIu32
-                " differs from set value %" PRIu16 ".\n",
-                auxUint32, width);
+                " differs from set value %u.\n",
+                auxUint32, (unsigned int)width);
         goto failure;
     }
     if (!TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &auxUint32))
@@ -585,8 +585,8 @@ int write_test_tiff(TIFF *tif, const char *filenameRead)
     {
         fprintf(stderr,
                 "Read value of TIFFTAG_IMAGELENGTH %" PRIu32
-                " differs from set value %" PRIu16 ".\n",
-                auxUint32, length);
+                " differs from set value %u.\n",
+                auxUint32, (unsigned int)length);
         goto failure;
     }
 
@@ -602,9 +602,8 @@ int write_test_tiff(TIFF *tif, const char *filenameRead)
         if (auxUint16 != NINKS)
         {
             fprintf(stderr,
-                    "Read value of TIFFTAG_NUMBEROFINKS %" PRIu32
-                    " differs from set value %" PRIu16 ".\n",
-                    auxUint16, NINKS);
+                    "Read value of TIFFTAG_NUMBEROFINKS %u differs from set value %u.\n",
+                    auxUint16, (unsigned int)NINKS);
             goto failure;
         }
     }
@@ -861,7 +860,7 @@ int testPasscountFlag(const char *szMsg, const TIFFFieldArray *tFieldArray,
                 fprintf(stderr, "\n");
             fprintf(stderr,
                     "WriteCount %d for tag \t%-25s does not fit to "
-                    "'set_get_field_type' %d. "
+                    "'set_get_field_type' %u. "
                     "Should be TIFF_VARIABLE2=-3\n",
                     tFieldArray->fields[t].field_writecount,
                     tFieldArray->fields[t].field_name,
@@ -888,7 +887,7 @@ int testPasscountFlag(const char *szMsg, const TIFFFieldArray *tFieldArray,
                     fprintf(stderr, "\n");
                 fprintf(stderr,
                         "WriteCount %d for tag \t%-25s does not fit to "
-                        "'set_get_field_type' %d. "
+                        "'set_get_field_type' %u. "
                         "Should be TIFF_VARIABLE=-1\n",
                         tFieldArray->fields[t].field_writecount,
                         tFieldArray->fields[t].field_name,
@@ -913,7 +912,7 @@ int testPasscountFlag(const char *szMsg, const TIFFFieldArray *tFieldArray,
                     fprintf(stderr, "\n");
                 fprintf(stderr,
                         "WriteCount %d for tag \t%-25s does not fit to "
-                        "'set_get_field_type' %d. "
+                        "'set_get_field_type' %u. "
                         "Should be >1. \n",
                         tFieldArray->fields[t].field_writecount,
                         tFieldArray->fields[t].field_name,
@@ -931,7 +930,7 @@ int testPasscountFlag(const char *szMsg, const TIFFFieldArray *tFieldArray,
                 fprintf(stderr, "\n");
             fprintf(stderr,
                     "WriteCount %d for tag \t%-25s does not fit to "
-                    "'set_get_field_type' %d. "
+                    "'set_get_field_type' %u. "
                     "Should be 1. \n",
                     tFieldArray->fields[t].field_writecount,
                     tFieldArray->fields[t].field_name,
@@ -1117,7 +1116,7 @@ int write_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                 else
                 {
                     fprintf(stderr,
-                            "WriteCount for .set_get_field_type %d should be "
+                            "WriteCount for .set_get_field_type %u should be "
                             "1!  %s\n",
                             tSetFieldType, tFieldArray->fields[t].field_name);
                 }
@@ -1205,7 +1204,7 @@ int write_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                 break;
             default:
                 fprintf(stderr,
-                        "SetFieldType %d not defined within writing switch for "
+                        "SetFieldType %u not defined within writing switch for "
                         "%s.\n",
                         tSetFieldType, tFieldName);
         }; /*-- switch(tSetFieldType) --*/
@@ -1221,7 +1220,7 @@ int write_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
             if (tWriteCount == 1)
             {
                 fprintf(stderr,
-                        "WriteCount for .set_get_field_type %d should be -1 or "
+                        "WriteCount for .set_get_field_type %u should be -1 or "
                         "greater than 1!  %s\n",
                         tSetFieldType, tFieldArray->fields[t].field_name);
             }
@@ -1366,7 +1365,7 @@ int read_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                 if (retCode2 != 0)
                 {
                     fprintf(stderr,
-                            "%d:Read value of %s %s differs from set value "
+                            "%u:Read value of %s %s differs from set value "
                             "%s\n",
                             i, tFieldName, auxCharArray, auxTextArrayW[i]);
                     GOTOFAILURE
@@ -1410,7 +1409,7 @@ int read_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                 if (auxInt32 != (char)auxInt32ArrayW[i])
                 {
                     fprintf(stderr,
-                            "%d:Read value of %s %d differs from set "
+                            "%u:Read value of %s %d differs from set "
                             "value %d\n",
                             i, tFieldName, auxInt32, auxInt32ArrayW[i]);
                 }
@@ -1429,7 +1428,7 @@ int read_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                 if (auxInt32 != (short)auxInt32ArrayW[i])
                 {
                     fprintf(stderr,
-                            "%d:Read value of %s %d differs from set "
+                            "%u:Read value of %s %d differs from set "
                             "value %d\n",
                             i, tFieldName, auxInt32, auxInt32ArrayW[i]);
                     GOTOFAILURE
@@ -1448,7 +1447,7 @@ int read_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                     auxShortArray[1] != auxInt32ArrayW[i])
                 {
                     fprintf(stderr,
-                            "%d:Read value of %s %d/%d UINT16_PAIR differs "
+                            "%u:Read value of %s %d/%d UINT16_PAIR differs "
                             "from set "
                             "values %d/%d\n",
                             i, tFieldName, auxShortArray[0], auxShortArray[1],
@@ -1480,9 +1479,9 @@ int read_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                         if (auxUint32 != auxU)
                         {
                             fprintf(stderr,
-                                    "%d:Read value of %s %d differs "
+                                    "%u:Read value of %s %u differs "
                                     "from set "
-                                    "value %d\n",
+                                    "value %u\n",
                                     i, tFieldName, auxUint32, auxU);
                             GOTOFAILURE
                         }
@@ -1490,7 +1489,7 @@ int read_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                     else
                     {
                         fprintf(stderr,
-                                "%d:Read value of %s %d differs from set "
+                                "%u:Read value of %s %d differs from set "
                                 "value %d\n",
                                 i, tFieldName, auxInt32, auxInt32ArrayW[i]);
                         GOTOFAILURE
@@ -1510,7 +1509,7 @@ int read_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                 if (auxUint64 != (uint64_t)auxInt32ArrayW[i])
                 {
                     fprintf(stderr,
-                            "%d:Read value of %s %" PRIu64 " differs from set"
+                            "%u:Read value of %s %" PRIu64 " differs from set"
                             "value %d\n",
                             i, tFieldName, auxUint64, auxInt32ArrayW[i]);
                     GOTOFAILURE
@@ -1531,7 +1530,7 @@ int read_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                     if (unionInt32.Short1 != 1 && auxUint64 != 18)
                     {
                         fprintf(stderr,
-                                "%d:Read value of %s %" PRIu64
+                                "%u:Read value of %s %" PRIu64
                                 " differs from set"
                                 "value %d\n",
                                 i, tFieldName, auxUint64, 18);
@@ -1574,7 +1573,7 @@ int read_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                     if (!(tTag == EXIFTAG_SUBJECTDISTANCE && auxFloat == -1.0))
                     {
                         fprintf(stderr,
-                                "%d:Read value of %s %f differs from set value "
+                                "%u:Read value of %s %f differs from set value "
                                 "%f\n",
                                 i, tFieldName, auxFloat, auxDoubleArrayW[i]);
                         GOTOFAILURE
@@ -1604,7 +1603,7 @@ int read_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                     if (!(tTag == EXIFTAG_SUBJECTDISTANCE && auxDouble == -1.0))
                     {
                         fprintf(stderr,
-                                "%d:Read value of %s %f differs from set value "
+                                "%u:Read value of %s %f differs from set value "
                                 "%f\n",
                                 i, tFieldName, auxDouble, auxDoubleArrayW[i]);
                         GOTOFAILURE
@@ -1649,7 +1648,7 @@ int read_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                 {
                     fprintf(
                         stderr,
-                        "WriteCount for .set_get_field_type %d should be -1, "
+                        "WriteCount for .set_get_field_type %u should be -1, "
                         "-2, -3 or "
                         "greater than 1!  %s\n",
                         tSetFieldType, tFieldArray->fields[t].field_name);
@@ -1725,7 +1724,7 @@ int read_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                             if (fabs(dblDiff) > fabs(dblDiffLimit))
                             {
                                 fprintf(stderr,
-                                        "Read value %d of %s #%d %f differs "
+                                        "Read value %u of %s #%d %f differs "
                                         "from set value %f\n",
                                         i, tFieldName, j, auxFloatArray[j],
                                         auxFloatArrayW[i + j]);
@@ -1751,7 +1750,7 @@ int read_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                             if (fabs(dblDiff) > fabs(dblDiffLimit))
                             {
                                 fprintf(stderr,
-                                        "Read value %d of %s #%d %f differs "
+                                        "Read value %u of %s #%d %f differs "
                                         "from set value %f\n",
                                         i, tFieldName, j, auxDoubleArray[j],
                                         auxDoubleArrayW[i + j]);
@@ -1788,7 +1787,7 @@ int read_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                             if (auxCharArray[j] != auxCharCompare[j])
                             {
                                 fprintf(stderr,
-                                        "Read value %d of %s #%d %d differs "
+                                        "Read value %u of %s #%d %d differs "
                                         "from set value %d\n",
                                         i, tFieldName, j, auxCharArray[j],
                                         auxCharArrayW[i + j]);
@@ -1811,7 +1810,7 @@ int read_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                             if (auxShortArray[j] != auxShortArrayW[i + j])
                             {
                                 fprintf(stderr,
-                                        "Read value %d of %s #%d %d "
+                                        "Read value %u of %s #%d %d "
                                         "differs from "
                                         "set value %d\n",
                                         i, tFieldName, j, auxShortArray[j],
@@ -1835,7 +1834,7 @@ int read_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                             if (auxInt32Array[j] != auxInt32ArrayW[i + j])
                             {
                                 fprintf(stderr,
-                                        "Read value %d of %s #%d %d "
+                                        "Read value %u of %s #%d %d "
                                         "differs from "
                                         "set value %d\n",
                                         i, tFieldName, j, auxInt32Array[j],
@@ -1847,7 +1846,7 @@ int read_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                     else
                     {
                         fprintf(stderr,
-                                "SetFieldType %d not defined within array"
+                                "SetFieldType %u not defined within array"
                                 "reading clause for %s.\n",
                                 tSetFieldType, tFieldName);
                         GOTOFAILURE
@@ -1863,7 +1862,7 @@ int read_all_tags(TIFF *tif, const TIFFFieldArray *tFieldArray,
                 break;
             default:
                 fprintf(stderr,
-                        "SetFieldType %d not defined within reading switch for "
+                        "SetFieldType %u not defined within reading switch for "
                         "%s.\n",
                         tSetFieldType, tFieldName);
                 GOTOFAILURE

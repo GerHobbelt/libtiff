@@ -33,6 +33,7 @@
 #define SCALE(x) ((x)*257L)
 
 static const char *programName = NULL;
+
 static void Usage(void);
 
 int main(int argc, const char **argv)

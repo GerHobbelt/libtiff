@@ -618,7 +618,7 @@ int TIFFRGBAImageGet(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
     {
         TIFFErrorExtR(img->tif, TIFFFileName(img->tif),
                       "Error in TIFFRGBAImageGet: row offset %d exceeds "
-                      "image height %d",
+                      "image height %u",
                       img->row_offset, img->height);
         return 0;
     }
@@ -729,7 +729,7 @@ static int gtTileContig(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
     {
         TIFFErrorExtR(tif, TIFFFileName(tif),
                       "Error in gtTileContig: column offset %d exceeds "
-                      "image width %d",
+                      "image width %u",
                       img->col_offset, img->width);
         return 0;
     }
@@ -902,7 +902,7 @@ static int gtTileSeparate(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
     {
         TIFFErrorExtR(tif, TIFFFileName(tif),
                       "Error in gtTileSeparate: column offset %d exceeds "
-                      "image width %d",
+                      "image width %u",
                       img->col_offset, img->width);
         return 0;
     }
@@ -1133,7 +1133,7 @@ static int gtStripContig(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
     {
         TIFFErrorExtR(tif, TIFFFileName(tif),
                       "Error in gtStripContig: column offset %d exceeds "
-                      "image width %d",
+                      "image width %u",
                       img->col_offset, imagewidth);
         return 0;
     }
@@ -1278,7 +1278,7 @@ static int gtStripSeparate(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
     {
         TIFFErrorExtR(tif, TIFFFileName(tif),
                       "Error in gtStripSeparate: column offset %d exceeds "
-                      "image width %d",
+                      "image width %u",
                       img->col_offset, imagewidth);
         return 0;
     }
