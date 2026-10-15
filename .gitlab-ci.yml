@@ -134,33 +134,37 @@ windows-vs2026-release:
   stage: build
   rules:
     - if: '$CI_PROJECT_PATH == "libtiff/libtiff"'
-  tags: [windows, vs2026]
+  tags: [windows, docker]
+  image: registry.gitlab.com/codelibre/containers/vs2026-libtiff:latest
   script:
-    - pwsh build/gitlab-ci.ps1 -VSVersion 2026 Ninja Release
+    - powershell build/gitlab-ci.ps1 Ninja Release
 
 windows-vs2026-debug:
   stage: build
   rules:
     - if: '$CI_PROJECT_PATH == "libtiff/libtiff"'
-  tags: [windows, vs2026]
+  tags: [windows, docker]
+  image: registry.gitlab.com/codelibre/containers/vs2026-libtiff:latest
   script:
-    - pwsh build/gitlab-ci.ps1 -VSVersion 2026 Ninja Debug
+    - powershell build/gitlab-ci.ps1 Ninja Debug
 
 windows-vs2022-release:
   stage: build
   rules:
     - if: '$CI_PROJECT_PATH == "libtiff/libtiff"'
-  tags: [windows, vs2022]
+  tags: [windows, docker]
+  image: registry.gitlab.com/codelibre/containers/vs2022-libtiff:latest
   script:
-    - pwsh build/gitlab-ci.ps1 -VSVersion 2022 Ninja Release
+    - powershell build/gitlab-ci.ps1 Ninja Release
 
 windows-vs2022-debug:
   stage: build
   rules:
     - if: '$CI_PROJECT_PATH == "libtiff/libtiff"'
-  tags: [windows, vs2022]
+  tags: [windows, docker]
+  image: registry.gitlab.com/codelibre/containers/vs2022-libtiff:latest
   script:
-    - pwsh build/gitlab-ci.ps1 -VSVersion 2022 Ninja Debug
+    - powershell build/gitlab-ci.ps1 Ninja Debug
 
 windows-cygwin-release:
   stage: build

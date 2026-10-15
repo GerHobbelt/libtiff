@@ -58,6 +58,10 @@
 
 #include <tiffio.h>
 
+#ifdef _MSC_VER
+#pragma warning(disable : 4127) /* conditional expression is constant */
+#endif
+
 #define FAULT_RETURN 1
 #define OK_RETURN 0
 
@@ -624,8 +628,8 @@ static int readTestTiff(const char *szFileName, int isBigTiff,
 
     /* Copy const array to be manipulated and freed just after TIFFMergeFields()
      * within the "extender()" called by TIFFOpen(). */
-    TIFFFieldInfo *tiff_field_info2;
-    TIFFFieldInfo *tiff_field_info_sav;
+    TIFFFieldInfo *tiff_field_info2 = NULL;
+    TIFFFieldInfo *tiff_field_info_sav = NULL;
     const char *strAux = "";
     if (isIFD8LONG8Exchange)
     {

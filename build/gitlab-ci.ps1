@@ -1,17 +1,12 @@
 # PowerShell script for Windows CI builds with Visual Studio
 # Used by GitLab CI for VS2026 and VS2022 builds
 #
-# Usage: pwsh build/gitlab-ci.ps1 [-VSVersion <version>] <generator> <build_type> [static]
-#   -VSVersion: Visual Studio version year (e.g., "2022", "2026"). If not specified, uses latest.
+# Usage: pwsh build/gitlab-ci.ps1 <generator> <build_type> [static]
 #   generator:  CMake generator (e.g., "Ninja", "Visual Studio 17 2022")
 #   build_type: Release or Debug
 #   static:     Optional, use "static" for static library build
 
 param(
-    [Parameter()]
-    [ValidateSet("2019", "2022", "2026", "")]
-    [string]$VSVersion = "",
-
     [Parameter(Mandatory=$true, Position=0)]
     [string]$Generator,
 
@@ -22,14 +17,6 @@ param(
     [Parameter(Position=2)]
     [string]$LinkType = ""
 )
-
-# Map VS year to major version number for vswhere
-# VS2019 = 16.x, VS2022 = 17.x, VS2026 = 18.x
-$VSVersionMap = @{
-    "2019" = @{ Min = "16.0"; Max = "17.0" }
-    "2022" = @{ Min = "17.0"; Max = "18.0" }
-    "2026" = @{ Min = "18.0"; Max = "19.0" }
-}
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
@@ -42,7 +29,7 @@ $TestBuildDir = Join-Path $SourceDir "cmake-test-build"
 $TestNoTargetBuildDir = Join-Path $SourceDir "cmake-test-no-target-build"
 
 # vcpkg integration (if available)
-$VcpkgRoot = "C:\vcpkg-libtiff"
+$VcpkgRoot = "C:\vcpkg"
 $VcpkgToolchain = Join-Path $VcpkgRoot "scripts\buildsystems\vcpkg.cmake"
 
 function Write-Header {
@@ -122,72 +109,12 @@ function Initialize-Vcpkg {
 function Initialize-VisualStudio {
     Write-Header "Initializing Visual Studio Environment"
 
-    # Find Visual Studio installation
-    $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
-    if (-not (Test-Path $vswhere)) {
-        throw "vswhere.exe not found. Is Visual Studio installed?"
-    }
-
-    # Build vswhere arguments based on whether a specific version was requested
-    $vswhereArgs = @("-products", "*", "-requires", "Microsoft.VisualStudio.Component.VC.Tools.x86.x64", "-property", "installationPath")
-
-    if ($VSVersion -and $VSVersionMap.ContainsKey($VSVersion)) {
-        $versionRange = $VSVersionMap[$VSVersion]
-        $vswhereArgs += "-version"
-        $vswhereArgs += "[$($versionRange.Min),$($versionRange.Max))"
-        Write-Host "Searching for Visual Studio $VSVersion (version range [$($versionRange.Min),$($versionRange.Max)))"
-    } else {
-        $vswhereArgs += "-latest"
-        Write-Host "Searching for latest Visual Studio installation"
-    }
-
-    $vsPathResults = & $vswhere @vswhereArgs
-    if (-not $vsPathResults) {
-        if ($VSVersion) {
-            throw "Visual Studio $VSVersion with C++ tools not found"
-        } else {
-            throw "Visual Studio with C++ tools not found"
-        }
-    }
-
-    # vswhere may return multiple installations - prefer BuildTools over Community/Professional/Enterprise
-    if ($vsPathResults -is [array]) {
-        Write-Host "Found multiple Visual Studio installations:"
-        foreach ($path in $vsPathResults) {
-            Write-Host "  - $path"
-        }
-        # Look for BuildTools first
-        $vsPath = $vsPathResults | Where-Object { $_ -match "BuildTools" } | Select-Object -First 1
-        if (-not $vsPath) {
-            $vsPath = $vsPathResults[0]
-        }
-    } else {
-        $vsPath = $vsPathResults
-    }
-
-    Write-Host "Selected Visual Studio at: $vsPath"
-
-    # Find vcvarsall.bat
-    $vcvarsall = Join-Path $vsPath "VC\Auxiliary\Build\vcvarsall.bat"
-    if (-not (Test-Path $vcvarsall)) {
-        throw "vcvarsall.bat not found at: $vcvarsall"
-    }
-
-    # Import Visual Studio environment variables
-    Write-Host "Running vcvarsall.bat x64..."
-    $envOutput = cmd /c "`"$vcvarsall`" x64 && set"
-    foreach ($line in $envOutput) {
-        if ($line -match "^([^=]+)=(.*)$") {
-            [Environment]::SetEnvironmentVariable($matches[1], $matches[2], "Process")
-        }
-    }
-
     # Verify compiler is available
     $clPath = Get-Command cl.exe -ErrorAction SilentlyContinue
     if ($clPath) {
         Write-Host "Compiler found: $($clPath.Source)"
     } else {
-        throw "cl.exe not found in PATH after running vcvarsall.bat"
+        throw "cl.exe not found in PATH"
     }
 }
 
@@ -380,7 +307,6 @@ function Invoke-TestProjectBuild {
 
 # Main execution
 Write-Header "LibTIFF Windows CI Build"
-Write-Host "VS Version:  $(if ($VSVersion) { "VS$VSVersion" } else { 'latest' })"
 Write-Host "Generator:   $Generator"
 Write-Host "Build Type:  $BuildType"
 Write-Host "Link Type:   $(if ($LinkType) { $LinkType } else { 'shared (default)' })"
