@@ -1719,7 +1719,8 @@ DECLAREContigPutFunc(put16bitbwtile)
     int samplesperpixel = img->samplesperpixel;
     uint32_t **BWmap = img->BWmap;
     /* Convert pixel skew to byte skew (16-bit samples) */
-    fromskew = fromskew * (2 * samplesperpixel);
+    const tmsize_t fromskewLocal =
+        (tmsize_t)fromskew * (tmsize_t)(2 * samplesperpixel);
 
     (void)y;
     for (; h > 0; --h)
@@ -1735,7 +1736,7 @@ DECLAREContigPutFunc(put16bitbwtile)
             wp += samplesperpixel;
         }
         cp += toskew;
-        pp += fromskew;
+        pp += fromskewLocal;
     }
 }
 
@@ -1805,13 +1806,14 @@ DECLAREContigPutFunc(putRGBcontig8bittile)
 
     (void)x;
     (void)y;
-    fromskew *= samplesperpixel;
+    const tmsize_t fromskewLocal =
+        (tmsize_t)fromskew * (tmsize_t)samplesperpixel;
     for (; h > 0; --h)
     {
         UNROLL8(w, NOP, *cp++ = PACK(pp[0], pp[1], pp[2]);
                 pp += samplesperpixel);
         cp += toskew;
-        pp += fromskew;
+        pp += fromskewLocal;
     }
 }
 
@@ -1825,13 +1827,14 @@ DECLAREContigPutFunc(putRGBAAcontig8bittile)
 
     (void)x;
     (void)y;
-    fromskew *= samplesperpixel;
+    const tmsize_t fromskewLocal =
+        (tmsize_t)fromskew * (tmsize_t)samplesperpixel;
     for (; h > 0; --h)
     {
         UNROLL8(w, NOP, *cp++ = PACK4(pp[0], pp[1], pp[2], pp[3]);
                 pp += samplesperpixel);
         cp += toskew;
-        pp += fromskew;
+        pp += fromskewLocal;
     }
 }
 
@@ -1843,7 +1846,8 @@ DECLAREContigPutFunc(putRGBUAcontig8bittile)
 {
     int samplesperpixel = img->samplesperpixel;
     (void)y;
-    fromskew *= samplesperpixel;
+    const tmsize_t fromskewLocal =
+        (tmsize_t)fromskew * (tmsize_t)samplesperpixel;
     for (; h > 0; --h)
     {
         uint32_t r, g, b, a;
@@ -1859,7 +1863,7 @@ DECLAREContigPutFunc(putRGBUAcontig8bittile)
             pp += samplesperpixel;
         }
         cp += toskew;
-        pp += fromskew;
+        pp += fromskewLocal;
     }
 }
 
@@ -1871,7 +1875,8 @@ DECLAREContigPutFunc(putRGBcontig16bittile)
     int samplesperpixel = img->samplesperpixel;
     uint16_t *wp = (uint16_t *)pp;
     (void)y;
-    fromskew *= samplesperpixel;
+    const tmsize_t fromskewLocal =
+        (tmsize_t)fromskew * (tmsize_t)samplesperpixel;
     for (; h > 0; --h)
     {
         for (x = w; x > 0; --x)
@@ -1881,7 +1886,7 @@ DECLAREContigPutFunc(putRGBcontig16bittile)
             wp += samplesperpixel;
         }
         cp += toskew;
-        wp += fromskew;
+        wp += fromskewLocal;
     }
 }
 
@@ -1894,7 +1899,8 @@ DECLAREContigPutFunc(putRGBAAcontig16bittile)
     int samplesperpixel = img->samplesperpixel;
     uint16_t *wp = (uint16_t *)pp;
     (void)y;
-    fromskew *= samplesperpixel;
+    const tmsize_t fromskewLocal =
+        (tmsize_t)fromskew * (tmsize_t)samplesperpixel;
     for (; h > 0; --h)
     {
         for (x = w; x > 0; --x)
@@ -1904,7 +1910,7 @@ DECLAREContigPutFunc(putRGBAAcontig16bittile)
             wp += samplesperpixel;
         }
         cp += toskew;
-        wp += fromskew;
+        wp += fromskewLocal;
     }
 }
 
@@ -1917,7 +1923,8 @@ DECLAREContigPutFunc(putRGBUAcontig16bittile)
     int samplesperpixel = img->samplesperpixel;
     uint16_t *wp = (uint16_t *)pp;
     (void)y;
-    fromskew *= samplesperpixel;
+    const tmsize_t fromskewLocal =
+        (tmsize_t)fromskew * (tmsize_t)samplesperpixel;
     for (; h > 0; --h)
     {
         uint32_t r, g, b, a;
@@ -1933,7 +1940,7 @@ DECLAREContigPutFunc(putRGBUAcontig16bittile)
             wp += samplesperpixel;
         }
         cp += toskew;
-        wp += fromskew;
+        wp += fromskewLocal;
     }
 }
 
@@ -1949,7 +1956,8 @@ DECLAREContigPutFunc(putRGBcontig8bitCMYKtile)
 
     (void)x;
     (void)y;
-    fromskew *= samplesperpixel;
+    const tmsize_t fromskewLocal =
+        (tmsize_t)fromskew * (tmsize_t)samplesperpixel;
     for (; h > 0; --h)
     {
         UNROLL8(w, NOP, k = (uint16_t)(255 - pp[3]);
@@ -1958,7 +1966,7 @@ DECLAREContigPutFunc(putRGBcontig8bitCMYKtile)
                 b = (uint16_t)((k * (uint16_t)(255 - pp[2])) / 255);
                 *cp++ = PACK(r, g, b); pp += samplesperpixel);
         cp += toskew;
-        pp += fromskew;
+        pp += fromskewLocal;
     }
 }
 
@@ -1974,7 +1982,8 @@ DECLAREContigPutFunc(putRGBcontig8bitCMYKMaptile)
     unsigned int r, g, b, k;
 
     (void)y;
-    fromskew *= samplesperpixel;
+    const tmsize_t fromskewLocal =
+        (tmsize_t)fromskew * (tmsize_t)samplesperpixel;
     for (; h > 0; --h)
     {
         for (x = w; x > 0; --x)
@@ -1986,7 +1995,7 @@ DECLAREContigPutFunc(putRGBcontig8bitCMYKMaptile)
             *cp++ = PACK(Map[r], Map[g], Map[b]);
             pp += samplesperpixel;
         }
-        pp += fromskew;
+        pp += fromskewLocal;
         cp += toskew;
     }
 }
@@ -2157,7 +2166,7 @@ DECLAREContigPutFunc(putcontig8bitCIELab8)
     float X, Y, Z;
     uint32_t r, g, b;
     (void)y;
-    fromskew *= 3;
+    const tmsize_t fromskewLocal = (tmsize_t)fromskew * (tmsize_t)3;
     for (; h > 0; --h)
     {
         for (x = w; x > 0; --x)
@@ -2169,7 +2178,7 @@ DECLAREContigPutFunc(putcontig8bitCIELab8)
             pp += 3;
         }
         cp += toskew;
-        pp += fromskew;
+        pp += fromskewLocal;
     }
 }
 
@@ -2182,7 +2191,7 @@ DECLAREContigPutFunc(putcontig8bitCIELab16)
     uint32_t r, g, b;
     uint16_t *wp = (uint16_t *)pp;
     (void)y;
-    fromskew *= 3;
+    const tmsize_t fromskewLocal = (tmsize_t)fromskew * (tmsize_t)3;
     for (; h > 0; --h)
     {
         for (x = w; x > 0; --x)
@@ -2194,7 +2203,7 @@ DECLAREContigPutFunc(putcontig8bitCIELab16)
             wp += 3;
         }
         cp += toskew;
-        wp += fromskew;
+        wp += fromskewLocal;
     }
 }
 
@@ -2221,7 +2230,8 @@ DECLAREContigPutFunc(putcontig8bitYCbCr44tile)
 
     (void)y;
     /* adjust fromskew */
-    fromskew = (fromskew / 4) * (4 * 4 + 2);
+    const tmsize_t fromskewLocal =
+        (tmsize_t)(fromskew / 4) * (tmsize_t)(4 * 4 + 2);
     if ((h & 3) == 0 && (w & 3) == 0)
     {
         for (; h >= 4; h -= 4)
@@ -2259,7 +2269,7 @@ DECLAREContigPutFunc(putcontig8bitYCbCr44tile)
             cp1 += incr;
             cp2 += incr;
             cp3 += incr;
-            pp += fromskew;
+            pp += fromskewLocal;
         }
     }
     else
@@ -2346,7 +2356,7 @@ DECLAREContigPutFunc(putcontig8bitYCbCr44tile)
             cp1 += incr;
             cp2 += incr;
             cp3 += incr;
-            pp += fromskew;
+            pp += fromskewLocal;
         }
     }
 }
@@ -2360,7 +2370,8 @@ DECLAREContigPutFunc(putcontig8bitYCbCr42tile)
     const tmsize_t incr = 2 * (tmsize_t)toskew + (tmsize_t)w;
 
     (void)y;
-    fromskew = (fromskew / 4) * (4 * 2 + 2);
+    const tmsize_t fromskewLocal =
+        (tmsize_t)(fromskew / 4) * (tmsize_t)(4 * 2 + 2);
     if ((w & 3) == 0 && (h & 1) == 0)
     {
         for (; h >= 2; h -= 2)
@@ -2386,7 +2397,7 @@ DECLAREContigPutFunc(putcontig8bitYCbCr42tile)
             } while (--x);
             cp += incr;
             cp1 += incr;
-            pp += fromskew;
+            pp += fromskewLocal;
         }
     }
     else
@@ -2451,7 +2462,7 @@ DECLAREContigPutFunc(putcontig8bitYCbCr42tile)
             h -= 2;
             cp += incr;
             cp1 += incr;
-            pp += fromskew;
+            pp += fromskewLocal;
         }
     }
 }
@@ -2462,7 +2473,8 @@ DECLAREContigPutFunc(putcontig8bitYCbCr42tile)
 DECLAREContigPutFunc(putcontig8bitYCbCr41tile)
 {
     (void)y;
-    fromskew = (fromskew / 4) * (4 * 1 + 2);
+    const tmsize_t fromskewLocal =
+        (tmsize_t)(fromskew / 4) * (tmsize_t)(4 * 1 + 2);
     do
     {
         x = w >> 2;
@@ -2505,7 +2517,7 @@ DECLAREContigPutFunc(putcontig8bitYCbCr41tile)
         }
 
         cp += toskew;
-        pp += fromskew;
+        pp += fromskewLocal;
     } while (--h);
 }
 
@@ -2517,7 +2529,8 @@ DECLAREContigPutFunc(putcontig8bitYCbCr22tile)
     uint32_t *cp2;
     const tmsize_t incr = 2 * (tmsize_t)toskew + (tmsize_t)w;
     (void)y;
-    fromskew = (fromskew / 2) * (2 * 2 + 2);
+    const tmsize_t fromskewLocal =
+        (tmsize_t)(fromskew / 2) * (tmsize_t)(2 * 2 + 2);
     cp2 = cp + w + toskew;
     while (h >= 2)
     {
@@ -2547,7 +2560,7 @@ DECLAREContigPutFunc(putcontig8bitYCbCr22tile)
         }
         cp += incr;
         cp2 += incr;
-        pp += fromskew;
+        pp += fromskewLocal;
         h -= 2;
     }
     if (h == 1)
@@ -2579,7 +2592,8 @@ DECLAREContigPutFunc(putcontig8bitYCbCr22tile)
 DECLAREContigPutFunc(putcontig8bitYCbCr21tile)
 {
     (void)y;
-    fromskew = (fromskew / 2) * (2 * 1 + 2);
+    const tmsize_t fromskewLocal =
+        (tmsize_t)(fromskew / 2) * (tmsize_t)(2 * 1 + 2);
     do
     {
         x = w >> 1;
@@ -2608,7 +2622,7 @@ DECLAREContigPutFunc(putcontig8bitYCbCr21tile)
         }
 
         cp += toskew;
-        pp += fromskew;
+        pp += fromskewLocal;
     } while (--h);
 }
 
@@ -2620,7 +2634,8 @@ DECLAREContigPutFunc(putcontig8bitYCbCr12tile)
     uint32_t *cp2;
     const tmsize_t incr = 2 * (tmsize_t)toskew + (tmsize_t)w;
     (void)y;
-    fromskew = (fromskew / 1) * (1 * 2 + 2);
+    const tmsize_t fromskewLocal =
+        (tmsize_t)(fromskew / 1) * (tmsize_t)(1 * 2 + 2);
     cp2 = cp + w + toskew;
     while (h >= 2)
     {
@@ -2637,7 +2652,7 @@ DECLAREContigPutFunc(putcontig8bitYCbCr12tile)
         } while (--x);
         cp += incr;
         cp2 += incr;
-        pp += fromskew;
+        pp += fromskewLocal;
         h -= 2;
     }
     if (h == 1)
@@ -2660,7 +2675,8 @@ DECLAREContigPutFunc(putcontig8bitYCbCr12tile)
 DECLAREContigPutFunc(putcontig8bitYCbCr11tile)
 {
     (void)y;
-    fromskew = (fromskew / 1) * (1 * 1 + 2);
+    const tmsize_t fromskewLocal =
+        (tmsize_t)(fromskew / 1) * (tmsize_t)(1 * 1 + 2);
     do
     {
         x = w; /* was x = w>>1; patched 2000/09/25 warmerda@home.com */
@@ -2674,7 +2690,7 @@ DECLAREContigPutFunc(putcontig8bitYCbCr11tile)
             pp += 3;
         } while (--x);
         cp += toskew;
-        pp += fromskew;
+        pp += fromskewLocal;
     } while (--h);
 }
 

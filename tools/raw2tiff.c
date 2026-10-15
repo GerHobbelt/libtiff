@@ -238,6 +238,13 @@ int main(int argc, const char **argv)
         return (EXIT_FAILURE);
     }
 
+    if ((depth <= 0) || ((uint32_t)depth > (UINT_MAX / nbands)))
+    {
+        fprintf(stderr, "Too large nbands value specified.\n");
+        close(fd);
+        return (EXIT_FAILURE);
+    }
+
     temp_limit_check = (uint32_t)depth * nbands;
 
     if (!temp_limit_check || length > (UINT_MAX / temp_limit_check))
@@ -331,6 +338,11 @@ int main(int argc, const char **argv)
         default:
             break;
     }
+    /*
+     * At this point depth * nbands * length * width has been checked
+     * not to exceed UINT_MAX, and length is non-zero. Therefore the
+     * per-scanline calculations below cannot overflow uint32_t.
+     */
     switch (interleaving)
     {
         case BAND: /* band interleaved data */
@@ -341,6 +353,14 @@ int main(int argc, const char **argv)
         default:
             linebytes = (uint32_t)depth * width * nbands;
             break;
+    }
+    if ((uint32_t)depth > (UINT_MAX / width) ||
+        ((uint32_t)depth * width) > (UINT_MAX / nbands))
+    {
+        fprintf(stderr, "Too large image size specified.\n");
+        close(fd);
+        TIFFClose(out);
+        return (EXIT_FAILURE);
     }
     bufsize = (uint32_t)depth * width * nbands;
     buf1 = (unsigned char *)_TIFFmalloc(bufsize);

@@ -189,7 +189,21 @@ int TIFFWriteScanline(TIFF *tif, void *buf, uint32_t row, uint16_t sample)
 /* time if the new compressed tile is bigger than the older one. (GDAL #4771) */
 static int _TIFFReserveLargeEnoughWriteBuffer(TIFF *tif, uint32_t strip_or_tile)
 {
+    static const char module[] = "_TIFFReserveLargeEnoughWriteBuffer";
     TIFFDirectory *td = &tif->tif_dir;
+
+    if (td->td_stripbytecount_p == NULL)
+    {
+        TIFFErrorExtR(tif, module, "Strip bytecount array pointer is NULL");
+        return 0;
+    }
+
+    if (strip_or_tile == NOSTRIP || strip_or_tile >= td->td_nstrips)
+    {
+        TIFFErrorExtR(tif, module, "Strip/tile number not valid");
+        return 0;
+    }
+
     if (td->td_stripbytecount_p[strip_or_tile] > 0)
     {
         /* The +1 is to ensure at least one extra bytes */
@@ -738,22 +752,24 @@ static int TIFFGrowStrips(TIFF *tif, uint32_t delta, const char *module)
         tif, td->td_stripoffset_p,
         (tmsize_t)(((size_t)td->td_nstrips + (size_t)delta) *
                    sizeof(uint64_t)));
+    /*
+     * Update td_stripoffset_p immediately so the old pointer is not left
+     * dangling if the second realloc fails.
+     */
+    if (new_stripoffset)
+        td->td_stripoffset_p = new_stripoffset;
     new_stripbytecount = (uint64_t *)_TIFFreallocExt(
         tif, td->td_stripbytecount_p,
         (tmsize_t)(((size_t)td->td_nstrips + (size_t)delta) *
                    sizeof(uint64_t)));
+    if (new_stripbytecount)
+        td->td_stripbytecount_p = new_stripbytecount;
     if (new_stripoffset == NULL || new_stripbytecount == NULL)
     {
-        if (new_stripoffset)
-            _TIFFfreeExt(tif, new_stripoffset);
-        if (new_stripbytecount)
-            _TIFFfreeExt(tif, new_stripbytecount);
         td->td_nstrips = 0;
         TIFFErrorExtR(tif, module, "No space to expand strip arrays");
         return (0);
     }
-    td->td_stripoffset_p = new_stripoffset;
-    td->td_stripbytecount_p = new_stripbytecount;
     _TIFFmemset(td->td_stripoffset_p + td->td_nstrips, 0,
                 (tmsize_t)((size_t)delta * sizeof(uint64_t)));
     _TIFFmemset(td->td_stripbytecount_p + td->td_nstrips, 0,

@@ -203,6 +203,15 @@ static int cvt_by_tile(TIFF *in, TIFF *out)
         return (0);
     }
 
+    /*
+     * tile_height is used as a divisor in the overflow check below.
+     * Validate it before performing the reverse calculation.
+     */
+    if (tile_height == 0)
+    {
+        TIFFError(TIFFFileName(in), "Invalid zero tile length");
+        exit(EXIT_FAILURE);
+    }
     TIFFSetField(out, TIFFTAG_TILEWIDTH, tile_width);
     TIFFSetField(out, TIFFTAG_TILELENGTH, tile_height);
 
@@ -319,6 +328,16 @@ static int cvt_by_strip(TIFF *in, TIFF *out)
     {
         TIFFError(TIFFFileName(in), "Source image not in strips");
         return (0);
+    }
+
+    /*
+     * rowsperstrip is used as a divisor in the overflow check below.
+     * Validate it before performing the reverse calculation.
+     */
+    if (rowsperstrip == 0)
+    {
+        TIFFError(TIFFFileName(in), "Invalid zero rows per strip");
+        exit(EXIT_FAILURE);
     }
 
     TIFFSetField(out, TIFFTAG_ROWSPERSTRIP, rowsperstrip);
