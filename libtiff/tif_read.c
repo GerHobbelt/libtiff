@@ -618,13 +618,34 @@ tmsize_t _TIFFReadEncodedStripAndAllocBuffer(TIFF *tif, uint32_t strip,
     if (!TIFFFillStrip(tif, strip))
         return ((tmsize_t)(-1));
 
-    *buf = _TIFFmallocExt(tif, bufsizetoalloc);
+    /* Sanity checks to avoid excessive memory allocation */
+    /* Max compression ratio experimentally determined. Might be fragile...
+     * Only apply this heuristics to situations where the memory allocation
+     * would be big, to avoid breaking nominal use cases.
+     */
+    if (bufsizetoalloc > 100 * 1024 * 1024)
+    {
+        const uint64_t maxCompressionRatio = TIFFGetMaxCompressionRatio(tif);
+        if (maxCompressionRatio > 0 &&
+            (uint64_t)tif->tif_rawdatasize <
+                (uint64_t)this_stripsize / maxCompressionRatio)
+        {
+            TIFFErrorExtR(tif, TIFFFileName(tif),
+                          "Likely invalid strip byte count for strip %u. "
+                          "Uncompressed strip size is %" PRIu64 ", "
+                          "compressed one is %" PRIu64,
+                          strip, (uint64_t)this_stripsize,
+                          (uint64_t)tif->tif_rawdatasize);
+            return ((tmsize_t)(-1));
+        }
+    }
+
+    *buf = _TIFFcallocExt(tif, 1, bufsizetoalloc);
     if (*buf == NULL)
     {
         TIFFErrorExtR(tif, TIFFFileName(tif), "No space for strip buffer");
         return ((tmsize_t)(-1));
     }
-    _TIFFmemset(*buf, 0, bufsizetoalloc);
 
     if ((*tif->tif_decodestrip)(tif, (uint8_t *)*buf, this_stripsize, plane) <=
         0)
@@ -1088,25 +1109,22 @@ tmsize_t _TIFFReadEncodedTileAndAllocBuffer(TIFF *tif, uint32_t tile,
          * Only apply this heuristics to situations where the memory allocation
          * would be big, to avoid breaking nominal use cases.
          */
-        const int maxCompressionRatio =
-            td->td_compression == COMPRESSION_ZSTD ? 33000
-            : td->td_compression == COMPRESSION_JXL
-                ?
-                /* Evaluated on a 8000x8000 tile */
-                25000 * (td->td_planarconfig == PLANARCONFIG_CONTIG
-                             ? td->td_samplesperpixel
-                             : 1)
-                : td->td_compression == COMPRESSION_LZMA ? 7000 : 1000;
-        if (bufsizetoalloc > 100 * 1000 * 1000 &&
-            tif->tif_rawdatasize < tilesize / maxCompressionRatio)
+        if (bufsizetoalloc > 100 * 1024 * 1024)
         {
-            TIFFErrorExtR(tif, TIFFFileName(tif),
-                          "Likely invalid tile byte count for tile %u. "
-                          "Uncompressed tile size is %" PRIu64 ", "
-                          "compressed one is %" PRIu64,
-                          tile, (uint64_t)tilesize,
-                          (uint64_t)tif->tif_rawdatasize);
-            return ((tmsize_t)(-1));
+            const uint64_t maxCompressionRatio =
+                TIFFGetMaxCompressionRatio(tif);
+            if (maxCompressionRatio > 0 &&
+                (uint64_t)tif->tif_rawdatasize <
+                    (uint64_t)tilesize / maxCompressionRatio)
+            {
+                TIFFErrorExtR(tif, TIFFFileName(tif),
+                              "Likely invalid tile byte count for tile %u. "
+                              "Uncompressed tile size is %" PRIu64 ", "
+                              "compressed one is %" PRIu64,
+                              tile, (uint64_t)tilesize,
+                              (uint64_t)tif->tif_rawdatasize);
+                return ((tmsize_t)(-1));
+            }
         }
     }
 

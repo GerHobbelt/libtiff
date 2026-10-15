@@ -54,6 +54,7 @@ EXPORTS	TIFFAccessTagMethods
 	TIFFGetField
 	TIFFGetFieldDefaulted
 	TIFFGetMapFileProc
+	TIFFGetMaxCompressionRatio
 	TIFFGetMode
 	TIFFGetReadProc
 	TIFFGetSeekProc

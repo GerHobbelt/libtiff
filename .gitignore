@@ -4,6 +4,8 @@ autom4te.cache
 *.o
 *.la
 *.lo
+*.framework
+*.xcframework
 .deps
 .libs
 config.log
@@ -66,3 +68,4 @@ test/o-*
 .vs
 cmake-build*
 autoconf-build/
+build*

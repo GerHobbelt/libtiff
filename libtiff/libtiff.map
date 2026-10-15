@@ -222,3 +222,7 @@ LIBTIFF_4.6.1 {
 LIBTIFF_4.7.1 {
     TIFFOpenOptionsSetWarnAboutUnknownTags;
 } LIBTIFF_4.6.1;
+
+LIBTIFF_4.7.2 {
+    TIFFGetMaxCompressionRatio;
+} LIBTIFF_4.7.1;

@@ -191,6 +191,7 @@ rst_sources = \
 	functions/TIFFReadFromUserBuffer.rst \
 	functions/TIFFSetTagExtender.rst \
 	functions/TIFFStrileQuery.rst \
+	functions/TIFFGetMaxCompressionRatio.rst \
 	libtiff.rst \
 	multi_page.rst \
 	images.rst
