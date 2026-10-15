@@ -23,6 +23,7 @@
  */
 
 #include "tif_config.h"
+#include "tiffiop.h"
 
 #include <math.h>
 #include <stdio.h>
@@ -484,9 +485,9 @@ static int ContigCompare(int sample, uint32_t row, unsigned char *p1,
 
                     for (s = 0; s < samples_to_test; s++)
                     {
-                        if (fabs(*pix1 - *pix2) < 0.000000000001)
+                        if (fabs((double)*pix1 - (double)*pix2) < 0.000000000001)
                         {
-                            PrintFloatDiff(row, sample, pix, *pix1, *pix2);
+                            PrintFloatDiff(row, sample, pix, (double)*pix1, (double)*pix2);
                         }
 
                         pix1++;
@@ -657,6 +658,22 @@ static int checkTag(TIFF *tif1, TIFF *tif2, int tag, const char *name, void *p1,
         return (0);                                                            \
     }
 
+#define CHECK_FLOAT(cmp, fmt)                                                  \
+    {                                                                          \
+        switch (checkTag(tif1, tif2, tag, name, &v1, &v2))                     \
+        {                                                                      \
+            case 1:                                                            \
+                if (cmp)                                                       \
+                case -1:                                                       \
+                    return (1);                                                \
+                printf(fmt, name, (double)v1, (double)v2);                     \
+                break;                                                         \
+            default:                                                           \
+                break;                                                         \
+        }                                                                      \
+        return (0);                                                            \
+    }
+
 static int CheckShortTag(TIFF *tif1, TIFF *tif2, int tag, const char *name)
 {
     uint16_t v1, v2;
@@ -749,7 +766,7 @@ static int CheckLongTag(TIFF *tif1, TIFF *tif2, int tag, const char *name)
 static int CheckFloatTag(TIFF *tif1, TIFF *tif2, int tag, const char *name)
 {
     float v1, v2;
-    CHECK(v1 == v2, "%s: %g %g\n");
+    CHECK_FLOAT(TIFF_FLOAT_EQ(v1, v2), "%s: %g %g\n");
 }
 
 static int CheckStringTag(TIFF *tif1, TIFF *tif2, int tag, const char *name)

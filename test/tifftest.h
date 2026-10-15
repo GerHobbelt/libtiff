@@ -30,11 +30,7 @@
  * Header file for helper testing routines.
  */
 
-#include "tiffio.h"
-
-int CheckShortField(TIFF *, const ttag_t, const uint16_t);
-int CheckShortPairedField(TIFF *, const ttag_t, const uint16_t *);
-int CheckLongField(TIFF *, const ttag_t, const uint32_t);
+#include "check_tag.h"
 
 int write_strips(TIFF *tif, const tdata_t array, const tsize_t size);
 int read_strips(TIFF *tif, const tdata_t array, const tsize_t size);

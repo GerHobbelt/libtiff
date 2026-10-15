@@ -290,7 +290,7 @@ int main(int argc, const char **argv)
     TIFFSetField(faxTIFF, TIFFTAG_FILLORDER, fillorder_in);
     TIFFSetField(faxTIFF, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
     TIFFSetField(faxTIFF, TIFFTAG_PHOTOMETRIC, photometric_in);
-    TIFFSetField(faxTIFF, TIFFTAG_YRESOLUTION, resY);
+    TIFFSetField(faxTIFF, TIFFTAG_YRESOLUTION, (double)resY);
     TIFFSetField(faxTIFF, TIFFTAG_RESOLUTIONUNIT, RESUNIT_INCH);
 
     /* NB: this must be done after directory info is setup */
@@ -350,7 +350,7 @@ int main(int argc, const char **argv)
         if (!stretch)
         {
             TIFFGetField(faxTIFF, TIFFTAG_YRESOLUTION, &resY);
-            TIFFSetField(out, TIFFTAG_YRESOLUTION, resY);
+            TIFFSetField(out, TIFFTAG_YRESOLUTION, (double)resY);
         }
         else
             TIFFSetField(out, TIFFTAG_YRESOLUTION, 196.);
@@ -420,7 +420,7 @@ static int copyFaxFile(TIFF *tifin, TIFF *tifout)
 
     (*tifin->tif_setupdecode)(tifin);
     (*tifin->tif_predecode)(tifin, (tsample_t)0);
-    tifin->tif_row = 0;
+    tifin->tif_dir.td_row = 0;
     badfaxlines = 0;
     badfaxrun = 0;
 
@@ -452,7 +452,7 @@ static int copyFaxFile(TIFF *tifin, TIFF *tifout)
             badrun = 0;
             _TIFFmemcpy(refbuf, rowbuf, linesize);
         }
-        tifin->tif_row++;
+        tifin->tif_dir.td_row++;
         lastcc = tifin->tif_rawcc;
 
         if (TIFFWriteScanline(tifout, rowbuf, row, 0) < 0)

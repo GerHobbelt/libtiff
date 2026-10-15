@@ -144,7 +144,7 @@ static int TWebPDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
         TIFFErrorExtR(tif, module,
                       "ZIPDecode: Scanline %" PRIu32 " cannot be read due to "
                       "previous error",
-                      tif->tif_row);
+                      tif->tif_dir.td_row);
         return 0;
     }
 
@@ -161,7 +161,7 @@ static int TWebPDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
         else
         {
             segment_width = td->td_imagewidth;
-            segment_height = td->td_imagelength - tif->tif_row;
+            segment_height = td->td_imagelength - tif->tif_dir.td_row;
             if (segment_height > td->td_rowsperstrip)
                 segment_height = td->td_rowsperstrip;
         }
@@ -468,7 +468,7 @@ static int TWebPPreDecode(TIFF *tif, uint16_t s)
     else
     {
         segment_width = td->td_imagewidth;
-        segment_height = td->td_imagelength - tif->tif_row;
+        segment_height = td->td_imagelength - tif->tif_dir.td_row;
         if (segment_height > td->td_rowsperstrip)
             segment_height = td->td_rowsperstrip;
     }
@@ -604,7 +604,7 @@ static int TWebPPreEncode(TIFF *tif, uint16_t s)
     else
     {
         segment_width = td->td_imagewidth;
-        segment_height = td->td_imagelength - tif->tif_row;
+        segment_height = td->td_imagelength - tif->tif_dir.td_row;
         if (segment_height > td->td_rowsperstrip)
             segment_height = td->td_rowsperstrip;
     }
