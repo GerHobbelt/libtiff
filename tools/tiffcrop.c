@@ -173,8 +173,6 @@ static inline int strcasecmp(const char *s1, const char *s2) {
 #ifndef TIFFhowmany
 #define TIFFhowmany(x, y)                                                      \
     ((((uint32_t)(x)) + (((uint32_t)(y)) - 1)) / ((uint32_t)(y)))
-#define TIFFhowmany8(x)                                                        \
-    (((x) & 0x07) ? ((uint32_t)(x) >> 3) + 1 : (uint32_t)(x) >> 3)
 #endif
 
 /*

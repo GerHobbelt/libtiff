@@ -57,7 +57,6 @@
 #ifndef howmany
 #define howmany(x, y) (((uint32_t)(x) + (uint32_t)(y) - 1U) / (uint32_t)(y))
 #endif
-#define roundup(x, y) (howmany(x, y) * ((uint32_t)(y)))
 
 #define LumaRed ycbcrCoeffs[0]
 #define LumaGreen ycbcrCoeffs[1]

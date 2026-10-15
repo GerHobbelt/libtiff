@@ -2513,7 +2513,7 @@ static copyFunc pickCopyFunc(TIFF *in, TIFF *out, uint16_t bitspersample,
                 "%s: Cannot handle different planar configuration w/ "
                 "bits/sample != 8\n",
                 TIFFFileName(in));
-        return (NULL);
+        return 0;
     }
     TIFFGetField(in, TIFFTAG_IMAGEWIDTH, &w);
     TIFFGetField(in, TIFFTAG_IMAGELENGTH, &l);
@@ -2531,7 +2531,7 @@ static copyFunc pickCopyFunc(TIFF *in, TIFF *out, uint16_t bitspersample,
             fprintf(stderr,
                     "%s: Cannot handle tiled configuration w/bias image\n",
                     TIFFFileName(in));
-            return (NULL);
+            return 0;
         }
         if (TIFFIsTiled(out))
         {
@@ -2615,5 +2615,5 @@ static copyFunc pickCopyFunc(TIFF *in, TIFF *out, uint16_t bitspersample,
 #undef T
     fprintf(stderr, "tiffcp: %s: Don't know how to copy/convert image.\n",
             TIFFFileName(in));
-    return (NULL);
+    return 0;
 }
