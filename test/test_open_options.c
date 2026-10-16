@@ -74,6 +74,7 @@ typedef struct MyErrorHandlerUserDataStruct
     size_t buffer_size;
     TIFF *tif_got_from_callback;
     char module[64];
+    int got_cleanup_error;
 } MyErrorHandlerUserDataStruct;
 
 static int TIFF_ATTRIBUTE((__format__(__printf__, 4, 0)))
@@ -87,6 +88,10 @@ static int TIFF_ATTRIBUTE((__format__(__printf__, 4, 0)))
     errorhandler_user_data->tif_got_from_callback = tiff;
     snprintf(errorhandler_user_data->module,
              sizeof(errorhandler_user_data->module), "%s", module);
+    /* Check whether TIFFCleanup has displayed an error message regarding
+     * unreleased memory. */
+    if (strcmp(module, "TIFFCleanup") == 0)
+        errorhandler_user_data->got_cleanup_error = 1;
     return 1;
 }
 
@@ -269,6 +274,148 @@ static int test_TIFFOpenOptionsSetMaxCumulatedMemAlloc(
         }
     }
     unlink("test_error_handler.tif");
+    return ret;
+}
+
+static int test_TIFFOpenOptionsMemoryLimitsDirectoryTraversal(void)
+{
+    static const char filename[] = "test_open_options_many_directories.tif";
+    static const uint32_t directory_count = 4096;
+    const tmsize_t limit =
+        (tmsize_t)(sizeof(TIFF) + strlen(filename) + 1 + 30000);
+    int ret = 0;
+    TIFF *tif = TIFFOpen(filename, "w");
+    if (tif == NULL)
+    {
+        fprintf(stderr, "Cannot create %s\n", filename);
+        return 1;
+    }
+
+    for (uint32_t i = 0; i < directory_count; ++i)
+    {
+        uint8_t pixel = (uint8_t)i;
+        if (!TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, 1) ||
+            !TIFFSetField(tif, TIFFTAG_IMAGELENGTH, 1) ||
+            !TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, 8) ||
+            !TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1) ||
+            !TIFFSetField(tif, TIFFTAG_ROWSPERSTRIP, 1) ||
+            !TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_NONE) ||
+            !TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK) ||
+            TIFFWriteScanline(tif, &pixel, 0, 0) < 0 ||
+            !TIFFWriteDirectory(tif))
+        {
+            fprintf(stderr, "Cannot write directory %" PRIu32 " to %s\n", i,
+                    filename);
+            ret = 1;
+            break;
+        }
+    }
+    TIFFClose(tif);
+    if (ret != 0)
+    {
+        unlink(filename);
+        return ret;
+    }
+
+    char error_buffer[ERROR_STRING_SIZE] = {0};
+    MyErrorHandlerUserDataStruct errorhandler_user_data = {
+        .buffer = error_buffer,
+        .buffer_size = sizeof(error_buffer),
+        .got_cleanup_error = 0};
+    TIFFOpenOptions *opts = TIFFOpenOptionsAlloc();
+    if (!opts)
+    {
+        unlink(filename);
+        return 1;
+    }
+    TIFFOpenOptionsSetMaxCumulatedMemAlloc(opts, limit);
+    TIFFOpenOptionsSetErrorHandlerExtR(opts, myErrorHandler,
+                                       &errorhandler_user_data);
+    tif = TIFFOpenExt(filename, "rm", opts);
+    TIFFOpenOptionsFree(opts);
+
+    if (tif == NULL)
+    {
+        fprintf(stderr, "Cannot read %s\n", filename);
+        ret = 1;
+    }
+    else
+    {
+        /* TIFFReadDirectory() will trigger an error when allocating memory for
+         * a new directory. A memory allocation within the hash module cannot be
+         * triggered, as the previous directory allocation is always released.
+         */
+        uint32_t directories_read = 1;
+        while (TIFFReadDirectory(tif))
+            ++directories_read;
+
+        if (directories_read >= directory_count)
+        {
+            fprintf(stderr,
+                    "Cumulative memory limit did not stop directory "
+                    "traversal (%" PRIu32 "/%" PRIu32 " directories)\n",
+                    directories_read, directory_count);
+            ret = 1;
+        }
+        TIFFClose(tif);
+        if (errorhandler_user_data.got_cleanup_error)
+        {
+            fprintf(stderr,
+                    "Cumulative memory allocations were not released after "
+                    "directory traversal\n");
+            ret = 1;
+        }
+    }
+
+    memset(error_buffer, 0, sizeof(error_buffer));
+    errorhandler_user_data.got_cleanup_error = 0;
+    opts = TIFFOpenOptionsAlloc();
+    if (!opts)
+    {
+        unlink(filename);
+        return 1;
+    }
+    TIFFOpenOptionsSetMaxSingleMemAlloc(opts, limit);
+    /* Enable accounting as well, so TIFFCleanup can detect leaks here. The
+     * cumulative limit is far above what this fixture can allocate. */
+    TIFFOpenOptionsSetMaxCumulatedMemAlloc(opts, 16 * 1024 * 1024);
+    TIFFOpenOptionsSetErrorHandlerExtR(opts, myErrorHandler,
+                                       &errorhandler_user_data);
+    tif = TIFFOpenExt(filename, "rm", opts);
+    TIFFOpenOptionsFree(opts);
+
+    if (tif == NULL)
+    {
+        fprintf(stderr, "Cannot read %s with a single-allocation limit\n",
+                filename);
+        ret = 1;
+    }
+    else
+    {
+        /* TIFFReadDirectory() will exceed single memory limit for allocating
+         * memory in TIFFHashSetRehash(). */
+        uint32_t directories_read = 1;
+        while (TIFFReadDirectory(tif))
+            ++directories_read;
+
+        if (directories_read >= directory_count)
+        {
+            fprintf(stderr,
+                    "Single-allocation memory limit did not stop directory "
+                    "traversal (%" PRIu32 "/%" PRIu32 " directories)\n",
+                    directories_read, directory_count);
+            ret = 1;
+        }
+        TIFFClose(tif);
+        if (errorhandler_user_data.got_cleanup_error)
+        {
+            fprintf(stderr,
+                    "Single-allocation traversal leaked tracked memory\n");
+            ret = 1;
+        }
+    }
+
+    unlink(filename);
     return ret;
 }
 
@@ -511,6 +658,9 @@ int main(void)
     ret += test_TIFFOpenOptionsSetMaxCumulatedMemAlloc(
         sizeof(TIFF) + strlen("test_error_handler.tif") + 1 + 30000, FALSE,
         FALSE);
+    fprintf(stderr, "\n---- test_TIFFOpenOptionsMemoryLimitsDirectoryTraversal "
+                    "---- \n");
+    ret += test_TIFFOpenOptionsMemoryLimitsDirectoryTraversal();
     if (ret > 0)
         fprintf(stderr, "\n=== test_open_options failed with %d fails ===\n",
                 ret);

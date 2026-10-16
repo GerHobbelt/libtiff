@@ -31,6 +31,8 @@
 #ifndef TIFF_HASH_SET_H_INCLUDED
 #define TIFF_HASH_SET_H_INCLUDED
 
+#include "tiffio.h"
+
 #include <stdbool.h>
 
 /**
@@ -61,13 +63,13 @@ extern "C"
     typedef bool (*TIFFHashSetEqualFunc)(const void *elt1, const void *elt2);
 
     /** TIFFHashSetFreeEltFunc */
-    typedef void (*TIFFHashSetFreeEltFunc)(void *elt);
+    typedef void (*TIFFHashSetFreeEltFunc)(TIFF *tif, void *elt);
 
     /* Functions */
 
-    TIFFHashSet *TIFFHashSetNew(TIFFHashSetHashFunc fnHashFunc,
+    TIFFHashSet *TIFFHashSetNew(TIFF *tif, TIFFHashSetHashFunc fnHashFunc,
                                 TIFFHashSetEqualFunc fnEqualFunc,
-                                TIFFHashSetFreeEltFunc fnFreeEltFunc);
+                                bool blnFreeEltFunc);
 
     void TIFFHashSetDestroy(TIFFHashSet *set);
 
