@@ -110,17 +110,6 @@ static bool TIFFHashSetEqualPointer(const void *elt1, const void *elt2)
 }
 
 /************************************************************************/
-/*                          TIFFHashSetFree()                           */
-/************************************************************************/
-
-/**
- * TIFF free function using TIFF memory limits functionality.
- *
- */
-
-static void TIFFHashSetFree(TIFF *tif, void *ptr) { _TIFFfreeExt(tif, ptr); }
-
-/************************************************************************/
 /*                           TIFFHashSetNew()                           */
 /************************************************************************/
 
@@ -156,7 +145,7 @@ TIFFHashSet *TIFFHashSetNew(TIFF *tif, TIFFHashSetHashFunc fnHashFunc,
     set->tif = tif;
     set->fnHashFunc = fnHashFunc ? fnHashFunc : TIFFHashSetHashPointer;
     set->fnEqualFunc = fnEqualFunc ? fnEqualFunc : TIFFHashSetEqualPointer;
-    set->fnFreeEltFunc = blnFreeEltFunc ? TIFFHashSetFree : NULL;
+    set->fnFreeEltFunc = blnFreeEltFunc ? _TIFFfreeExt : NULL;
     set->nSize = 0;
     set->tabList = (TIFFList **)_TIFFcallocExt(tif, 53, sizeof(TIFFList *));
     if (set->tabList == NULL)
