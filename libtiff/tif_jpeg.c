@@ -1164,7 +1164,12 @@ static int JPEGSetupDecode(TIFF *tif)
     }
 #endif
 
-    JPEGInitializeLibJPEG(tif, TRUE);
+    if (!JPEGInitializeLibJPEG(tif, TRUE))
+    {
+        TIFFErrorExtR(tif, "JPEGSetupDecode",
+                      "Failed to initialize libjpeg decompressor");
+        return (0);
+    }
 
     assert(sp != NULL);
     assert(sp->cinfo.comm.is_decompressor);
@@ -2076,7 +2081,12 @@ static int JPEGSetupEncode(TIFF *tif)
     }
 #endif
 
-    JPEGInitializeLibJPEG(tif, FALSE);
+    if (!JPEGInitializeLibJPEG(tif, FALSE))
+    {
+        TIFFErrorExtR(tif, module,
+                      "Failed to initialize libjpeg compressor");
+        return (0);
+    }
 
     assert(sp != NULL);
     assert(!sp->cinfo.comm.is_decompressor);
