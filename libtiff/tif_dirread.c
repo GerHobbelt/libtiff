@@ -5761,6 +5761,29 @@ static bool equalFuncNumberToOffset(const void *elt1, const void *elt2)
     return offsetAndDirNumber1->dirNumber == offsetAndDirNumber2->dirNumber;
 }
 
+static bool insertOffsetAndDirNumber(TIFF *tif,
+                                     TIFFOffsetAndDirNumber *entryPtr)
+{
+    if (!TIFFHashSetInsert(tif->tif_map_dir_offset_to_number, entryPtr))
+    {
+        TIFFErrorExtR(tif, "_TIFFCheckDirNumberAndOffset",
+                      "Insertion in tif_map_dir_offset_to_number failed");
+        return false;
+    }
+    if (!TIFFHashSetInsert(tif->tif_map_dir_number_to_offset, entryPtr))
+    {
+        TIFFErrorExtR(tif, "_TIFFCheckDirNumberAndOffset",
+                      "Insertion in tif_map_dir_number_to_offset failed");
+        if (!TIFFHashSetRemove(tif->tif_map_dir_offset_to_number, entryPtr))
+        {
+            TIFFErrorExtR(tif, "_TIFFCheckDirNumberAndOffset",
+                          "Rollback of directory tracking entry failed");
+        }
+        return false;
+    }
+    return true;
+}
+
 /*
  * Check the directory number and offset against the list of already seen
  * directory numbers and offsets. This is a trick to prevent IFD looping.
@@ -5779,11 +5802,12 @@ int _TIFFCheckDirNumberAndOffset(TIFF *tif, tdir_t dirn, uint64_t diroff)
     if (tif->tif_map_dir_offset_to_number == NULL)
     {
         tif->tif_map_dir_offset_to_number = TIFFHashSetNew(
-            hashFuncOffsetToNumber, equalFuncOffsetToNumber, free);
+            tif, hashFuncOffsetToNumber, equalFuncOffsetToNumber, true);
         if (tif->tif_map_dir_offset_to_number == NULL)
         {
             TIFFErrorExtR(tif, "_TIFFCheckDirNumberAndOffset",
                           "Not enough memory");
+            /* ToDo: Check, why code does not return 0 as error. */
             return 1;
         }
     }
@@ -5793,11 +5817,12 @@ int _TIFFCheckDirNumberAndOffset(TIFF *tif, tdir_t dirn, uint64_t diroff)
         /* No free callback for this map, as it shares the same items as
          * tif->tif_map_dir_offset_to_number. */
         tif->tif_map_dir_number_to_offset = TIFFHashSetNew(
-            hashFuncNumberToOffset, equalFuncNumberToOffset, NULL);
+            tif, hashFuncNumberToOffset, equalFuncNumberToOffset, false);
         if (tif->tif_map_dir_number_to_offset == NULL)
         {
             TIFFErrorExtR(tif, "_TIFFCheckDirNumberAndOffset",
                           "Not enough memory");
+            /* ToDo: Check, why code does not return 0 as error. */
             return 1;
         }
     }
@@ -5861,8 +5886,9 @@ int _TIFFCheckDirNumberAndOffset(TIFF *tif, tdir_t dirn, uint64_t diroff)
                                   foundEntryOld);
             }
 
-            TIFFOffsetAndDirNumber *entryPtr = (TIFFOffsetAndDirNumber *)malloc(
-                sizeof(TIFFOffsetAndDirNumber));
+            TIFFOffsetAndDirNumber *entryPtr =
+                (TIFFOffsetAndDirNumber *)_TIFFmallocExt(
+                    tif, sizeof(TIFFOffsetAndDirNumber));
             if (entryPtr == NULL)
             {
                 return 0;
@@ -5871,18 +5897,8 @@ int _TIFFCheckDirNumberAndOffset(TIFF *tif, tdir_t dirn, uint64_t diroff)
             /* Add IFD offset and dirn to IFD directory list */
             *entryPtr = entry;
 
-            if (!TIFFHashSetInsert(tif->tif_map_dir_offset_to_number, entryPtr))
+            if (!insertOffsetAndDirNumber(tif, entryPtr))
             {
-                TIFFErrorExtR(
-                    tif, "_TIFFCheckDirNumberAndOffset",
-                    "Insertion in tif_map_dir_offset_to_number failed");
-                return 0;
-            }
-            if (!TIFFHashSetInsert(tif->tif_map_dir_number_to_offset, entryPtr))
-            {
-                TIFFErrorExtR(
-                    tif, "_TIFFCheckDirNumberAndOffset",
-                    "Insertion in tif_map_dir_number_to_offset failed");
                 return 0;
             }
         }
@@ -5899,28 +5915,20 @@ int _TIFFCheckDirNumberAndOffset(TIFF *tif, tdir_t dirn, uint64_t diroff)
         return 0;
     }
 
-    TIFFOffsetAndDirNumber *entryPtr =
-        (TIFFOffsetAndDirNumber *)malloc(sizeof(TIFFOffsetAndDirNumber));
+    TIFFOffsetAndDirNumber *entryPtr = (TIFFOffsetAndDirNumber *)_TIFFmallocExt(
+        tif, sizeof(TIFFOffsetAndDirNumber));
     if (entryPtr == NULL)
     {
         TIFFErrorExtR(tif, "_TIFFCheckDirNumberAndOffset",
-                      "malloc(sizeof(TIFFOffsetAndDirNumber)) failed");
+                      "Cannot allocate directory tracking entry");
         return 0;
     }
 
     /* Add IFD offset and dirn to IFD directory list */
     *entryPtr = entry;
 
-    if (!TIFFHashSetInsert(tif->tif_map_dir_offset_to_number, entryPtr))
+    if (!insertOffsetAndDirNumber(tif, entryPtr))
     {
-        TIFFErrorExtR(tif, "_TIFFCheckDirNumberAndOffset",
-                      "Insertion in tif_map_dir_offset_to_number failed");
-        return 0;
-    }
-    if (!TIFFHashSetInsert(tif->tif_map_dir_number_to_offset, entryPtr))
-    {
-        TIFFErrorExtR(tif, "_TIFFCheckDirNumberAndOffset",
-                      "Insertion in tif_map_dir_number_to_offset failed");
         return 0;
     }
 
