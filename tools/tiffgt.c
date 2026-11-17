@@ -226,7 +226,6 @@ int main(int argc, const char **argv)
     glutMainLoop();
 
     cleanup_and_exit(EXIT_SUCCESS);
-    return EXIT_SUCCESS;
 }
 
 static void cleanup_and_exit(int code)
