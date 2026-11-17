@@ -76,6 +76,24 @@ static const TIFFDisplay display_sRGB = {
     2.4f, /* Gamma values for the three guns */
 };
 
+static char const *const orientationStrings[] = {
+    "not valid", /*0 for error printout */
+    "TOPLEFT",   /*1 row 0 top, col 0 lhs */
+    "TOPRIGHT",  /*2 row 0 top, col 0 rhs */
+    "BOTRIGHT",  /*3 row 0 bottom, col 0 rhs */
+    "BOTLEFT",   /*4 row 0 bottom, col 0 lhs */
+    "LEFTTOP",   /*5 row 0 lhs, col 0 top */
+    "RIGHTTOP",  /*6 row 0 rhs, col 0 top */
+    "RIGHTBOT",  /*7 row 0 rhs, col 0 bottom */
+    "LEFTBOT"    /*8 row 0 lhs, col 0 bottom */
+};
+static uint16_t checkedOrientation(uint16_t orientation)
+{
+    if (orientation < 1 || orientation > 8)
+        return 0;
+    return orientation;
+}
+
 /*
  * Check the image to see if TIFFReadRGBAImage can deal with it.
  * 1/0 is returned according to whether or not the image can
@@ -92,7 +110,7 @@ int TIFFRGBAImageOK(TIFF *tif, char emsg[EMSG_BUF_SIZE])
     {
         snprintf(emsg, EMSG_BUF_SIZE,
                  "Sorry, requested compression method is not configured");
-        return (0);
+        return 0;
     }
     switch (td->td_bitspersample)
     {
@@ -107,14 +125,14 @@ int TIFFRGBAImageOK(TIFF *tif, char emsg[EMSG_BUF_SIZE])
                      "Sorry, can not handle images with %" PRIu16
                      "-bit samples",
                      td->td_bitspersample);
-            return (0);
+            return 0;
     }
     if (td->td_sampleformat == SAMPLEFORMAT_IEEEFP)
     {
         snprintf(
             emsg, EMSG_BUF_SIZE,
             "Sorry, can not handle images with IEEE floating-point samples");
-        return (0);
+        return 0;
     }
     colorchannels = td->td_samplesperpixel - td->td_extrasamples;
     if (!TIFFGetField(tif, TIFFTAG_PHOTOMETRIC, &photometric))
@@ -130,7 +148,7 @@ int TIFFRGBAImageOK(TIFF *tif, char emsg[EMSG_BUF_SIZE])
             default:
                 snprintf(emsg, EMSG_BUF_SIZE, "Missing needed %s tag",
                          photoTag);
-                return (0);
+                return 0;
         }
     }
     switch (photometric)
@@ -148,7 +166,7 @@ int TIFFRGBAImageOK(TIFF *tif, char emsg[EMSG_BUF_SIZE])
                     "and %s=%" PRIu16 " and Bits/Sample=%" PRIu16 "",
                     photoTag, photometric, "Samples/pixel",
                     td->td_samplesperpixel, td->td_bitspersample);
-                return (0);
+                return 0;
             }
             /*
              * We should likely validate that any extra samples are either
@@ -170,7 +188,7 @@ int TIFFRGBAImageOK(TIFF *tif, char emsg[EMSG_BUF_SIZE])
                 snprintf(emsg, EMSG_BUF_SIZE,
                          "Sorry, can not handle RGB image with %s=%d",
                          "Color channels", colorchannels);
-                return (0);
+                return 0;
             }
             break;
         case PHOTOMETRIC_SEPARATED:
@@ -200,7 +218,7 @@ int TIFFRGBAImageOK(TIFF *tif, char emsg[EMSG_BUF_SIZE])
                 snprintf(emsg, EMSG_BUF_SIZE,
                          "Sorry, LogL data must have %s=%d", "Compression",
                          COMPRESSION_SGILOG);
-                return (0);
+                return 0;
             }
             break;
         case PHOTOMETRIC_LOGLUV:
@@ -211,14 +229,14 @@ int TIFFRGBAImageOK(TIFF *tif, char emsg[EMSG_BUF_SIZE])
                          "Sorry, LogLuv data must have %s=%d or %d",
                          "Compression", COMPRESSION_SGILOG,
                          COMPRESSION_SGILOG24);
-                return (0);
+                return 0;
             }
             if (td->td_planarconfig != PLANARCONFIG_CONTIG)
             {
                 snprintf(emsg, EMSG_BUF_SIZE,
                          "Sorry, can not handle LogLuv images with %s=%" PRIu16,
                          "Planarconfiguration", td->td_planarconfig);
-                return (0);
+                return 0;
             }
             if (td->td_samplesperpixel != 3 || colorchannels != 3)
             {
@@ -247,9 +265,9 @@ int TIFFRGBAImageOK(TIFF *tif, char emsg[EMSG_BUF_SIZE])
             snprintf(emsg, EMSG_BUF_SIZE,
                      "Sorry, can not handle image with %s=%" PRIu16, photoTag,
                      photometric);
-            return (0);
+            return 0;
     }
-    return (1);
+    return 1;
 }
 
 void TIFFRGBAImageEnd(TIFFRGBAImage *img)
@@ -546,7 +564,7 @@ int TIFFRGBAImageBegin(TIFFRGBAImage *img, TIFF *tif, int stop,
                 snprintf(emsg, EMSG_BUF_SIZE,
                          "Sorry, can not handle LogLuv images with %s=%" PRIu16,
                          "Planarconfiguration", planarconfig);
-                return (0);
+                return 0;
             }
             TIFFSetField(tif, TIFFTAG_SGILOGDATAFMT, SGILOGDATAFMT_8BIT);
             img->photometric = PHOTOMETRIC_RGB; /* little white lie */
@@ -588,48 +606,28 @@ fail_return:
     return 0;
 }
 
-int TIFFRGBAImageGet(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
-                     uint32_t h)
+int TIFFRGBAImageGet(TIFFRGBAImage *img, uint32_t *raster, uint32_t rwidth,
+                     uint32_t rheight)
 {
     if (img->get == NULL)
     {
         TIFFErrorExtR(img->tif, TIFFFileName(img->tif),
                       "No \"get\" routine setup");
-        return (0);
+        return 0;
     }
     if (img->put.any == NULL)
     {
         TIFFErrorExtR(
             img->tif, TIFFFileName(img->tif),
             "No \"put\" routine setupl; probably can not handle image format");
-        return (0);
-    }
-    /* Verify raster height against image height.
-     * Width is checked in img->get() function individually. */
-    if (0 <= img->row_offset && (uint32_t)img->row_offset < img->height)
-    {
-        uint32_t hx = img->height - (uint32_t)img->row_offset;
-        if (h > hx)
-        {
-            /* Adapt parameters to read only available lines and put image
-             * at the bottom of the raster. */
-            raster += (size_t)(h - hx) * w;
-            h = hx;
-        }
-    }
-    else
-    {
-        TIFFErrorExtR(img->tif, TIFFFileName(img->tif),
-                      "Error in TIFFRGBAImageGet: row offset %d exceeds "
-                      "image height %u",
-                      img->row_offset, img->height);
         return 0;
     }
-    return (*img->get)(img, raster, w, h);
+    /* Check and adaptation of parameters is done within (img->get) function. */
+    return (*img->get)(img, raster, rwidth, rheight);
 }
 
 /*
- * Read the specified image into an ABGR-format rastertaking in account
+ * Read the specified image into an ABGR-format raster taking in account
  * specified orientation.
  */
 int TIFFReadRGBAImageOriented(TIFF *tif, uint32_t rwidth, uint32_t rheight,
@@ -650,7 +648,7 @@ int TIFFReadRGBAImageOriented(TIFF *tif, uint32_t rwidth, uint32_t rheight,
         TIFFErrorExtR(tif, TIFFFileName(tif), "%s", emsg);
         ok = 0;
     }
-    return (ok);
+    return ok;
 }
 
 /*
@@ -672,28 +670,222 @@ int TIFFReadRGBAImage(TIFF *tif, uint32_t rwidth, uint32_t rheight,
  * Because LibTIFF does not contain image rotation code, images with
  * orientation > 4 will be loaded rotated by 90 degrees.
  */
-static int 
-setorientation(TIFFRGBAImage* img)
+static int setorientation(TIFFRGBAImage *img)
 {
-  const uint16_t flipbits[8] = {0,2,3,1,6,7,5,4};
-  uint16_t flip_orient = flipbits[img->orientation - 1];
-  uint16_t flip_req_or = flipbits[img->req_orientation - 1];
-  return (flip_orient & ~flip_req_or) | (~flip_orient & flip_req_or);
+    int flip_ret = 0;
+    if (checkedOrientation(img->req_orientation) == 0)
+    {
+        TIFFWarningExtR(img->tif, TIFFFileName(img->tif),
+                        "TIFFRGBAImage ERROR: Requested orientation %d is not "
+                        "within allowed range of image orientations 1 to 8. "
+                        "Using default",
+                        img->req_orientation);
+        img->req_orientation = ORIENTATION_BOTLEFT; /* It is the default */
+    }
+    switch (img->orientation)
+    {
+        case ORIENTATION_TOPLEFT:
+        case ORIENTATION_LEFTTOP:
+            if (img->req_orientation == ORIENTATION_TOPRIGHT ||
+                img->req_orientation == ORIENTATION_RIGHTTOP)
+                flip_ret = FLIP_HORIZONTALLY;
+            else if (img->req_orientation == ORIENTATION_BOTRIGHT ||
+                     img->req_orientation == ORIENTATION_RIGHTBOT)
+                flip_ret = FLIP_HORIZONTALLY | FLIP_VERTICALLY;
+            else if (img->req_orientation == ORIENTATION_BOTLEFT ||
+                     img->req_orientation == ORIENTATION_LEFTBOT)
+                flip_ret = FLIP_VERTICALLY;
+            else
+                flip_ret = 0;
+            break;
+        case ORIENTATION_TOPRIGHT:
+        case ORIENTATION_RIGHTTOP:
+            if (img->req_orientation == ORIENTATION_TOPLEFT ||
+                img->req_orientation == ORIENTATION_LEFTTOP)
+                flip_ret = FLIP_HORIZONTALLY;
+            else if (img->req_orientation == ORIENTATION_BOTRIGHT ||
+                     img->req_orientation == ORIENTATION_RIGHTBOT)
+                flip_ret = FLIP_VERTICALLY;
+            else if (img->req_orientation == ORIENTATION_BOTLEFT ||
+                     img->req_orientation == ORIENTATION_LEFTBOT)
+                flip_ret = FLIP_HORIZONTALLY | FLIP_VERTICALLY;
+            else
+                flip_ret = 0;
+            break;
+        case ORIENTATION_BOTRIGHT:
+        case ORIENTATION_RIGHTBOT:
+            if (img->req_orientation == ORIENTATION_TOPLEFT ||
+                img->req_orientation == ORIENTATION_LEFTTOP)
+                flip_ret = FLIP_HORIZONTALLY | FLIP_VERTICALLY;
+            else if (img->req_orientation == ORIENTATION_TOPRIGHT ||
+                     img->req_orientation == ORIENTATION_RIGHTTOP)
+                flip_ret = FLIP_VERTICALLY;
+            else if (img->req_orientation == ORIENTATION_BOTLEFT ||
+                     img->req_orientation == ORIENTATION_LEFTBOT)
+                flip_ret = FLIP_HORIZONTALLY;
+            else
+                flip_ret = 0;
+            break;
+        case ORIENTATION_BOTLEFT:
+        case ORIENTATION_LEFTBOT:
+            if (img->req_orientation == ORIENTATION_TOPLEFT ||
+                img->req_orientation == ORIENTATION_LEFTTOP)
+                flip_ret = FLIP_VERTICALLY;
+            else if (img->req_orientation == ORIENTATION_TOPRIGHT ||
+                     img->req_orientation == ORIENTATION_RIGHTTOP)
+                flip_ret = FLIP_HORIZONTALLY | FLIP_VERTICALLY;
+            else if (img->req_orientation == ORIENTATION_BOTRIGHT ||
+                     img->req_orientation == ORIENTATION_RIGHTBOT)
+                flip_ret = FLIP_HORIZONTALLY;
+            else
+                flip_ret = 0;
+            break;
+        default: /* NOTREACHED */
+            flip_ret = 0;
+            break;
+    }
+    /*
+     * TIFFRGBAImage cannot rotate images because of its interface restrictions.
+     * (see last comment in issue #29)
+     * Therefore, check for allowed combinations of img->orientation and
+     * img->req_orientation (requested orientation from the user).
+     *  The img->req_orientation also defines in which corner of the
+     * two dimensional "raster" matrix the image will be moved
+     * (i.e. which raster-corner will be the raster origin).
+     */
+    static const char warnMsg[] =
+        "TIFFRGBAImage cannot rotate but only flip. Therefore, image "
+        "pixel will be moved to %s corner of the raster matrix as origin "
+        "but the image pixel orientation will result in %s";
+    if ((img->req_orientation <= ORIENTATION_BOTLEFT) &&
+        (img->orientation >= ORIENTATION_LEFTTOP))
+    {
+        TIFFWarningExtR(
+            img->tif, TIFFFileName(img->tif), warnMsg,
+            orientationStrings[checkedOrientation(img->req_orientation)],
+            orientationStrings[checkedOrientation(
+                (uint16_t)(img->req_orientation + 4))]);
+    }
+    else if ((img->req_orientation >= ORIENTATION_LEFTTOP) &&
+             (img->orientation <= ORIENTATION_BOTLEFT))
+    {
+        TIFFWarningExtR(
+            img->tif, TIFFFileName(img->tif), warnMsg,
+            orientationStrings[checkedOrientation(img->req_orientation)],
+            orientationStrings[checkedOrientation(
+                (uint16_t)(img->req_orientation - 4))]);
+    }
+    return flip_ret;
+}
 
-  /*          TL TR BR BL LT RT RB LB <- Source orientation
-   * flipbits  0  2  3  1  6  7  5  4
-   *        +  -  -  -  -  -  -  -  -
-   * TL  0  |  0  2  3  1  6  7  5  4
-   * TR  2  |  2  0  1  3  4  5  7  6
-   * BR  3  |  3  1  0  2  5  4  6  7
-   * BL  1  |  1  3  2  0  7  6  4  5
-   * LT  6  |  6  4  5  7  0  1  3  2
-   * RT  7  |  7  5  4  6  1  0  2  3
-   * RB  5  |  5  7  6  4  3  2  0  1
-   * LB  4  |  4  6  7  5  2  3  1  0 |
-   *                                - return values
-   * ^ Target orientation
-   */
+/* Calculate (initialize) all parameters for gt-functions to put the image area
+ * into the raster according to available image and raster sizes as well as to
+ * requested orientation and raster-origin.
+ * Furthermore, row_offset and col_offset is checked to be 0 or positive and
+ * req_orientation value is checked to be in enummeration range. */
+static int calcCopyToRasterParameter(TIFFRGBAImage *img, uint32_t *raster,
+                                     uint32_t rwidth, uint32_t rheight,
+                                     uint32_t *pwcpy, uint32_t *phcpy,
+                                     int *pflip, uint32_t **pp_raster_start,
+                                     int32_t *ptoskew, uint32_t *py,
+                                     bool isTiled, uint32_t tilewidth,
+                                     const char *funcName)
+{
+    /* If the raster height is smaller than the image height,
+     * or if there is a row_offset, adapt the number of lines to be copied. */
+    if (img->row_offset < 0 || (uint32_t)img->row_offset >= img->height)
+    {
+        TIFFErrorExtR(img->tif, TIFFFileName(img->tif),
+                      "Error in %s: row offset %d exceeds "
+                      "image height %u",
+                      funcName, img->row_offset, img->height);
+        return 0;
+    }
+    *phcpy = TIFFmin(rheight, img->height - (uint32_t)img->row_offset);
+
+    /* If the raster is smaller than the image,
+     * or if there is a col_offset, adapt the number of samples to be copied per
+     * row. */
+    if (img->col_offset < 0 || (uint32_t)img->col_offset >= img->width)
+    {
+        TIFFErrorExtR(img->tif, TIFFFileName(img->tif),
+                      "Error in %s: column offset %d exceeds "
+                      "image width %u",
+                      funcName, img->col_offset, img->width);
+        return 0;
+    }
+    *pwcpy = TIFFmin(rwidth, img->width - (uint32_t)img->col_offset);
+
+    /* Determine flipping and check req_orientation value. */
+    *pflip = setorientation(img);
+
+    /* -- Set raster-origin --
+     * Set pointer into raster buffer according img->req_orientation, which
+     * defines in which corner of the two dimensional "raster" matrix the image
+     * will be moved (i.e. which raster-corner will be the raster origin).
+     * Furthermore, if vertical flipping is required adapt pointer into raster
+     * to the last line. Then, write the lines from the bottom line to the top
+     * line of the image area within the raster buffer.
+     */
+    switch (img->req_orientation)
+    {
+        case ORIENTATION_TOPLEFT:
+        case ORIENTATION_LEFTTOP:
+            *pp_raster_start = raster;
+            break;
+        case ORIENTATION_TOPRIGHT:
+        case ORIENTATION_RIGHTTOP:
+            *pp_raster_start = raster + ((size_t)rwidth - *pwcpy);
+            break;
+        case ORIENTATION_BOTRIGHT:
+        case ORIENTATION_RIGHTBOT:
+            *pp_raster_start = raster + ((size_t)rheight - *phcpy) * rwidth +
+                               ((size_t)rwidth - *pwcpy);
+            break;
+        case ORIENTATION_BOTLEFT:
+        case ORIENTATION_LEFTBOT:
+            *pp_raster_start = raster + ((size_t)rheight - *phcpy) * rwidth;
+            break;
+        default: /* NOTREACHED */
+            return 0;
+            break;
+    }
+
+    /* Set increment (toskew) to next or previous line in raster.
+     * And initialize row index (y) of the image area within the raster
+     * buffer.
+     * Tiled images are read tile by tile and therefore toskew has to be
+     * calculated using tile-width.
+     */
+    const uint32_t cpywidth = isTiled ? tilewidth : *pwcpy;
+    if (*pflip & FLIP_VERTICALLY)
+    {
+        if ((int64_t)rwidth + cpywidth > INT_MAX)
+        {
+            TIFFErrorExtR(img->tif, TIFFFileName(img->tif),
+                          "Width overflow in %s", funcName);
+            return 0;
+        }
+        /* Skew back to the raster row before the currently written row
+         * -> one raster width plus copied image pixels. */
+        *ptoskew = -(int32_t)(rwidth + cpywidth);
+        *py = *phcpy - 1; /* start with last image line in raster */
+    }
+    else
+    {
+        /* Skew forward to the end of the raster width of the row currently
+         * copied. */
+        if (cpywidth > ((int64_t)INT_MAX + rwidth) ||
+            rwidth > ((int64_t)INT_MAX + cpywidth))
+        {
+            TIFFErrorExtR(img->tif, TIFFFileName(img->tif),
+                          "Width underflow in %s", funcName);
+            return 0;
+        }
+        *ptoskew = (int32_t)(rwidth - cpywidth);
+        *py = 0; /* start with first image line in raster */
+    }
+    return 1;
 }
 
 /*
@@ -702,8 +894,8 @@ setorientation(TIFFRGBAImage* img)
  * or
  *	SamplesPerPixel == 1
  */
-static int gtTileContig(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
-                        uint32_t h)
+static int gtTileContig(TIFFRGBAImage *img, uint32_t *raster, uint32_t rwidth,
+                        uint32_t rheight)
 {
     TIFF *tif = img->tif;
     tileContigRoutine put = img->put.contig;
@@ -720,64 +912,39 @@ static int gtTileContig(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
     uint32_t leftmost_tw;
     tmsize_t bufsize;
 
-    /* If the raster is smaller than the image,
-     * or if there is a col_offset, adapt the samples to be copied per row. */
-    uint32_t wmin;
+    uint32_t wcpy;            /* samples to copy in raster width direction */
+    uint32_t hcpy;            /* lines to copy in raster height direction */
+    uint32_t *p_raster_start; /* pointer into raster where imagedata shall start
+                                 to be written */
 
-    if (0 <= img->col_offset && (uint32_t)img->col_offset < img->width)
-    {
-        wmin = TIFFmin(w, img->width - (uint32_t)img->col_offset);
-    }
-    else
-    {
-        TIFFErrorExtR(tif, TIFFFileName(tif),
-                      "Error in gtTileContig: column offset %d exceeds "
-                      "image width %u",
-                      img->col_offset, img->width);
-        return 0;
-    }
-    bufsize = TIFFTileSize(tif);
-    if (bufsize == 0)
-    {
-        TIFFErrorExtR(tif, TIFFFileName(tif), "%s", "No space for tile buffer");
-        return (0);
-    }
+    /* For explanation of some local parameters refer to gtStripContig() */
 
     TIFFGetField(tif, TIFFTAG_TILEWIDTH, &tw);
     TIFFGetField(tif, TIFFTAG_TILELENGTH, &th);
 
-    flip = setorientation(img);
-    if (flip & FLIP_VERTICALLY)
-    {
-        if (((int64_t)tw + w) > INT_MAX)
-        {
-            TIFFErrorExtR(tif, TIFFFileName(tif), "%s",
-                          "unsupported tile size (too wide)");
-            return (0);
-        }
-        y = h - 1;
-        toskew = -(int32_t)(tw + w);
-    }
-    else
-    {
-        if (tw > ((int64_t)INT_MAX + w) || w > ((int64_t)INT_MAX + tw))
-        {
-            TIFFErrorExtR(tif, TIFFFileName(tif), "%s",
-                          "unsupported tile size (too wide)");
-            return (0);
-        }
-        y = 0;
-        toskew = -(int32_t)(tw - w);
-    }
-
     if (tw == 0 || th == 0)
     {
         TIFFErrorExtR(tif, TIFFFileName(tif), "tile width or height is zero");
-        return (0);
+        return 0;
+    }
+
+    if (!calcCopyToRasterParameter(img, raster, rwidth, rheight, &wcpy, &hcpy,
+                                   &flip, &p_raster_start, &toskew, &y, true,
+                                   tw, "gtTileContig"))
+    {
+        return 0;
+    }
+
+    bufsize = TIFFTileSize(tif);
+    if (bufsize == 0)
+    {
+        TIFFErrorExtR(tif, TIFFFileName(tif), "%s", "No space for tile buffer");
+        return 0;
     }
 
     /*
-     *	Leftmost tile is clipped on left side if col_offset > 0.
+     * Reading the image data tile by tile.
+     * Leftmost tile is clipped on left side if col_offset > 0.
      */
     leftmost_fromskew = (int32_t)((uint32_t)img->col_offset % tw);
     leftmost_tw = (uint32_t)((int32_t)tw - leftmost_fromskew);
@@ -786,20 +953,20 @@ static int gtTileContig(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
     {
         TIFFErrorExtR(tif, TIFFFileName(tif), "%s %" PRId64, "Invalid skew",
                       skew_i64);
-        return (0);
+        return 0;
     }
     leftmost_toskew = (int32_t)skew_i64;
-    for (row = 0; ret != 0 && row < h; row += nrow)
+    for (row = 0; ret != 0 && row < hcpy; row += nrow)
     {
         rowstoread = th - ((uint32_t)row + (uint32_t)img->row_offset) % th;
-        nrow = (row + rowstoread > h ? h - row : rowstoread);
+        nrow = row + rowstoread > hcpy ? hcpy - row : rowstoread;
         fromskew = leftmost_fromskew;
         this_tw = leftmost_tw;
         this_toskew = leftmost_toskew;
         tocol = 0;
         col = (uint32_t)img->col_offset;
-        /* wmin: only write imagewidth if raster is bigger. */
-        while (tocol < wmin)
+        /* wcpy: only write imagewidth if raster is bigger. */
+        while (tocol < wcpy)
         {
             if (_TIFFReadTileAndAllocBuffer(tif, (void **)&buf, bufsize, col,
                                             (uint32_t)row +
@@ -813,18 +980,18 @@ static int gtTileContig(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
             pos = (((uint32_t)row + (uint32_t)img->row_offset) % th) *
                       TIFFTileRowSize(tif) +
                   ((tmsize_t)fromskew * img->samplesperpixel);
-            if (tocol + this_tw > wmin)
+            if (tocol + this_tw > wcpy)
             {
                 /*
                  * Rightmost tile is clipped on right side.
                  */
-                fromskew = (int32_t)(tw - (wmin - tocol));
+                fromskew = (int32_t)(tw - (wcpy - tocol));
                 this_tw = (uint32_t)((int32_t)tw - fromskew);
                 this_toskew = (int32_t)(toskew + (int32_t)(uint32_t)fromskew);
             }
-            tmsize_t roffset = (tmsize_t)y * w + tocol;
-            (*put)(img, raster + roffset, tocol, y, this_tw, nrow, fromskew,
-                   this_toskew, buf + pos);
+            tmsize_t roffset = (tmsize_t)y * rwidth + tocol;
+            (*put)(img, p_raster_start + roffset, tocol, y, this_tw, nrow,
+                   fromskew, this_toskew, buf + pos);
             tocol += this_tw;
             col += this_tw;
             /*
@@ -845,12 +1012,12 @@ static int gtTileContig(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
     {
         uint32_t line;
 
-        for (line = 0; line < h; line++)
+        for (line = 0; line < hcpy; line++)
         {
-            uint32_t *left = raster + (size_t)line * w;
-            /* Use wmin to only flip horizontally data in place and not complete
+            uint32_t *left = p_raster_start + (size_t)line * rwidth;
+            /* Use wcpy to only flip horizontally data in place and not complete
              * raster-row. */
-            uint32_t *right = left + wmin - 1;
+            uint32_t *right = left + wcpy - 1;
 
             while (left < right)
             {
@@ -863,7 +1030,7 @@ static int gtTileContig(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
         }
     }
 
-    return (ret);
+    return ret;
 }
 
 /*
@@ -872,8 +1039,8 @@ static int gtTileContig(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
  *	 PlanarConfiguration separated
  * We assume that all such images are RGB.
  */
-static int gtTileSeparate(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
-                          uint32_t h)
+static int gtTileSeparate(TIFFRGBAImage *img, uint32_t *raster, uint32_t rwidth,
+                          uint32_t rheight)
 {
     TIFF *tif = img->tif;
     tileSeparateRoutine put = img->put.separate;
@@ -897,19 +1064,26 @@ static int gtTileSeparate(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
     int32_t leftmost_fromskew;
     uint32_t leftmost_tw;
 
-    /* If the raster is smaller than the image,
-     * or if there is a col_offset, adapt the samples to be copied per row. */
-    uint32_t wmin;
-    if (0 <= img->col_offset && (uint32_t)img->col_offset < img->width)
+    uint32_t wcpy;            /* samples to copy in raster width direction */
+    uint32_t hcpy;            /* lines to copy in raster height direction */
+    uint32_t *p_raster_start; /* pointer into raster where imagedata shall start
+                                 to be written */
+
+    /* For explanation of some local parameters refer to gtStripContig() */
+
+    TIFFGetField(tif, TIFFTAG_TILEWIDTH, &tw);
+    TIFFGetField(tif, TIFFTAG_TILELENGTH, &th);
+
+    if (tw == 0 || th == 0)
     {
-        wmin = TIFFmin(w, img->width - (uint32_t)img->col_offset);
+        TIFFErrorExtR(tif, TIFFFileName(tif), "tile width or height is zero");
+        return 0;
     }
-    else
+
+    if (!calcCopyToRasterParameter(img, raster, rwidth, rheight, &wcpy, &hcpy,
+                                   &flip, &p_raster_start, &toskew, &y, true,
+                                   tw, "gtTileSeparate"))
     {
-        TIFFErrorExtR(tif, TIFFFileName(tif),
-                      "Error in gtTileSeparate: column offset %d exceeds "
-                      "image width %u",
-                      img->col_offset, img->width);
         return 0;
     }
 
@@ -917,36 +1091,7 @@ static int gtTileSeparate(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
     bufsize =
         _TIFFMultiplySSize(tif, alpha ? 4 : 3, tilesize, "gtTileSeparate");
     if (bufsize == 0)
-    {
-        return (0);
-    }
-
-    TIFFGetField(tif, TIFFTAG_TILEWIDTH, &tw);
-    TIFFGetField(tif, TIFFTAG_TILELENGTH, &th);
-
-    flip = setorientation(img);
-    if (flip & FLIP_VERTICALLY)
-    {
-        if (((int64_t)tw + w) > INT_MAX)
-        {
-            TIFFErrorExtR(tif, TIFFFileName(tif), "%s",
-                          "unsupported tile size (too wide)");
-            return (0);
-        }
-        y = h - 1;
-        toskew = -(int32_t)(tw + w);
-    }
-    else
-    {
-        if (tw > ((int64_t)INT_MAX + w) || w > ((int64_t)INT_MAX + tw))
-        {
-            TIFFErrorExtR(tif, TIFFFileName(tif), "%s",
-                          "unsupported tile size (too wide)");
-            return (0);
-        }
-        y = 0;
-        toskew = -(int32_t)(tw - w);
-    }
+        return 0;
 
     switch (img->photometric)
     {
@@ -964,7 +1109,7 @@ static int gtTileSeparate(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
     if (tw == 0 || th == 0)
     {
         TIFFErrorExtR(tif, TIFFFileName(tif), "tile width or height is zero");
-        return (0);
+        return 0;
     }
 
     /*
@@ -977,20 +1122,20 @@ static int gtTileSeparate(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
     {
         TIFFErrorExtR(tif, TIFFFileName(tif), "%s %" PRId64, "Invalid skew",
                       skew_i64);
-        return (0);
+        return 0;
     }
     leftmost_toskew = (int32_t)skew_i64;
-    for (row = 0; ret != 0 && row < h; row += nrow)
+    for (row = 0; ret != 0 && row < hcpy; row += nrow)
     {
         rowstoread = th - ((uint32_t)row + (uint32_t)img->row_offset) % th;
-        nrow = (row + rowstoread > h ? h - row : rowstoread);
+        nrow = row + rowstoread > hcpy ? hcpy - row : rowstoread;
         fromskew = leftmost_fromskew;
         this_tw = leftmost_tw;
         this_toskew = leftmost_toskew;
         tocol = 0;
         col = (uint32_t)img->col_offset;
-        /* wmin: only write imagewidth if raster is bigger. */
-        while (tocol < wmin)
+        /* wcpy: only write imagewidth if raster is bigger. */
+        while (tocol < wcpy)
         {
             if (buf == NULL)
             {
@@ -1057,19 +1202,19 @@ static int gtTileSeparate(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
             pos = (tmsize_t)((uint32_t)((int32_t)row + img->row_offset) % th) *
                       TIFFTileRowSize(tif) +
                   (tmsize_t)fromskew;
-            if (tocol + this_tw > wmin)
+            if (tocol + this_tw > wcpy)
             {
                 /*
                  * Rightmost tile is clipped on right side.
                  */
-                fromskew = (int32_t)(tw - (wmin - tocol));
+                fromskew = (int32_t)(tw - (wcpy - tocol));
                 this_tw = (uint32_t)((int32_t)tw - fromskew);
                 this_toskew = (int32_t)(toskew + (int32_t)(uint32_t)fromskew);
             }
-            tmsize_t roffset = (tmsize_t)y * w + tocol;
-            (*put)(img, raster + roffset, tocol, y, this_tw, nrow, fromskew,
-                   this_toskew, p0 + pos, p1 + pos, p2 + pos,
-                   (alpha ? (pa + pos) : NULL));
+            tmsize_t roffset = (tmsize_t)y * rwidth + tocol;
+            (*put)(img, p_raster_start + roffset, tocol, y, this_tw, nrow,
+                   fromskew, this_toskew, p0 + pos, p1 + pos, p2 + pos,
+                   alpha ? pa + pos : NULL);
             tocol += this_tw;
             col += this_tw;
             /*
@@ -1089,12 +1234,12 @@ static int gtTileSeparate(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
     {
         uint32_t line;
 
-        for (line = 0; line < h; line++)
+        for (line = 0; line < hcpy; line++)
         {
-            uint32_t *left = raster + (size_t)line * w;
-            /* Use wmin to only flip horizontally data in place and not complete
+            uint32_t *left = p_raster_start + (size_t)line * rwidth;
+            /* Use wcpy to only flip horizontally data in place and not complete
              * raster-row. */
-            uint32_t *right = left + wmin - 1;
+            uint32_t *right = left + wcpy - 1;
 
             while (left < right)
             {
@@ -1108,7 +1253,7 @@ static int gtTileSeparate(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
     }
 
     _TIFFfreeExt(img->tif, buf);
-    return (ret);
+    return ret;
 }
 
 /*
@@ -1117,8 +1262,8 @@ static int gtTileSeparate(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
  * or
  *	SamplesPerPixel == 1
  */
-static int gtStripContig(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
-                         uint32_t h)
+static int gtStripContig(TIFFRGBAImage *img, uint32_t *raster, uint32_t rwidth,
+                         uint32_t rheight)
 {
     TIFF *tif = img->tif;
     tileContigRoutine put = img->put.contig;
@@ -1127,7 +1272,6 @@ static int gtStripContig(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
     unsigned char *buf = NULL;
     uint32_t rowsperstrip;
     uint16_t subsamplinghor, subsamplingver;
-    uint32_t imagewidth = img->width;
     tmsize_t scanline;
     /* fromskew, toskew are the increments within the input image or the raster
      * from the end of a line to the start of the next line to read or write. */
@@ -1135,19 +1279,15 @@ static int gtStripContig(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
     int ret = 1, flip;
     tmsize_t maxstripsize;
 
-    /* If the raster is smaller than the image,
-     * or if there is a col_offset, adapt the samples to be copied per row. */
-    uint32_t wmin;
-    if (0 <= img->col_offset && (uint32_t)img->col_offset < imagewidth)
+    uint32_t wcpy;            /* samples to copy in raster width direction */
+    uint32_t hcpy;            /* lines to copy in raster height direction */
+    uint32_t *p_raster_start; /* pointer into raster where imagedata shall start
+                                 to be written (image area within raster) */
+
+    if (!calcCopyToRasterParameter(img, raster, rwidth, rheight, &wcpy, &hcpy,
+                                   &flip, &p_raster_start, &toskew, &y, false,
+                                   0, "gtStripContig"))
     {
-        wmin = TIFFmin(w, imagewidth - (uint32_t)img->col_offset);
-    }
-    else
-    {
-        TIFFErrorExtR(tif, TIFFFileName(tif),
-                      "Error in gtStripContig: column offset %d exceeds "
-                      "image width %u",
-                      img->col_offset, imagewidth);
         return 0;
     }
 
@@ -1157,50 +1297,43 @@ static int gtStripContig(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
     {
         TIFFErrorExtR(tif, TIFFFileName(tif),
                       "Invalid vertical YCbCr subsampling");
-        return (0);
+        return 0;
     }
 
     maxstripsize = TIFFStripSize(tif);
-
-    flip = setorientation(img);
-    if (flip & FLIP_VERTICALLY)
-    {
-        if (w > INT_MAX / 2)
-        {
-            TIFFErrorExtR(tif, TIFFFileName(tif), "Width overflow");
-            return (0);
-        }
-        y = h - 1;
-        /* Skew back to the raster row before the currently written row
-         * -> one raster width plus copied image pixels. */
-        toskew = -(int32_t)(w + wmin);
-    }
-    else
-    {
-        y = 0;
-        /* Skew forward to the end of the raster width of the row currently
-         * copied. */
-        toskew = (int32_t)(w - wmin);
-    }
 
     TIFFGetFieldDefaulted(tif, TIFFTAG_ROWSPERSTRIP, &rowsperstrip);
     if (rowsperstrip == 0)
     {
         TIFFErrorExtR(tif, TIFFFileName(tif), "rowsperstrip is zero");
-        return (0);
+        return 0;
     }
 
     scanline = TIFFScanlineSize(tif);
-    fromskew = (int32_t)(w < imagewidth ? imagewidth - w : 0);
-    for (row = 0; row < h; row += nrow)
+    fromskew = (int32_t)(wcpy < img->width ? img->width - wcpy : 0);
+    if (fromskew != (int32_t)(img->width - wcpy))
+    {
+        /* should never happen */
+        TIFFErrorExtR(tif, TIFFFileName(tif), "fromskew got unexpected value");
+    }
+
+    for (row = 0; row < hcpy; row += nrow)
     {
         uint32_t temp;
+        /* rowstoread = number of rows within current strip from
+         * current row till end of strip.
+         * -> rowsFromRowToStripEnd */
         rowstoread = rowsperstrip -
                      (uint32_t)((int32_t)row + img->row_offset) % rowsperstrip;
-        nrow = (row + rowstoread > h ? h - row : rowstoread);
+        /* nrow, nrowsub = number of rows to read within current row-loop.
+         * -> rowsToRead, rowsToReadSub */
+        nrow = row + rowstoread > hcpy ? hcpy - row : rowstoread;
         nrowsub = nrow;
         if ((nrowsub % subsamplingver) != 0)
             nrowsub += subsamplingver - nrowsub % subsamplingver;
+        /* temp = number of rows to read from beginning of current strip over
+         * current row till last row to read within current strip.
+         * -> rowsToReadFromStripStart */
         temp =
             (uint32_t)((int32_t)row + img->row_offset) % rowsperstrip + nrowsub;
         if (scanline > 0 && temp > (size_t)(TIFF_TMSIZE_T_MAX / scanline))
@@ -1221,32 +1354,33 @@ static int gtStripContig(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
             ret = 0;
             break;
         }
-
+        /* pos = read offset into strip-buffer where to start reading. */
         pos = (tmsize_t)((uint32_t)((int32_t)row + img->row_offset) %
                          rowsperstrip) *
                   scanline +
               ((tmsize_t)img->col_offset * img->samplesperpixel);
-        tmsize_t roffset = (tmsize_t)y * w;
-        (*put)(img, raster + roffset, 0, y, wmin, nrow, fromskew, toskew,
-               buf + pos);
+        /* roffset = offset into raster, where to write. */
+        tmsize_t roffset = (tmsize_t)y * rwidth;
+        (*put)(img, p_raster_start + roffset, 0, y, wcpy, nrow, fromskew,
+               toskew, buf + pos);
+        /* y = row-index into image area within raster where to write
+         * (i.e. for offset calculations). */
         y += (uint32_t)((flip & FLIP_VERTICALLY) ? -(int32_t)nrow
                                                  : (int32_t)nrow);
     }
 
     if (flip & FLIP_HORIZONTALLY)
     {
-        /* Flips the complete raster matrix horizontally. If raster width is
-         * larger than image width, data are moved horizontally to the right
-         * side.
-         * Use wmin to only flip data in place. */
+        /* Flips the image area within the raster buffer horizontally.
+         * Use wcpy to only flip data in place. */
         uint32_t line;
 
-        for (line = 0; line < h; line++)
+        for (line = 0; line < hcpy; line++)
         {
-            uint32_t *left = raster + (size_t)line * w;
-            /* Use wmin to only flip horizontally data in place and not complete
+            uint32_t *left = p_raster_start + (size_t)line * rwidth;
+            /* Use wcpy to only flip horizontally data in place and not complete
              * raster-row. */
-            uint32_t *right = left + wmin - 1;
+            uint32_t *right = left + wcpy - 1;
 
             while (left < right)
             {
@@ -1260,7 +1394,7 @@ static int gtStripContig(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
     }
 
     _TIFFfreeExt(img->tif, buf);
-    return (ret);
+    return ret;
 }
 
 /*
@@ -1269,8 +1403,8 @@ static int gtStripContig(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
  *	 PlanarConfiguration separated
  * We assume that all such images are RGB.
  */
-static int gtStripSeparate(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
-                           uint32_t h)
+static int gtStripSeparate(TIFFRGBAImage *img, uint32_t *raster,
+                           uint32_t rwidth, uint32_t rheight)
 {
     TIFF *tif = img->tif;
     tileSeparateRoutine put = img->put.separate;
@@ -1280,27 +1414,22 @@ static int gtStripSeparate(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
     tmsize_t pos;
     tmsize_t scanline;
     uint32_t rowsperstrip, offset_row;
-    uint32_t imagewidth = img->width;
     tmsize_t stripsize;
     tmsize_t bufsize;
     int32_t fromskew, toskew;
-    int alpha = img->alpha;
+    int alpha = img->alpha; /* local variable is faster */
     int ret = 1, flip;
     uint16_t colorchannels;
+    uint32_t wcpy;            /* samples to copy in raster width direction */
+    uint32_t hcpy;            /* lines to copy in raster height direction */
+    uint32_t *p_raster_start; /* pointer into raster where imagedata shall start
+                                 to be written */
 
-    /* If the raster is smaller than the image,
-     * or if there is a col_offset, adapt the samples to be copied per row. */
-    uint32_t wmin;
-    if (0 <= img->col_offset && (uint32_t)img->col_offset < imagewidth)
+    /* For explanation of local parameters refer to gtStripContig() */
+    if (!calcCopyToRasterParameter(img, raster, rwidth, rheight, &wcpy, &hcpy,
+                                   &flip, &p_raster_start, &toskew, &y, false,
+                                   0, "gtStripSeparate"))
     {
-        wmin = TIFFmin(w, imagewidth - (uint32_t)img->col_offset);
-    }
-    else
-    {
-        TIFFErrorExtR(tif, TIFFFileName(tif),
-                      "Error in gtStripSeparate: column offset %d exceeds "
-                      "image width %u",
-                      img->col_offset, imagewidth);
         return 0;
     }
 
@@ -1308,30 +1437,7 @@ static int gtStripSeparate(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
     bufsize =
         _TIFFMultiplySSize(tif, alpha ? 4 : 3, stripsize, "gtStripSeparate");
     if (bufsize == 0)
-    {
-        return (0);
-    }
-
-    flip = setorientation(img);
-    if (flip & FLIP_VERTICALLY)
-    {
-        if (w > INT_MAX / 2)
-        {
-            TIFFErrorExtR(tif, TIFFFileName(tif), "Width overflow");
-            return (0);
-        }
-        y = h - 1;
-        /* Skew back to the raster row before the currently written row
-         * -> one raster width plus one image width. */
-        toskew = -(int32_t)(w + wmin);
-    }
-    else
-    {
-        y = 0;
-        /* Skew forward to the end of the raster width of the row currently
-         * written. */
-        toskew = (int32_t)(w - wmin);
-    }
+        return 0;
 
     switch (img->photometric)
     {
@@ -1350,18 +1456,23 @@ static int gtStripSeparate(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
     if (rowsperstrip == 0)
     {
         TIFFErrorExtR(tif, TIFFFileName(tif), "rowsperstrip is zero");
-        return (0);
+        return 0;
     }
 
     scanline = TIFFScanlineSize(tif);
-    fromskew = (int32_t)(w < imagewidth ? imagewidth - w : 0);
-    for (row = 0; row < h; row += nrow)
+    fromskew = (int32_t)(wcpy < img->width ? img->width - wcpy : 0);
+    if (fromskew != (int32_t)(img->width - wcpy))
+    {
+        /* should never happen */
+        TIFFErrorExtR(tif, TIFFFileName(tif), "fromskew got unexpected value");
+    }
+    for (row = 0; row < hcpy; row += nrow)
     {
         uint32_t temp;
         rowstoread =
             rowsperstrip -
             ((uint32_t)((int32_t)row + img->row_offset) % rowsperstrip);
-        nrow = (row + rowstoread > h ? h - row : rowstoread);
+        nrow = row + rowstoread > hcpy ? hcpy - row : rowstoread;
         offset_row = (uint32_t)((int32_t)row + img->row_offset);
         temp = (uint32_t)((int32_t)row + img->row_offset) % rowsperstrip + nrow;
         if (scanline > 0 && temp > (size_t)(TIFF_TMSIZE_T_MAX / scanline))
@@ -1434,9 +1545,10 @@ static int gtStripSeparate(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
                          rowsperstrip) *
                   scanline +
               (tmsize_t)img->col_offset;
-        tmsize_t roffset = (tmsize_t)y * w;
-        (*put)(img, raster + roffset, 0, y, wmin, nrow, fromskew, toskew,
-               p0 + pos, p1 + pos, p2 + pos, (alpha ? (pa + pos) : NULL));
+        tmsize_t roffset = (tmsize_t)y * rwidth;
+        (*put)(img, p_raster_start + roffset, 0, y, wcpy, nrow, fromskew,
+               toskew, p0 + pos, p1 + pos, p2 + pos,
+               (alpha ? (pa + pos) : NULL));
         y += (uint32_t)((flip & FLIP_VERTICALLY) ? -(int32_t)nrow
                                                  : (int32_t)nrow);
     }
@@ -1445,12 +1557,12 @@ static int gtStripSeparate(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
     {
         uint32_t line;
 
-        for (line = 0; line < h; line++)
+        for (line = 0; line < hcpy; line++)
         {
-            uint32_t *left = raster + (size_t)line * w;
-            /* Use wmin to only flip horizontally data in place and not complete
+            uint32_t *left = p_raster_start + (size_t)line * rwidth;
+            /* Use wcpy to only flip horizontally data in place and not complete
              * raster-row. */
-            uint32_t *right = left + wmin - 1;
+            uint32_t *right = left + wcpy - 1;
 
             while (left < right)
             {
@@ -1464,7 +1576,7 @@ static int gtStripSeparate(TIFFRGBAImage *img, uint32_t *raster, uint32_t w,
     }
 
     _TIFFfreeExt(img->tif, buf);
-    return (ret);
+    return ret;
 }
 
 /*
@@ -2729,7 +2841,7 @@ DECLARESepPutFunc(putseparate8bitYCbCr11tile)
 
 static int isInRefBlackWhiteRange(float f)
 {
-    return f > (float)(-0x7FFFFFFF + 128) && f < (float)0x7FFFFFFF;
+    return (f > (float)(-0x7FFFFFFF + 128) && f < (float)0x7FFFFFFF);
 }
 
 static int initYCbCrConversion(TIFFRGBAImage *img)
@@ -2748,7 +2860,7 @@ static int initYCbCrConversion(TIFFRGBAImage *img)
         {
             TIFFErrorExtR(img->tif, module,
                           "No space for YCbCr->RGB conversion state");
-            return (0);
+            return 0;
         }
     }
 
@@ -2763,7 +2875,7 @@ static int initYCbCrConversion(TIFFRGBAImage *img)
     {
         TIFFErrorExtR(img->tif, module,
                       "Invalid values for YCbCrCoefficients tag");
-        return (0);
+        return 0;
     }
 
     if (!isInRefBlackWhiteRange(refBlackWhite[0]) ||
@@ -2775,12 +2887,12 @@ static int initYCbCrConversion(TIFFRGBAImage *img)
     {
         TIFFErrorExtR(img->tif, module,
                       "Invalid values for ReferenceBlackWhite tag");
-        return (0);
+        return 0;
     }
 
     if (TIFFYCbCrToRGBInit(img->ycbcr, luma, refBlackWhite) < 0)
-        return (0);
-    return (1);
+        return 0;
+    return 1;
 }
 
 static tileContigRoutine initCIELabConversion(TIFFRGBAImage *img)
@@ -2854,7 +2966,7 @@ static int makebwmap(TIFFRGBAImage *img)
     {
         TIFFErrorExtR(img->tif, TIFFFileName(img->tif),
                       "No space for B&W mapping table");
-        return (0);
+        return 0;
     }
     p = (uint32_t *)(img->BWmap + 256);
     for (i = 0; i < 256; i++)
@@ -2895,7 +3007,7 @@ static int makebwmap(TIFFRGBAImage *img)
         }
 #undef GREY
     }
-    return (1);
+    return 1;
 }
 
 /*
@@ -2919,7 +3031,7 @@ static int setupMap(TIFFRGBAImage *img)
     {
         TIFFErrorExtR(img->tif, TIFFFileName(img->tif),
                       "No space for photometric conversion table");
-        return (0);
+        return 0;
     }
     if (img->photometric == PHOTOMETRIC_MINISWHITE)
     {
@@ -2940,12 +3052,12 @@ static int setupMap(TIFFRGBAImage *img)
          * unpacking tables for samples <= 8 bits.
          */
         if (!makebwmap(img))
-            return (0);
+            return 0;
         /* no longer need Map, free it */
         _TIFFfreeExt(img->tif, img->Map);
         img->Map = NULL;
     }
-    return (1);
+    return 1;
 }
 
 static int checkcmap(TIFFRGBAImage *img)
@@ -2957,8 +3069,8 @@ static int checkcmap(TIFFRGBAImage *img)
 
     while (n-- > 0)
         if (*r++ >= 256 || *g++ >= 256 || *b++ >= 256)
-            return (16);
-    return (8);
+            return 16;
+    return 8;
 }
 
 static void cvtcmap(TIFFRGBAImage *img)
@@ -3003,7 +3115,7 @@ static int makecmap(TIFFRGBAImage *img)
     {
         TIFFErrorExtR(img->tif, TIFFFileName(img->tif),
                       "No space for Palette mapping table");
-        return (0);
+        return 0;
     }
     p = (uint32_t *)(img->PALmap + 256);
     for (i = 0; i < 256; i++)
@@ -3043,7 +3155,7 @@ static int makecmap(TIFFRGBAImage *img)
         }
 #undef CMAP
     }
-    return (1);
+    return 1;
 }
 
 /*
@@ -3063,7 +3175,7 @@ static int buildMap(TIFFRGBAImage *img)
         case PHOTOMETRIC_MINISBLACK:
         case PHOTOMETRIC_MINISWHITE:
             if (!setupMap(img))
-                return (0);
+                return 0;
             break;
         case PHOTOMETRIC_PALETTE:
             /*
@@ -3080,12 +3192,12 @@ static int buildMap(TIFFRGBAImage *img)
              * unpacking tables for samples < 8 bits.
              */
             if (img->bitspersample <= 8 && !makecmap(img))
-                return (0);
+                return 0;
             break;
         default:
             break;
     }
-    return (1);
+    return 1;
 }
 
 /*
@@ -3228,7 +3340,7 @@ static int PickContigCase(TIFFRGBAImage *img)
                                       "with image size %ux%u",
                                       SubsamplingHor, SubsamplingVer,
                                       img->width, img->height);
-                        return (0);
+                        return 0;
                     }
                     switch ((SubsamplingHor << 4) | SubsamplingVer)
                     {
@@ -3368,7 +3480,7 @@ static int BuildMapUaToAa(TIFFRGBAImage *img)
     if (img->UaToAa == NULL)
     {
         TIFFErrorExtR(img->tif, module, "Out of memory");
-        return (0);
+        return 0;
     }
     m = img->UaToAa;
     for (na = 0; na < 256; na++)
@@ -3376,7 +3488,7 @@ static int BuildMapUaToAa(TIFFRGBAImage *img)
         for (nv = 0; nv < 256; nv++)
             *m++ = (uint8_t)((nv * na + 127) / 255);
     }
-    return (1);
+    return 1;
 }
 
 static int BuildMapBitdepth16To8(TIFFRGBAImage *img)
@@ -3389,12 +3501,12 @@ static int BuildMapBitdepth16To8(TIFFRGBAImage *img)
     if (img->Bitdepth16To8 == NULL)
     {
         TIFFErrorExtR(img->tif, module, "Out of memory");
-        return (0);
+        return 0;
     }
     m = img->Bitdepth16To8;
     for (n = 0; n < 65536; n++)
         *m++ = (uint8_t)((n + 128) / 257);
-    return (1);
+    return 1;
 }
 
 /*
@@ -3423,7 +3535,7 @@ int TIFFReadRGBAStripExt(TIFF *tif, uint32_t row, uint32_t *raster,
     {
         TIFFErrorExtR(tif, TIFFFileName(tif),
                       "Can't use TIFFReadRGBAStrip() with tiled file.");
-        return (0);
+        return 0;
     }
 
     TIFFGetFieldDefaulted(tif, TIFFTAG_ROWSPERSTRIP, &rowsperstrip);
@@ -3431,7 +3543,7 @@ int TIFFReadRGBAStripExt(TIFF *tif, uint32_t row, uint32_t *raster,
     if (rowsperstrip == 0)
     {
         TIFFErrorExtR(tif, TIFFFileName(tif), "rowsperstrip is zero");
-        return (0);
+        return 0;
     }
 
     if ((row % rowsperstrip) != 0)
@@ -3439,7 +3551,7 @@ int TIFFReadRGBAStripExt(TIFF *tif, uint32_t row, uint32_t *raster,
         TIFFErrorExtR(
             tif, TIFFFileName(tif),
             "Row passed to TIFFReadRGBAStrip() must be first in a strip.");
-        return (0);
+        return 0;
     }
 
     if (TIFFRGBAImageBegin(&img, tif, stop_on_error, emsg))
@@ -3449,7 +3561,7 @@ int TIFFReadRGBAStripExt(TIFF *tif, uint32_t row, uint32_t *raster,
             TIFFErrorExtR(tif, TIFFFileName(tif),
                           "Invalid row passed to TIFFReadRGBAStrip().");
             TIFFRGBAImageEnd(&img);
-            return (0);
+            return 0;
         }
 
         img.row_offset = (int)row;
@@ -3470,7 +3582,7 @@ int TIFFReadRGBAStripExt(TIFF *tif, uint32_t row, uint32_t *raster,
         ok = 0;
     }
 
-    return (ok);
+    return ok;
 }
 
 /*
@@ -3504,7 +3616,7 @@ int TIFFReadRGBATileExt(TIFF *tif, uint32_t col, uint32_t row, uint32_t *raster,
     {
         TIFFErrorExtR(tif, TIFFFileName(tif),
                       "Can't use TIFFReadRGBATile() with striped file.");
-        return (0);
+        return 0;
     }
 
     TIFFGetFieldDefaulted(tif, TIFFTAG_TILEWIDTH, &tile_xsize);
@@ -3513,7 +3625,7 @@ int TIFFReadRGBATileExt(TIFF *tif, uint32_t col, uint32_t row, uint32_t *raster,
     {
         TIFFErrorExtR(tif, TIFFFileName(tif),
                       "tile_xsize or tile_ysize is zero");
-        return (0);
+        return 0;
     }
 
     if ((col % tile_xsize) != 0 || (row % tile_ysize) != 0)
@@ -3521,7 +3633,7 @@ int TIFFReadRGBATileExt(TIFF *tif, uint32_t col, uint32_t row, uint32_t *raster,
         TIFFErrorExtR(tif, TIFFFileName(tif),
                       "Row/col passed to TIFFReadRGBATile() must be top"
                       "left corner of a tile.");
-        return (0);
+        return 0;
     }
 
     /*
@@ -3531,7 +3643,7 @@ int TIFFReadRGBATileExt(TIFF *tif, uint32_t col, uint32_t row, uint32_t *raster,
     if (!TIFFRGBAImageBegin(&img, tif, stop_on_error, emsg))
     {
         TIFFErrorExtR(tif, TIFFFileName(tif), "%s", emsg);
-        return (0);
+        return 0;
     }
 
     if (col >= img.width || row >= img.height)
@@ -3539,7 +3651,7 @@ int TIFFReadRGBATileExt(TIFF *tif, uint32_t col, uint32_t row, uint32_t *raster,
         TIFFErrorExtR(tif, TIFFFileName(tif),
                       "Invalid row/col passed to TIFFReadRGBATile().");
         TIFFRGBAImageEnd(&img);
-        return (0);
+        return 0;
     }
 
     /*
@@ -3579,7 +3691,7 @@ int TIFFReadRGBATileExt(TIFF *tif, uint32_t col, uint32_t row, uint32_t *raster,
      */
 
     if (read_xsize == tile_xsize && read_ysize == tile_ysize)
-        return (ok);
+        return ok;
 
     for (i_row = 0; i_row < read_ysize; i_row++)
     {
@@ -3598,5 +3710,5 @@ int TIFFReadRGBATileExt(TIFF *tif, uint32_t col, uint32_t row, uint32_t *raster,
                     (tmsize_t)(sizeof(uint32_t) * (size_t)tile_xsize));
     }
 
-    return (ok);
+    return ok;
 }
